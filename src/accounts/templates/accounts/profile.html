@@ -1,0 +1,26 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<h2>Welcome, {{ user.username }}!</h2>
+<p>Manage your info here.</p>
+<p1>Username: {{ user.username }}</p1>
+<p>Email: {{ user.email }}</p>
+
+<!-- Future Expansion Section -->
+{% if user.bio or user.profile_picture %}
+    <h3>Additional Info</h3>
+    {% if user.profile_picture %}
+        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" width="150">
+    {% endif %}
+    <p>{{ user.bio }}</p>
+{% endif %}
+
+<!-- Change Password Link -->
+<p><a href="{% url 'password_change' %}">Change Password</a></p>
+
+<!-- Logout Button -->
+<form action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Log Out</button>
+</form>
+{% endblock %}
