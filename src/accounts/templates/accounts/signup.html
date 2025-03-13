@@ -1,0 +1,76 @@
+<!-- accounts/templates/accounts/signup.html -->
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center">Create Your Account</h2>
+    <p class="text-center text-muted">Join us today! Fill in the details below.</p>
+
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label>{{ form.username.label }}</label>
+            {{ form.username }}
+        </div>
+
+        <div class="mb-3">
+            <label>{{ form.email.label }}</label>
+            {{ form.email }}
+        </div>
+
+        <div class="mb-3">
+            <label>{{ form.first_name.label }}</label>
+            {{ form.first_name }}
+        </div>
+
+        <div class="mb-3">
+            <label>{{ form.last_name.label }}</label>
+            {{ form.last_name }}
+        </div>
+
+        <div class="mb-3">
+            <label>{{ form.password1.label }}</label>
+            {{ form.password1 }}
+            <small class="form-text text-muted">{{ form.password1.help_text }}</small>
+        </div>
+
+        <div class="mb-3">
+            <label>{{ form.password2.label }}</label>
+            {{ form.password2 }}
+            <small class="form-text text-muted">{{ form.password2.help_text }}</small>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+    </form>
+</div>
+
+<style>
+    .container {
+        max-width: 400px;
+        margin: auto;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: white;
+    }
+    .mb-3 input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-top: 5px;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        transition: 0.3s;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<h2>Dashboard</h2>
+<p>Welcome to your dashboard, {{ user.username }}!</p>
+
+<!-- Extendable: Projects can customize this section -->
+{% block dashboard_content %}
+<p>This is the default dashboard. You can override this template to customize it.</p>
+
+<!-- Logout Button -->
+<form action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button type="submit">Log Out</button>
+</form>
+
+<!-- Django requires a POST request to log out for security reasons, so we use a form with a logout button instead of a simple <a> link.-->
+
+{% endblock %}
+{% endblock %}
