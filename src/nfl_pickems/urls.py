@@ -26,5 +26,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),  # Includes the accounts URLs
     path('', home, name='home'),  # Homepage
+    path('predictions/', include('predictions.urls')),
+    path('games/', include('games.urls')),
 ]
 

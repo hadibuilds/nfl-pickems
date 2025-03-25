@@ -7,6 +7,7 @@ from django.contrib.auth.views import LoginView
 from .forms import CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
+from games.models import Game
 
 
 class SignUpView(CreateView):
@@ -34,4 +35,7 @@ def profile_view(request):
 
 @login_required
 def dashboard_view(request):
-    return render(request, 'accounts/dashboard.html')
+    """Display a list of weeks that have games."""
+    weeks = Game.objects.values_list('week', flat=True).distinct().order_by('week')
+    print(f"DEBUG: Retrieved weeks - {list(weeks)}")  # ✅ Debugging output
+    return render(request, 'accounts/dashboard.html', {'weeks': weeks})

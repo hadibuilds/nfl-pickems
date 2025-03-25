@@ -1,0 +1,33 @@
+{% extends "base_generic.html" %}
+{% load standings_tags %}
+{% block content %}
+  <h2>🏆 Standings</h2>
+
+  <table border="1" cellpadding="10">
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>User</th>
+        {% for week in weeks %}
+          <th>Week {{ week }}</th>
+        {% endfor %}
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in standings %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ entry.user.username }}</td>
+          {% for week in weeks %}
+            <td>{{ entry.weekly_scores|get_item:week|default:"0" }}</td>
+          {% endfor %}
+          <td><strong>{{ entry.total }}</strong></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <br>
+  <a href="{% url 'dashboard' %}">← Back to Dashboard</a>
+{% endblock %}

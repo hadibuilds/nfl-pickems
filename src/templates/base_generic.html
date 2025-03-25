@@ -1,4 +1,5 @@
-<!-- templates/base_generic.html -->
+{% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,9 +15,14 @@
                 {% if request.path != '/accounts/dashboard/' and request.path != '/accounts/password_reset/' %}
                     <a href="{% url 'dashboard' %}">Dashboard</a>
                 {% endif %}
+
                 {% if request.path != '/accounts/profile/' and request.path != '/accounts/password_reset/' %}
                     {% if request.path != '/accounts/dashboard/' and request.path != '/accounts/password_reset/' %} | {% endif %}
                     <a href="{% url 'profile' %}">Profile</a>
+                {% endif %}
+
+                {% if request.path != '/predictions/standings/' %}
+                    | <a href="{% url 'standings' %}">Standings</a>
                 {% endif %}
             {% else %}
                 {% if request.path != '/accounts/login/' %}
