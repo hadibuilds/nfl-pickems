@@ -1,0 +1,108 @@
+{% extends "base_generic.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block content %}
+  <h2>Games for Week {{ week_number }}</h2>
+
+  {% for game in games %}
+    <p>
+      <strong>
+        {{ game.away_team }} @ {{ game.home_team }}
+        {% if game.is_locked %} 🔒{% endif %}
+      </strong>
+    </p>
+
+    <div class="team-buttons">
+      {% if game.is_locked %}
+        <button 
+          class="team-button {% if prediction_map|get_item:game.id == game.away_team %}selected{% endif %}" 
+          disabled>
+          {{ game.away_team }}
+        </button>
+        <button 
+          class="team-button {% if prediction_map|get_item:game.id == game.home_team %}selected{% endif %}" 
+          disabled>
+          {{ game.home_team }}
+        </button>
+      {% else %}
+        <button 
+          class="team-button {% if prediction_map|get_item:game.id == game.away_team %}selected{% endif %}" 
+          onclick="submitPrediction({{ game.id }}, '{{ game.away_team }}')">
+          {{ game.away_team }}
+        </button>
+        <button 
+          class="team-button {% if prediction_map|get_item:game.id == game.home_team %}selected{% endif %}" 
+          onclick="submitPrediction({{ game.id }}, '{{ game.home_team }}')">
+          {{ game.home_team }}
+        </button>
+      {% endif %}
+    </div>
+
+    <!-- Prop Bets -->
+    {% for prop_bet in game.prop_bets.all %}
+      <p><strong>Prop Bet:</strong> {{ prop_bet.question }}</p>
+
+      <div class="propbet-buttons">
+        {% for option in prop_bet.options %}
+          <button
+            class="propbet-button {% if prop_bet_predictions|get_item:prop_bet.id == option %}selected{% endif %}"
+            {% if game.is_locked %}
+              disabled
+            {% else %}
+              onclick="submitPropBet({{ prop_bet.id }}, '{{ option }}')"
+            {% endif %}
+          >
+            {{ option }}
+          </button>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <hr>
+  {% empty %}
+    <p>No games available for this week.</p>
+  {% endfor %}
+
+  <script>
+    function submitPrediction(gameId, team) {
+      fetch(`/predictions/predict/${gameId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `predicted_winner=${encodeURIComponent(team)}`
+      })
+      .then(response => {
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert("Error submitting prediction. Try again.");
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    }
+
+    function submitPropBet(propBetId, answer) {
+      console.log("Submitting prop bet:", propBetId, answer);  // DEBUG
+      fetch(`/predictions/propbet/${propBetId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `answer=${encodeURIComponent(answer)}`
+      })
+      .then(response => {
+        if (response.ok) {
+          location.reload();
+        } else {
+          response.text().then(text => console.error("Server error:", text));  // DEBUG
+          alert("Error submitting prop bet.");
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    }
+  </script>
+{% endblock %}
