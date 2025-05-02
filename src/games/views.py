@@ -1,9 +1,34 @@
+from .models import Game
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.response import Response
+from .serializers import GameSerializer
+from rest_framework.decorators import api_view
+
+
+@csrf_exempt
+@api_view(['GET'])
+def api_games(request):
+    games = Game.objects.prefetch_related('prop_bets').all()
+    serializer = GameSerializer(games, many=True)
+    return Response(serializer.data)
+
+"""
+@csrf_exempt
+def api_games(request):
+    if request.method == 'GET':
+        games = list(Game.objects.values())
+        return JsonResponse(games, safe=False)
+"""
+
+"""
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from games.models import Game
+from .models import Game
 from predictions.models import Prediction, PropBetPrediction, PropBet
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
-@login_required
 def week_games(request, week_number):
     games = Game.objects.filter(week=week_number).order_by('start_time')
 
@@ -24,3 +49,4 @@ def week_games(request, week_number):
         'prediction_map': prediction_map,
         'prop_bet_predictions': prop_prediction_map,  # 👈 Add to context
     })
+"""

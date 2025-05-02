@@ -2,14 +2,14 @@
 
 {% block content %}
   <h2>Select a Week</h2>
-  <ul>
+  <ul style="list-style: none; padding-left: 0;">
     {% for week in weeks %}
-      <a href="{% url 'week_games' week %}">Week {{ week }}</a>  <!-- ✅ Updated link -->
+      <li><a href="{% url 'week_games' week %}">Week {{ week }}</a></li>
     {% empty %}
-      <p>No games available.</p>
+      <li>No games available.</li>
     {% endfor %}
   </ul>
-
+  
 <!-- Logout Button -->
 <form action="{% url 'logout' %}" method="post">
     {% csrf_token %}

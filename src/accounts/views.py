@@ -8,7 +8,7 @@ from .forms import CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 from games.models import Game
-
+from django.http import JsonResponse
 
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
@@ -39,3 +39,10 @@ def dashboard_view(request):
     weeks = Game.objects.values_list('week', flat=True).distinct().order_by('week')
     print(f"DEBUG: Retrieved weeks - {list(weeks)}")  # ✅ Debugging output
     return render(request, 'accounts/dashboard.html', {'weeks': weeks})
+
+
+@login_required
+def whoami(request):
+    user = request.user
+    print(f"Debug: Logged-in user: {user.username}")  # Print the logged-in user's username
+    return JsonResponse({'username': user.username, 'email': user.email})

@@ -28,5 +28,6 @@ urlpatterns = [
     path('', home, name='home'),  # Homepage
     path('predictions/', include('predictions.urls')),
     path('games/', include('games.urls')),
+    path('', include('frontend.urls')),
 ]
 

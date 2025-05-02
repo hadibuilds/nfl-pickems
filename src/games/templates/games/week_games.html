@@ -6,60 +6,64 @@
   <h2>Games for Week {{ week_number }}</h2>
 
   {% for game in games %}
-    <p>
-      <strong>
-        {{ game.away_team }} @ {{ game.home_team }}
-        {% if game.is_locked %} 🔒{% endif %}
-      </strong>
-    </p>
-
-    <div class="team-buttons">
-      {% if game.is_locked %}
-        <button 
-          class="team-button {% if prediction_map|get_item:game.id == game.away_team %}selected{% endif %}" 
-          disabled>
-          {{ game.away_team }}
-        </button>
-        <button 
-          class="team-button {% if prediction_map|get_item:game.id == game.home_team %}selected{% endif %}" 
-          disabled>
-          {{ game.home_team }}
-        </button>
-      {% else %}
-        <button 
-          class="team-button {% if prediction_map|get_item:game.id == game.away_team %}selected{% endif %}" 
-          onclick="submitPrediction({{ game.id }}, '{{ game.away_team }}')">
-          {{ game.away_team }}
-        </button>
-        <button 
-          class="team-button {% if prediction_map|get_item:game.id == game.home_team %}selected{% endif %}" 
-          onclick="submitPrediction({{ game.id }}, '{{ game.home_team }}')">
-          {{ game.home_team }}
-        </button>
+  <div class="game-container">
+    <div class="game-header">
+      {{ game.away_team }} @ {{ game.home_team }} {% if game.is_locked %} 🔒{% endif %}
+      {% if prediction_result_map|get_item:game.id == True %}
+        <span class="correct">✅</span>
+      {% elif prediction_result_map|get_item:game.id == False %}
+        <span class="incorrect">❌</span>
       {% endif %}
     </div>
+  
+    <div class="button-row">
+      <!-- Away team -->
+      <button class="game-button
+        {% if prediction_map|get_item:game.id == game.away_team %}selected{% endif %}
+        {% if game.is_locked %} locked{% endif %}"
+        {% if game.is_locked %}
+          disabled
+        {% else %}
+          onclick="submitPrediction({{ game.id }}, '{{ game.away_team }}')"
+        {% endif %}>
+        {{ game.away_team }}
+      </button>
 
-    <!-- Prop Bets -->
+      <!-- Home team -->
+      <button class="game-button
+        {% if prediction_map|get_item:game.id == game.home_team %}selected{% endif %}
+        {% if game.is_locked %} locked{% endif %}"
+        {% if game.is_locked %}
+          disabled
+        {% else %}
+          onclick="submitPrediction({{ game.id }}, '{{ game.home_team }}')"
+        {% endif %}>
+        {{ game.home_team }}
+      </button>
+    </div>
+  
     {% for prop_bet in game.prop_bets.all %}
-      <p><strong>Prop Bet:</strong> {{ prop_bet.question }}</p>
-
-      <div class="propbet-buttons">
+      <div class="propbet-header">
+        {{ prop_bet.question }}
+        {% if prop_bet_result_map|get_item:prop_bet.id == True %}
+          <span class="correct">✅</span>
+        {% elif prop_bet_result_map|get_item:prop_bet.id == False %}
+          <span class="incorrect">❌</span>
+        {% endif %}
+      </div>
+  
+      <div class="button-row">
         {% for option in prop_bet.options %}
-          <button
-            class="propbet-button {% if prop_bet_predictions|get_item:prop_bet.id == option %}selected{% endif %}"
-            {% if game.is_locked %}
-              disabled
-            {% else %}
-              onclick="submitPropBet({{ prop_bet.id }}, '{{ option }}')"
-            {% endif %}
-          >
+          <button class="propbet-button {% if prop_bet_predictions|get_item:prop_bet.id == option %}selected{% endif %}{% if game.is_locked %} locked{% endif %}"
+            {% if game.is_locked %}disabled{% else %}
+            onclick="submitPropBet({{ prop_bet.id }}, '{{ option }}')" {% endif %}>
             {{ option }}
           </button>
         {% endfor %}
       </div>
     {% endfor %}
-
-    <hr>
+  </div>
+  
   {% empty %}
     <p>No games available for this week.</p>
   {% endfor %}
@@ -85,7 +89,7 @@
     }
 
     function submitPropBet(propBetId, answer) {
-      console.log("Submitting prop bet:", propBetId, answer);  // DEBUG
+      console.log("Submitting prop bet:", propBetId, answer);
       fetch(`/predictions/propbet/${propBetId}/`, {
         method: 'POST',
         headers: {
@@ -98,7 +102,7 @@
         if (response.ok) {
           location.reload();
         } else {
-          response.text().then(text => console.error("Server error:", text));  // DEBUG
+          response.text().then(text => console.error("Server error:", text));
           alert("Error submitting prop bet.");
         }
       })

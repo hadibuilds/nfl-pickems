@@ -1,0 +1,175 @@
+/* Remove default spacing */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  background-color: #111;
+  color: white;
+  padding: 10px 10px; /* reduce vertical and horizontal padding */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 20px;  /* reduce title size */
+  margin: 0;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 16px;
+  font-size: 14px;  /* slightly smaller font */
+  font-weight: 500;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+}
+
+main {
+  padding: 0 10px; /* Adds 20px padding on left and right */
+}
+
+footer {
+  padding: 0 10px; /* Adds 20px padding on left and right */
+}
+
+
+.team-button {
+  background-color: #f2f2f2;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;            /* Slightly more padding */
+  font-size: 0.8rem;           /* Slight bump in size */
+  font-weight: 600;
+  width: 55px;                 /* Just a bit wider */
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.team-button:hover {
+  background-color: #ddd;
+  border-color: #aaa;
+}
+
+.team-button.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #0056b3;
+}
+
+.propbet-buttons {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0;
+  flex-wrap: wrap;
+}
+
+.propbet-button {
+  background-color: #f2f2f2;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: auto; /* let button fit to label length */
+  min-width: 55px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.propbet-button:hover {
+  background-color: #ddd;
+  border-color: #aaa;
+}
+
+.propbet-button.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #0056b3;
+}
+
+.lock-emoji {
+  font-size: 1.2em;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.game-container {
+  background-color: #1c1c24;  /* dark slate background like the image */
+  border-radius: 12px;
+  padding: 16px;
+  margin: 20px auto;
+  max-width: 350px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  color: #ffffff;
+  font-family: 'Arial', sans-serif;
+}
+
+.game-header, .propbet-header {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  margin: 12px;
+}
+
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.game-button, .propbet-button {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  background-color: #2e2e38;
+  color: #fff;
+  transition: background-color 0.3s ease;
+}
+
+.game-button:hover:not(.selected):not(.locked),
+.propbet-button:hover:not(.selected):not(.locked) {
+  background-color: #d0e0ff;
+}
+
+.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #0056b3;
+  cursor: default;
+}
+
+.correct::after {
+  content: '✅';
+  margin-left: 6px;
+}
+
+.incorrect::after {
+  content: '❌';
+  margin-left: 6px;
+}
+
+.locked {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
