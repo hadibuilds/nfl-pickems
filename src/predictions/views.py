@@ -3,27 +3,22 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Prediction, PropBet, PropBetPrediction
+from .models import Prediction, PropBet, PropBetPrediction  # Corrected PropBetPrediction model
 from games.models import Game
 from collections import defaultdict
-
+import json
 User = get_user_model()
 
-@csrf_exempt
+@csrf_exempt  # Only use for testing; remove in production for security
 @login_required
 def make_prediction(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
 
     if request.method == 'POST':
         predicted_winner = request.POST.get('predicted_winner')
-        print("DEBUG predicted_winner =", predicted_winner)
-        print("DEBUG: home_team =", game.home_team)
-        print("DEBUG: away_team =", game.away_team)
-
         if not predicted_winner:
             return JsonResponse({'error': 'No team selected'}, status=400)
 
-        # ✅ Fix: Manually check if prediction exists
         try:
             prediction = Prediction.objects.get(user=request.user, game=game)
             prediction.predicted_winner = predicted_winner
@@ -35,7 +30,8 @@ def make_prediction(request, game_id):
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-@csrf_exempt
+
+@csrf_exempt  # Only use for testing; remove in production for security
 @login_required
 def make_prop_bet(request, prop_bet_id):
     prop_bet = get_object_or_404(PropBet, pk=prop_bet_id)
@@ -57,6 +53,7 @@ def make_prop_bet(request, prop_bet_id):
         return JsonResponse({'success': True})
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
+
 
 @login_required
 def standings_view(request):
@@ -97,4 +94,63 @@ def standings_view(request):
         'standings': standings,
         'weeks': sorted_weeks,
     })
+
+
+@login_required
+def get_user_predictions(request):
+    user = request.user
+    predictions = Prediction.objects.filter(user=user)
+    prop_bet_selections = PropBetPrediction.objects.filter(user=user)
+
+    predictions_data = [
+        {
+            'game_id': pred.game.id,
+            'predicted_winner': pred.predicted_winner
+        }
+        for pred in predictions
+    ]
+    
+    prop_bet_data = [
+        {
+            'prop_bet_id': bet.prop_bet.id,
+            'answer': bet.answer
+        }
+        for bet in prop_bet_selections
+    ]
+
+    return JsonResponse({'predictions': predictions_data, 'prop_bets': prop_bet_data})
+
+@csrf_exempt  # Only for testing; remove in production for security
+@login_required
+def save_user_selection(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        game_id = data.get('game_id')
+        predicted_winner = data.get('predicted_winner')
+        prop_bet_id = data.get('prop_bet_id')
+        answer = data.get('answer')
+
+        # Handle saving money-line selection
+        if game_id and predicted_winner:
+            game = get_object_or_404(Game, pk=game_id)
+            try:
+                prediction = Prediction.objects.get(user=request.user, game=game)
+                prediction.predicted_winner = predicted_winner
+            except Prediction.DoesNotExist:
+                prediction = Prediction(user=request.user, game=game, predicted_winner=predicted_winner)
+            prediction.save()
+
+        # Handle saving prop-bet selection
+        if prop_bet_id and answer:
+            prop_bet = get_object_or_404(PropBet, pk=prop_bet_id)
+            try:
+                prop_prediction = PropBetPrediction.objects.get(user=request.user, prop_bet=prop_bet)
+                prop_prediction.answer = answer
+            except PropBetPrediction.DoesNotExist:
+                prop_prediction = PropBetPrediction(user=request.user, prop_bet=prop_bet, answer=answer)
+            prop_prediction.save()
+
+        return JsonResponse({'success': True})
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 

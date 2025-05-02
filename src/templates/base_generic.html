@@ -9,32 +9,19 @@
 </head>
 <body>
     <header>
-        <h1>Daher Pick'Em League</h1>
+        <h1>Pick'Ems</h1>
         <nav>
-            {% if user.is_authenticated %}
-                {% if request.path != '/accounts/dashboard/' and request.path != '/accounts/password_reset/' %}
-                    <a href="{% url 'dashboard' %}">Dashboard</a>
-                {% endif %}
-
-                {% if request.path != '/accounts/profile/' and request.path != '/accounts/password_reset/' %}
-                    {% if request.path != '/accounts/dashboard/' and request.path != '/accounts/password_reset/' %} | {% endif %}
-                    <a href="{% url 'profile' %}">Profile</a>
-                {% endif %}
-
-                {% if request.path != '/predictions/standings/' %}
-                    | <a href="{% url 'standings' %}">Standings</a>
-                {% endif %}
-            {% else %}
-                {% if request.path != '/accounts/login/' %}
-                    <a href="{% url 'login' %}">Log In</a>
-                {% endif %}
-                {% if request.path != '/accounts/signup/' %}
-                    {% if request.path != '/accounts/login/' %} | {% endif %}
-                    <a href="{% url 'signup' %}">Sign Up</a>
-                {% endif %}
-            {% endif %}
+          {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'profile' %}">Profile</a>
+            <a href="{% url 'standings' %}">Standings</a>
+            <a href="{% url 'logout' %}">Logout</a>
+          {% else %}
+            <a href="{% url 'login' %}">Log In</a>
+            <a href="{% url 'signup' %}">Sign Up</a>
+          {% endif %}
         </nav>
-    </header>
+      </header>      
     
     <main>
         {% block content %}

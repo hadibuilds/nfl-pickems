@@ -1,7 +1,7 @@
 # accounts/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import SignUpView, profile_view, dashboard_view, CustomLoginView
+from .views import SignUpView, profile_view, dashboard_view, CustomLoginView, whoami
 
 urlpatterns = [
     path('signup/', SignUpView.as_view(), name='signup'),
@@ -16,4 +16,5 @@ urlpatterns = [
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='accounts/password_management.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='accounts/password_management.html'), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='accounts/password_management.html'), name='password_reset_complete'),
+    path('api/whoami/', whoami, name='whoami'),
 ]
