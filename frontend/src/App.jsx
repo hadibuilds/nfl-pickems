@@ -1,7 +1,16 @@
-import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import Navbar from './components/Navbar';
+import HomePage from './pages/HomePage';
+import WeekPage from './pages/WeekPage';
+import LoginPage from './pages/LoginPage';
+import SignUpPage from './pages/SignUpPage';
+import Standings from './pages/Standings';
+import WeekSelector from "./pages/WeekSelector"; 
+import PrivateRoute from './components/PrivateRoute';
+import { useAuth } from './context/AuthContext';
 
-// Helper function to get CSRF token from cookies
 const getCookie = (name) => {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
@@ -17,203 +26,161 @@ const getCookie = (name) => {
   return cookieValue;
 };
 
-function App() {
-  const [userInfo, setUserInfo] = useState(null);
+export default function App() {
+  const { userInfo, isLoading, logout } = useAuth();
   const [games, setGames] = useState([]);
   const [moneyLineSelections, setMoneyLineSelections] = useState({});
   const [propBetSelections, setPropBetSelections] = useState({});
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Fetch logged-in user information (WhoAmI endpoint)
-    fetch('http://localhost:8000/accounts/api/whoami/', {
-      credentials: 'include',  // Ensure session cookies are sent with requests
+    if (!userInfo || isLoading) return;
+
+    fetch('http://localhost:8000/games/api/games/', {
+      credentials: 'include',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
     })
-      .then(response => response.json())
-      .then(data => {
-        if (data.username) {
-          console.log('Logged in user:', data);  // Log the user info for debugging
-          setUserInfo(data);  // Store the logged-in user info in state
-        } else {
-          console.log('Not logged in');
-          setUserInfo(null);  // User is not logged in
-        }
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch games');
+        return response.json();
       })
+      .then(data => setGames(data))
       .catch(error => {
-        console.error('Error fetching user info:', error);
-        setUserInfo(null);
+        console.error('Error fetching games:', error);
+        setGames([]);
       });
 
-    // Fetch the games from the backend
-    fetch('http://localhost:8000/games/api/games/', {
-      credentials: 'include',  // Ensure cookies (session) are included
-      headers: { Accept: 'application/json' },
-    })
-      .then(response => response.json())
-      .then(data => setGames(data))
-      .catch(error => console.error('Error fetching games:', error));
-
-    // Fetch the user's predictions (money-line and prop-bet selections)
     fetch('http://localhost:8000/predictions/api/get-user-predictions/', {
-      credentials: 'include',  // Ensure cookies (session) are included
+      credentials: 'include',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
     })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch predictions');
+        return response.json();
+      })
       .then(data => {
-        const moneyLineSelections = data.predictions.reduce((acc, selection) => {
-          acc[selection.game_id] = selection.predicted_winner;
+        const moneyLine = data.predictions.reduce((acc, cur) => {
+          acc[cur.game_id] = cur.predicted_winner;
           return acc;
         }, {});
-
-        const propBetSelections = data.prop_bets.reduce((acc, selection) => {
-          acc[selection.prop_bet_id] = selection.answer;
+        const propBets = data.prop_bets.reduce((acc, cur) => {
+          acc[cur.prop_bet_id] = cur.answer;
           return acc;
         }, {});
-
-        setMoneyLineSelections(moneyLineSelections);
-        setPropBetSelections(propBetSelections);
+        setMoneyLineSelections(moneyLine);
+        setPropBetSelections(propBets);
       })
-      .catch(error => console.error('Error fetching predictions:', error));
-  }, []);
+      .catch(error => {
+        console.error('Error fetching predictions:', error);
+        setMoneyLineSelections({});
+        setPropBetSelections({});
+      });
+  }, [userInfo, isLoading]);
 
-  const handleMoneyLineClick = (gameId, team) => {
-    setMoneyLineSelections(prev => {
-      const updatedSelections = { ...prev, [gameId]: team };
-      fetch('http://localhost:8000/predictions/api/save-selection/', {  // Use correct port
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken'),  // CSRF token for CSRF protection
-        },
-        body: JSON.stringify({ game_id: gameId, predicted_winner: team }),
-        credentials: 'include',  // Send session cookies (important for authentication)
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            setMoneyLineSelections(updatedSelections);  // Save the updated selections
-          } else {
-            console.error('Error saving selection:', data.message);
-          }
-        })
-        .catch(error => console.error('Error submitting money-line:', error));
+  const handleMoneyLineClick = (game, team) => {
+    if (game.locked) return;
 
-      return updatedSelections;
-    });
+    const updated = { ...moneyLineSelections, [game.id]: team };
+    fetch('http://localhost:8000/predictions/api/save-selection/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({ game_id: game.id, predicted_winner: team }),
+      credentials: 'include',
+    })
+      .then(res => res.json())
+      .then(data => data.success && setMoneyLineSelections(updated))
+      .catch(console.error);
   };
 
-  const handlePropBetClick = (propBetId, answer) => {
-    setPropBetSelections(prev => {
-      const updatedSelections = { ...prev, [propBetId]: answer };
-      fetch('http://localhost:8000/predictions/api/save-selection/', {  // Use correct port
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken'),  // CSRF token for CSRF protection
-        },
-        body: JSON.stringify({ prop_bet_id: propBetId, answer }),
-        credentials: 'include',  // Send session cookies (important for authentication)
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            setPropBetSelections(updatedSelections);  // Save the updated selections
-          } else {
-            console.error('Error saving prop-bet selection:', data.message);
-          }
-        })
-        .catch(error => console.error('Error submitting prop-bet:', error));
+  const handlePropBetClick = (game, answer) => {
+    if (game.locked) return;
 
-      return updatedSelections;
-    });
+    const propBetId = game.prop_bets?.[0]?.id;
+    if (!propBetId) return;
+
+    const updated = { ...propBetSelections, [propBetId]: answer };
+    fetch('http://localhost:8000/predictions/api/save-selection/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({ prop_bet_id: propBetId, answer }),
+      credentials: 'include',
+    })
+      .then(res => res.json())
+      .then(data => data.success && setPropBetSelections(updated))
+      .catch(console.error);
   };
 
-  const sortedGames = [...games].sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+  const sortedGames = Array.isArray(games)
+    ? [...games].sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
+    : [];
 
   return (
-    <div className="app-container">
-      {userInfo ? (
-        <div>
-          <h2>Welcome, {userInfo.username}</h2>
-          <p>Email: {userInfo.email}</p>
-        </div>
-      ) : (
-        <h2>Not logged in</h2>
-      )}
-
-      <h1>Games for Week 1</h1>
-      {sortedGames.length === 0 ? (
-        <p>Loading...</p>
-      ) : (
-        sortedGames.map(game => {
-          const startTime = new Date(game.start_time);
-          const dayAndDate = startTime.toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: '2-digit',
-            day: '2-digit',
-          });
-          const formattedTime = startTime.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true,
-          });
-
-          const propBet = game.prop_bets?.[0];
-          const selectedTeam = moneyLineSelections[game.id];
-          const selectedPropAnswer = propBet ? propBetSelections[propBet.id] : null;
-
-          return (
-            <div key={game.id} className="game-box">
-              {/* Top Half - Money Line */}
-              <div className="game-section money-line">
-                <div className="game-datetime">
-                  <div className="date-line">{dayAndDate}</div>
-                  <div className="time-line">{formattedTime}</div>
-                </div>
-                <p className="matchup">{game.away_team} @ {game.home_team}</p>
-                <div className="button-row">
-                  <button
-                    className={`team-button ${selectedTeam === game.away_team ? 'selected' : ''}`}
-                    onClick={() => handleMoneyLineClick(game.id, game.away_team)}
-                  >
-                    {game.away_team}
-                  </button>
-                  <button
-                    className={`team-button ${selectedTeam === game.home_team ? 'selected' : ''}`}
-                    onClick={() => handleMoneyLineClick(game.id, game.home_team)}
-                  >
-                    {game.home_team}
-                  </button>
-                </div>
-              </div>
-
-              <div className="divider-line" />
-
-              {/* Bottom Half - Prop Bet */}
-              {propBet ? (
-                <div className="game-section prop-bet">
-                  <p className="prop-question">{propBet.question}</p>
-                  <div className="button-row">
-                    {propBet.options.map((option, index) => (
-                      <button
-                        key={index}
-                        className={`propbet-button ${selectedPropAnswer === option ? 'selected' : ''}`}
-                        onClick={() => handlePropBetClick(propBet.id, option)}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="game-section prop-bet">
-                  <p className="prop-question">No prop bet available</p>
-                </div>
-              )}
-            </div>
-          );
-        })
-      )}
-    </div>
+    <Router>
+      <Navbar userInfo={userInfo} onLogout={logout} isOpen={isOpen} setIsOpen={setIsOpen} />
+      <div className={`transition-transform duration-300 ${isOpen ? "-translate-x-64" : "translate-x-0"}`}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <HomePage />
+              </PrivateRoute>
+            }
+          />
+          <Route 
+            path="/week/:weekNumber" 
+            element={
+              <PrivateRoute>
+                <WeekPage 
+                  games={sortedGames} 
+                  moneyLineSelections={moneyLineSelections}
+                  propBetSelections={propBetSelections}
+                  handleMoneyLineClick={handleMoneyLineClick}
+                  handlePropBetClick={handlePropBetClick}
+                />
+              </PrivateRoute>
+            } 
+          />
+          <Route
+            path="/login"
+            element={
+              userInfo ? <Navigate to="/" replace /> : <LoginPage userInfo={userInfo} />
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              userInfo ? <Navigate to="/" replace /> : <SignUpPage userInfo={userInfo} />
+            }
+          />
+          <Route
+            path="/standings"
+            element={
+              <PrivateRoute>
+                <Standings />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/weeks"
+            element={
+              <PrivateRoute>
+                <WeekSelector />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </div>
+    </Router>
   );
 }
-
-export default App;

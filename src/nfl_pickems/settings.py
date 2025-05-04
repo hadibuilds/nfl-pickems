@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'rest_framework_simplejwt',
     'accounts',
     'games',
     'predictions',
@@ -57,7 +58,20 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -70,6 +84,10 @@ from corsheaders.defaults import default_headers
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'X-CSRFToken',
 ]
+
+from decouple import config
+
+INVITE_CODE = config("INVITE_CODE", default="fallbackcode")
 
 ROOT_URLCONF = 'nfl_pickems.urls'
 
@@ -111,7 +129,9 @@ AUTH_USER_MODEL = 'accounts.CustomUser'  # Use custom user model for all user au
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {'min_length': 5},  # Set to 5 characters
+        'OPTIONS': {
+            'min_length': 5
+        }
     },
 ]
 

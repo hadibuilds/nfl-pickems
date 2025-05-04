@@ -1,48 +1,105 @@
-# accounts/views.py
+from django.contrib.auth import login, logout, get_user_model, authenticate
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import permissions
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 
-from django.shortcuts import render, redirect
-from django.urls import reverse_lazy
-from django.views.generic.edit import CreateView
-from django.contrib.auth.views import LoginView
-from .forms import CustomUserCreationForm
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login
-from games.models import Game
-from django.http import JsonResponse
-
-class SignUpView(CreateView):
-    form_class = CustomUserCreationForm
-    success_url = reverse_lazy('dashboard')  # Redirect to login page after signup
-    template_name = 'accounts/signup.html'
-
-    def form_valid(self, form):
-        # Save the new user
-        user = form.save()
-        # Automatically log in the user
-        login(self.request, user)
-        return redirect(self.success_url)  # Redirect to dashboard
-
-class CustomLoginView(LoginView):
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect('dashboard')  # Redirect logged-in users to the dashboard
-        return super().dispatch(request, *args, **kwargs)
-
-        
-@login_required
-def profile_view(request):
-    return render(request, 'accounts/profile.html', {'user': request.user})
-
-@login_required
-def dashboard_view(request):
-    """Display a list of weeks that have games."""
-    weeks = Game.objects.values_list('week', flat=True).distinct().order_by('week')
-    print(f"DEBUG: Retrieved weeks - {list(weeks)}")  # ✅ Debugging output
-    return render(request, 'accounts/dashboard.html', {'weeks': weeks})
+User = get_user_model()
 
 
-@login_required
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def whoami(request):
     user = request.user
-    print(f"Debug: Logged-in user: {user.username}")  # Print the logged-in user's username
-    return JsonResponse({'username': user.username, 'email': user.email})
+    if user.is_authenticated:
+        return Response({
+            "username": user.username,
+            "email": user.email,
+        })
+    else:
+        return Response({"user": None})
+
+
+class LoginAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        identifier = request.data.get("identifier", "").lower()
+        password = request.data.get("password")
+
+        user = None
+        if "@" in identifier:
+            try:
+                user_obj = User.objects.get(email__iexact=identifier)
+                user = authenticate(request, username=user_obj.username.lower(), password=password)
+            except User.DoesNotExist:
+                return Response({"detail": "Invalid email or password"}, status=400)
+        else:
+            user = authenticate(request, username=identifier.lower(), password=password)
+
+        if not user:
+            return Response({"detail": "Invalid credentials"}, status=400)
+
+        login(request, user)
+        return Response({
+            "username": user.username,
+            "email": user.email,
+        })
+
+
+class RegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        try:
+            username = request.data.get("username", "").lower()
+            email = request.data.get("email", "").lower()
+            password = request.data.get("password")
+            invite_code = request.data.get("inviteCode")
+
+            if invite_code != settings.INVITE_CODE:
+                return Response({"detail": "Invalid invite code"}, status=400)
+
+            if not username or not email or not password:
+                return Response({"detail": "All fields are required."}, status=400)
+
+            if User.objects.filter(username__iexact=username).exists():
+                return Response({"detail": "Username already taken"}, status=400)
+
+            if User.objects.filter(email__iexact=email).exists():
+                return Response({"detail": "Email already registered"}, status=400)
+
+            try:
+                validate_password(password)
+            except DjangoValidationError as e:
+                return Response({"detail": list(e.messages)}, status=400)
+
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+
+            login(request, user)
+
+            return Response({
+                "username": user.username,
+                "email": user.email,
+            }, status=201)
+
+        except Exception as e:
+            return Response({
+                "detail": "Unexpected error",
+                "error": str(e)
+            }, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    logout(request)
+    return Response({"detail": "Successfully logged out."})
