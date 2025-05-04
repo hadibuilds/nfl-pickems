@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
+    'games',
+    'predictions'
 ]
 
 MIDDLEWARE = [
@@ -113,7 +115,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  # 3 levels up from setting
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'src' / 'static',  # ✅ This matches your current structure
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
