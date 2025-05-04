@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Game
 from predictions.models import PropBet
+from django.utils.timezone import now
 
 class PropBetSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,7 +10,11 @@ class PropBetSerializer(serializers.ModelSerializer):
 
 class GameSerializer(serializers.ModelSerializer):
     prop_bets = PropBetSerializer(many=True, read_only=True)
+    locked = serializers.SerializerMethodField()
 
     class Meta:
         model = Game
         fields = ['id', 'week', 'home_team', 'away_team', 'start_time', 'locked', 'winner', 'prop_bets']
+
+    def get_locked(self, obj):
+        return obj.is_locked
