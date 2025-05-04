@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,13 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-f%&5$u=6^cx4aif50@%2yu85ie85gs+_psb1avl7k#&z)&$f9g'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
 # Application definition
 
@@ -85,9 +85,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'X-CSRFToken',
 ]
 
-from decouple import config
-
-INVITE_CODE = config("INVITE_CODE", default="fallbackcode")
+INVITE_CODE = os.getenv("INVITE_CODE", "fallbackcode")
 
 ROOT_URLCONF = 'nfl_pickems.urls'
 
@@ -114,10 +112,11 @@ WSGI_APPLICATION = 'nfl_pickems.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    #'default': {
+    #    'ENGINE': 'django.db.backends.sqlite3',
+    #    'NAME': BASE_DIR / 'db.sqlite3',
+    #}
+    'default': dj_database_url.config(default=os.getenv("DATABASE_URL"))
 }
 
 # Custom user model
@@ -161,6 +160,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent  # 3 levels up from set
 STATICFILES_DIRS = [
     BASE_DIR / 'src' / 'static',  # ✅ This matches your current structure
 ]
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
