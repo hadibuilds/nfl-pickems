@@ -37,7 +37,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Must be directly after SecurityMiddleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -56,18 +56,28 @@ REST_FRAMEWORK = {
     ),
 }
 
-# CORS & CSRF
+# CORS & CSRF Settings for cross-origin frontend/backend
 CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = [
     "https://nfl-pickems-frontend.onrender.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
 CSRF_TRUSTED_ORIGINS = [
     "https://nfl-pickems-frontend.onrender.com",
     "http://localhost:5173",
 ]
-CORS_ALLOW_HEADERS = list(default_headers) + ['X-CSRFToken']
+
+CORS_ALLOW_HEADERS = list(default_headers) + ["X-CSRFToken"]
+
+# Cookie settings for cross-origin support
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
 
 # Invite code fallback
 INVITE_CODE = os.getenv("INVITE_CODE", "fallbackcode")
@@ -123,9 +133,9 @@ USE_TZ = True
 # Static files
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # → /src/static (contains /frontend/assets etc.)
+    BASE_DIR / 'static',
 ]
-STATIC_ROOT = BASE_DIR.parent / 'staticfiles'  # → /staticfiles at project root
+STATIC_ROOT = BASE_DIR.parent / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field
