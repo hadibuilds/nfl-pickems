@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
@@ -23,6 +23,12 @@ export default function SignUpPage() {
   });
 
   const API_BASE = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    fetch(`${API_BASE}/accounts/api/csrf/`, {
+      credentials: "include",
+    });
+  }, []);
 
   const toggleVisibility = () => setIsVisible(!isVisible);
 

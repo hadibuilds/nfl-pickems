@@ -7,9 +7,16 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.http import JsonResponse
+from rest_framework.decorators import ensure_csrf_cookie
 
 User = get_user_model()
 
+@ensure_csrf_cookie
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_csrf_token(request):
+    return JsonResponse({"detail": "CSRF cookie set"})
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
