@@ -2,13 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
-
-const getCookie = (name) => {
-  const cookie = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(name + "="));
-  return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
-};
+import { getCookie } from "../utils/cookies";
 
 export default function LoginPage() {
   const { setUserInfo } = useAuth();
@@ -22,7 +16,6 @@ export default function LoginPage() {
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
-  // Always prefetch CSRF on page load
   useEffect(() => {
     const fetchCSRF = async () => {
       try {
@@ -53,11 +46,6 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      // Re-fetch CSRF to guarantee it's valid for this session
-      await fetch(`${API_BASE}/accounts/api/csrf/`, {
-        credentials: "include",
-      });
-
       const res = await fetch(`${API_BASE}/accounts/api/login/`, {
         method: "POST",
         credentials: "include",
@@ -72,6 +60,7 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
+
       if (res.ok) {
         setUserInfo(data);
         navigate("/");
