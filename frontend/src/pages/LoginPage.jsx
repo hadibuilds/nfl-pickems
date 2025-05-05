@@ -20,6 +20,8 @@ export default function LoginPage() {
     remember: false,
   });
 
+  const API_BASE = import.meta.env.VITE_API_URL;
+
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   const handleChange = (e) => {
@@ -34,7 +36,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8000/accounts/api/login/", {
+      const res = await fetch(`${API_BASE}/accounts/api/login/`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -124,7 +126,7 @@ export default function LoginPage() {
               Remember me
             </label>
             <a
-              href="http://localhost:8000/accounts/api/password-reset/"
+              href={`${API_BASE}/accounts/api/password-reset/`}
               className="text-sm text-blue-600 hover:underline ml-4"
             >
               Forgot password?
