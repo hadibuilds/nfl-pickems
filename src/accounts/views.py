@@ -107,9 +107,7 @@ class RegisterView(APIView):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@ensure_csrf_cookie  # This issues a *new* CSRF after logout
 def logout_view(request):
     logout(request)
-    response = JsonResponse({"detail": "Successfully logged out."})
-    response.delete_cookie("csrftoken", path="/")
-    response.delete_cookie("sessionid", path="/")
-    return response
+    return JsonResponse({"detail": "Successfully logged out."})
