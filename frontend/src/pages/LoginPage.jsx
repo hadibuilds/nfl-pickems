@@ -22,11 +22,14 @@ export default function LoginPage() {
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
-  // Prefetch CSRF token on page load
+  // Prefetch CSRF token on page load if just logged out
   useEffect(() => {
-    fetch(`${API_BASE}/accounts/api/csrf/`, {
-      credentials: "include",
-    });
+    if (localStorage.getItem("justLoggedOut")) {
+      localStorage.removeItem("justLoggedOut");
+      fetch(`${API_BASE}/accounts/api/csrf/`, {
+        credentials: "include",
+      });
+    }
   }, []);
 
   const toggleVisibility = () => setIsVisible(!isVisible);
