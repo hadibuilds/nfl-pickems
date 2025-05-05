@@ -22,12 +22,6 @@ export default function App() {
   const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch(`${API_BASE}/accounts/api/csrf/`, {
-      credentials: 'include',
-    });
-  }, []);
-
-  useEffect(() => {
     const fetchGameData = async () => {
       try {
         const res = await fetch(`${API_BASE}/games/api/games/`, {
