@@ -11,6 +11,7 @@ import WeekSelector from "./pages/WeekSelector";
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './context/AuthContext';
 
+
 const getCookie = (name) => {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
@@ -34,6 +35,12 @@ export default function App() {
   const [isOpen, setIsOpen] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    fetch(`${API_BASE}/accounts/api/csrf/`, {
+      credentials: 'include',
+    });
+  }, []);
 
   useEffect(() => {
     if (!userInfo || isLoading) return;
