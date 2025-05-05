@@ -5,9 +5,11 @@ from .views import (
     LoginAPIView,
     RegisterView,
     logout_view,
+    get_csrf_token,
 )
 
 urlpatterns = [
+    path('api/csrf/', get_csrf_token, name='csrf-token'),
     path('api/whoami/', whoami, name='whoami'),
     path('api/login/', LoginAPIView.as_view(), name='api-login'),
     path('api/register/', RegisterView.as_view(), name='api-register'),
