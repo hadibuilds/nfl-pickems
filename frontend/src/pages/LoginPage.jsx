@@ -22,14 +22,21 @@ export default function LoginPage() {
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
-  // Prefetch CSRF token on page load if just logged out
+  // Always prefetch CSRF on page load
   useEffect(() => {
-    if (localStorage.getItem("justLoggedOut")) {
-      localStorage.removeItem("justLoggedOut");
-      fetch(`${API_BASE}/accounts/api/csrf/`, {
-        credentials: "include",
-      });
-    }
+    const fetchCSRF = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/accounts/api/csrf/`, {
+          credentials: "include",
+        });
+        console.log("✅ CSRF prefetched on login:", res.status);
+      } catch (err) {
+        console.error("❌ Failed to prefetch CSRF on login:", err);
+      }
+    };
+
+    fetchCSRF();
+    localStorage.removeItem("justLoggedOut");
   }, []);
 
   const toggleVisibility = () => setIsVisible(!isVisible);
@@ -46,7 +53,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      // Ensure fresh CSRF token before POST
+      // Re-fetch CSRF to guarantee it's valid for this session
       await fetch(`${API_BASE}/accounts/api/csrf/`, {
         credentials: "include",
       });
