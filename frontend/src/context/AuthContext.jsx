@@ -14,8 +14,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const shouldRunAuthCheck = !window.location.pathname.startsWith('/login') &&
-                               !window.location.pathname.startsWith('/signup');
+    // Prevent whoami from triggering after logout redirect
+    if (localStorage.getItem("justLoggedOut")) {
+      localStorage.removeItem("justLoggedOut");
+      setIsLoading(false);
+      return;
+    }
+
+    const shouldRunAuthCheck =
+      !window.location.pathname.startsWith('/login') &&
+      !window.location.pathname.startsWith('/signup');
 
     if (!shouldRunAuthCheck) {
       setIsLoading(false);
@@ -54,13 +62,16 @@ export const AuthProvider = ({ children }) => {
         },
       });
 
+      // Mark logout to prevent whoami
+      localStorage.setItem("justLoggedOut", "true");
+
       // Manually clear the cookies
       document.cookie = "csrftoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = "sessionid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 
       setUserInfo(null);
 
-      // Delay to prevent race condition with whoami firing
+      // Delay before redirect
       setTimeout(() => {
         window.location.href = "/login";
       }, 300);
