@@ -9,7 +9,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.contrib.sessions.models import Session
+from django.middleware.csrf import get_token
 
 User = get_user_model()
 
@@ -112,4 +112,9 @@ class RegisterView(APIView):
 def logout_view(request):
     logout(request)
     request.session.flush()
+
+    # Force session to reinit and new CSRF to be generated
+    _ = request.session  # This triggers creation of a new session ID
+    get_token(request)   # This sets a new CSRF token
+
     return JsonResponse({"detail": "Successfully logged out."})
