@@ -40,6 +40,11 @@ export default function SignUpPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Ensure fresh CSRF token before POST
+      await fetch(`${API_BASE}/accounts/api/csrf/`, {
+        credentials: "include",
+      });
+
       const res = await fetch(`${API_BASE}/accounts/api/register/`, {
         method: "POST",
         credentials: "include",

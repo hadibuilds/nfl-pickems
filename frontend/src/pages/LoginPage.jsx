@@ -22,7 +22,7 @@ export default function LoginPage() {
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
-  // CSRF token prefetch
+  // Prefetch CSRF token on page load
   useEffect(() => {
     fetch(`${API_BASE}/accounts/api/csrf/`, {
       credentials: "include",
@@ -43,6 +43,11 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
+      // Ensure fresh CSRF token before POST
+      await fetch(`${API_BASE}/accounts/api/csrf/`, {
+        credentials: "include",
+      });
+
       const res = await fetch(`${API_BASE}/accounts/api/login/`, {
         method: "POST",
         credentials: "include",

@@ -109,4 +109,7 @@ class RegisterView(APIView):
 @permission_classes([IsAuthenticated])
 def logout_view(request):
     logout(request)
-    return Response({"detail": "Successfully logged out."})
+    response = JsonResponse({"detail": "Successfully logged out."})
+    response.delete_cookie("csrftoken")
+    response.delete_cookie("sessionid")
+    return response
