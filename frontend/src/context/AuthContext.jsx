@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    fetch('http://localhost:8000/accounts/api/whoami/', {
+    fetch(`${import.meta.env.VITE_API_URL}/accounts/api/whoami/`, {
       credentials: 'include',
       headers: { 'X-CSRFToken': csrf },
     })
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await fetch('http://localhost:8000/accounts/api/logout/', {
+      await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/logout/`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -45,10 +45,17 @@ export const AuthProvider = ({ children }) => {
           'X-CSRFToken': getCookie('csrftoken'),
         },
       });
-    } catch (err) {
-      console.error('Logout failed:', err);
-    } finally {
+  
+      // Manually clear the cookies
+      document.cookie = "csrftoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "sessionid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  
+      // Clear frontend state and force reload to refresh CSRF
       setUserInfo(null);
+      window.location.href = "/login";
+  
+    } catch (err) {
+      console.error("Logout failed:", err);
     }
   };
 
