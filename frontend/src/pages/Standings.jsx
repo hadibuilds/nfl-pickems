@@ -9,10 +9,12 @@ export default function Standings() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  const API_BASE = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     const fetchStandings = async () => {
       try {
-        const res = await fetch('http://localhost:8000/predictions/api/standings/', {
+        const res = await fetch(`${API_BASE}/predictions/api/standings/`, {
           credentials: 'include',
         });
         const data = await res.json();
@@ -24,7 +26,7 @@ export default function Standings() {
     };
 
     fetchStandings();
-  }, []);
+  }, [API_BASE]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {

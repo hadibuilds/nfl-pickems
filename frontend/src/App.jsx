@@ -33,10 +33,12 @@ export default function App() {
   const [propBetSelections, setPropBetSelections] = useState({});
   const [isOpen, setIsOpen] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     if (!userInfo || isLoading) return;
 
-    fetch('http://localhost:8000/games/api/games/', {
+    fetch(`${API_BASE}/games/api/games/`, {
       credentials: 'include',
       headers: {
         'X-CSRFToken': getCookie('csrftoken'),
@@ -52,7 +54,7 @@ export default function App() {
         setGames([]);
       });
 
-    fetch('http://localhost:8000/predictions/api/get-user-predictions/', {
+    fetch(`${API_BASE}/predictions/api/get-user-predictions/`, {
       credentials: 'include',
       headers: {
         'X-CSRFToken': getCookie('csrftoken'),
@@ -85,7 +87,7 @@ export default function App() {
     if (game.locked) return;
 
     const updated = { ...moneyLineSelections, [game.id]: team };
-    fetch('http://localhost:8000/predictions/api/save-selection/', {
+    fetch(`${API_BASE}/predictions/api/save-selection/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -106,7 +108,7 @@ export default function App() {
     if (!propBetId) return;
 
     const updated = { ...propBetSelections, [propBetId]: answer };
-    fetch('http://localhost:8000/predictions/api/save-selection/', {
+    fetch(`${API_BASE}/predictions/api/save-selection/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

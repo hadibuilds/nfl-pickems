@@ -22,6 +22,8 @@ export default function SignUpPage() {
     inviteCode: "",
   });
 
+  const API_BASE = import.meta.env.VITE_API_URL;
+
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   const handleChange = (e) => {
@@ -32,7 +34,7 @@ export default function SignUpPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:8000/accounts/api/register/", {
+      const res = await fetch(`${API_BASE}/accounts/api/register/`, {
         method: "POST",
         credentials: "include",
         headers: {
