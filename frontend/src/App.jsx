@@ -10,22 +10,7 @@ import Standings from './pages/Standings';
 import WeekSelector from "./pages/WeekSelector"; 
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './context/AuthContext';
-
-
-const getCookie = (name) => {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-      cookie = cookie.trim();
-      if (cookie.startsWith(name + '=')) {
-        cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-};
+import { getCookie } from './utils/cookies';
 
 export default function App() {
   const { userInfo, isLoading, logout } = useAuth();
@@ -43,35 +28,34 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!userInfo || isLoading) return;
-
-    fetch(`${API_BASE}/games/api/games/`, {
-      credentials: 'include',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
-    })
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to fetch games');
-        return response.json();
-      })
-      .then(data => setGames(data))
-      .catch(error => {
-        console.error('Error fetching games:', error);
+    const fetchGameData = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/games/api/games/`, {
+          credentials: 'include',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+          },
+        });
+        if (!res.ok) throw new Error('Failed to fetch games');
+        const data = await res.json();
+        setGames(data);
+      } catch (err) {
+        console.error('Error fetching games:', err);
         setGames([]);
-      });
+      }
+    };
 
-    fetch(`${API_BASE}/predictions/api/get-user-predictions/`, {
-      credentials: 'include',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
-    })
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to fetch predictions');
-        return response.json();
-      })
-      .then(data => {
+    const fetchUserPredictions = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/predictions/api/get-user-predictions/`, {
+          credentials: 'include',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+          },
+        });
+        if (!res.ok) throw new Error('Failed to fetch predictions');
+        const data = await res.json();
+
         const moneyLine = data.predictions.reduce((acc, cur) => {
           acc[cur.game_id] = cur.predicted_winner;
           return acc;
@@ -80,53 +64,65 @@ export default function App() {
           acc[cur.prop_bet_id] = cur.answer;
           return acc;
         }, {});
+
         setMoneyLineSelections(moneyLine);
         setPropBetSelections(propBets);
-      })
-      .catch(error => {
-        console.error('Error fetching predictions:', error);
+      } catch (err) {
+        console.error('Error fetching predictions:', err);
         setMoneyLineSelections({});
         setPropBetSelections({});
-      });
+      }
+    };
+
+    if (userInfo && !isLoading) {
+      fetchGameData();
+      fetchUserPredictions();
+    }
   }, [userInfo, isLoading]);
 
-  const handleMoneyLineClick = (game, team) => {
+  const handleMoneyLineClick = async (game, team) => {
     if (game.locked) return;
-
     const updated = { ...moneyLineSelections, [game.id]: team };
-    fetch(`${API_BASE}/predictions/api/save-selection/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
-      body: JSON.stringify({ game_id: game.id, predicted_winner: team }),
-      credentials: 'include',
-    })
-      .then(res => res.json())
-      .then(data => data.success && setMoneyLineSelections(updated))
-      .catch(console.error);
+
+    try {
+      const res = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ game_id: game.id, predicted_winner: team }),
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.success) setMoneyLineSelections(updated);
+    } catch (err) {
+      console.error("Failed to save moneyline selection:", err);
+    }
   };
 
-  const handlePropBetClick = (game, answer) => {
+  const handlePropBetClick = async (game, answer) => {
     if (game.locked) return;
-
     const propBetId = game.prop_bets?.[0]?.id;
     if (!propBetId) return;
 
     const updated = { ...propBetSelections, [propBetId]: answer };
-    fetch(`${API_BASE}/predictions/api/save-selection/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
-      body: JSON.stringify({ prop_bet_id: propBetId, answer }),
-      credentials: 'include',
-    })
-      .then(res => res.json())
-      .then(data => data.success && setPropBetSelections(updated))
-      .catch(console.error);
+
+    try {
+      const res = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ prop_bet_id: propBetId, answer }),
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.success) setPropBetSelections(updated);
+    } catch (err) {
+      console.error("Failed to save prop bet selection:", err);
+    }
   };
 
   const sortedGames = Array.isArray(games)
