@@ -114,7 +114,7 @@ def logout_view(request):
     request.session.flush()
 
     # Force session to reinit and new CSRF to be generated
-    _ = request.session  # This triggers creation of a new session ID
+    request.session.cycle_key()  # This triggers creation of a new session ID
     get_token(request)   # This sets a new CSRF token
 
     return JsonResponse({"detail": "Successfully logged out."})
