@@ -14,7 +14,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Prevent whoami from triggering after logout redirect
     if (localStorage.getItem("justLoggedOut")) {
       localStorage.removeItem("justLoggedOut");
       setIsLoading(false);
@@ -63,16 +62,19 @@ export const AuthProvider = ({ children }) => {
         },
       });
 
-      // Clear cookies locally
+      // Clear cookies manually
       document.cookie = "csrftoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = "sessionid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 
-      // 🔥 Immediately fetch a fresh CSRF token (anonymous session)
-      await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/csrf/`, {
+      // Fetch new CSRF token and log its value
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/csrf/`, {
         credentials: 'include',
       });
 
-      // Prevent immediate whoami check
+      const newCsrf = getCookie('csrftoken');
+      console.log("Fetched new CSRF after logout:", newCsrf);
+
+      // Prevent re-triggering /whoami
       localStorage.setItem("justLoggedOut", "true");
 
       setUserInfo(null);
