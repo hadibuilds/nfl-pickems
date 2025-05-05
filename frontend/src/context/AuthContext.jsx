@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (localStorage.getItem("justLoggedOut")) {
+      console.log("⏸️ Skipping whoami check due to logout");
       localStorage.removeItem("justLoggedOut");
       setIsLoading(false);
       return;
@@ -52,7 +53,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Backend logout
+      console.log("🚪 Logging out...");
+
       await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/logout/`, {
         method: 'POST',
         credentials: 'include',
@@ -62,25 +64,21 @@ export const AuthProvider = ({ children }) => {
         },
       });
 
-      // Clear cookies manually
-      document.cookie = "csrftoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "sessionid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      // 💤 Allow time for session to reset before CSRF fetch
+      await new Promise(res => setTimeout(res, 100));
 
-      // Fetch new CSRF token and log its value
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/csrf/`, {
+      const csrfRes = await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/csrf/`, {
         credentials: 'include',
       });
 
-      const newCsrf = getCookie('csrftoken');
-      console.log("Fetched new CSRF after logout:", newCsrf);
+      const freshCsrf = getCookie('csrftoken');
+      console.log("✅ Fetched fresh CSRF after logout:", freshCsrf);
 
-      // Prevent re-triggering /whoami
       localStorage.setItem("justLoggedOut", "true");
-
       setUserInfo(null);
       window.location.href = "/login";
     } catch (err) {
-      console.error("Logout failed:", err);
+      console.error("❌ Logout error:", err);
     }
   };
 
