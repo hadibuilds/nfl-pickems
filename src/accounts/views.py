@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import JsonResponse
-from rest_framework.decorators import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 User = get_user_model()
 
