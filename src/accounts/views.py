@@ -111,8 +111,5 @@ class RegisterView(APIView):
 @ensure_csrf_cookie
 def logout_view(request):
     logout(request)
-    
-    # This resets the session completely (kills old + starts new anonymous one)
     request.session.flush()
-
     return JsonResponse({"detail": "Successfully logged out."})
