@@ -8,6 +8,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://nfl-pickems-frontend.onrender.com",
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+
 CSRF_TRUSTED_ORIGINS = [
     "https://nfl-pickems-frontend.onrender.com",
 ]
