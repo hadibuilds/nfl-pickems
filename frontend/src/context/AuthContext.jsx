@@ -14,6 +14,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    const shouldRunAuthCheck = !window.location.pathname.startsWith('/login') &&
+                               !window.location.pathname.startsWith('/signup');
+
+    if (!shouldRunAuthCheck) {
+      setIsLoading(false);
+      return;
+    }
+
     const csrf = getCookie('csrftoken');
     if (!csrf) {
       setIsLoading(false);
@@ -45,15 +53,18 @@ export const AuthProvider = ({ children }) => {
           'X-CSRFToken': getCookie('csrftoken'),
         },
       });
-  
+
       // Manually clear the cookies
       document.cookie = "csrftoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = "sessionid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-  
-      // Clear frontend state and force reload to refresh CSRF
+
       setUserInfo(null);
-      window.location.href = "/login";
-  
+
+      // Delay to prevent race condition with whoami firing
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 300);
+
     } catch (err) {
       console.error("Logout failed:", err);
     }
