@@ -36,7 +36,7 @@ export default function App() {
   const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    if (!userInfo || isLoading) return;
+    if (!userInfo?.username || isLoading) return;
 
     fetch(`${API_BASE}/games/api/games/`, {
       credentials: 'include',
@@ -81,7 +81,7 @@ export default function App() {
         setMoneyLineSelections({});
         setPropBetSelections({});
       });
-  }, [userInfo, isLoading]);
+  }, [userInfo?.username, isLoading]);
 
   const handleMoneyLineClick = (game, team) => {
     if (game.locked) return;
