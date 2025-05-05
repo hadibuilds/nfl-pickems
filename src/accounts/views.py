@@ -9,7 +9,6 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.decorators.csrf import csrf_exempt
 
 User = get_user_model()
 
@@ -106,15 +105,32 @@ class RegisterView(APIView):
             }, status=500)
 
 
-@csrf_exempt
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@ensure_csrf_cookie
 def logout_view(request):
-    logout(request)
-    request.session.flush()
-    request.session.cycle_key()
+    try:
+        logout(request)
+        request.session.flush()
 
-    response = JsonResponse({"detail": "Successfully logged out."})
-    response.delete_cookie("sessionid", samesite="None", secure=True)
-    response.delete_cookie("csrftoken", samesite="None", secure=True)
-    return response
+        response = JsonResponse({"detail": "Successfully logged out."})
+
+        # Expire sessionid cookie
+        response.delete_cookie(
+            key=settings.SESSION_COOKIE_NAME,
+            path='/',
+            samesite=settings.SESSION_COOKIE_SAMESITE,
+        )
+
+        # Expire CSRF cookie
+        response.delete_cookie(
+            key='csrftoken',
+            path='/',
+            samesite=settings.CSRF_COOKIE_SAMESITE,
+        )
+
+        return response
+    except Exception as e:
+        # Log error details for debugging
+        print(f"Error during logout: {e}")
+        return JsonResponse({"detail": "Internal server error"}, status=500)
