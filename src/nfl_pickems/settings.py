@@ -156,7 +156,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # 3 levels up from setting
+BASE_DIR = Path(__file__).resolve().parent.parent  # 3 levels up from setting
 
 STATICFILES_DIRS = [
     BASE_DIR / 'src' / 'static',  # ✅ This matches your current structure
