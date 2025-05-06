@@ -5,11 +5,15 @@ echo "🔄 Starting full React → Django sync process..."
 # 0. Remove old React build just in case
 echo "🧼 Cleaning old React build..."
 rm -rf frontend/dist/
+rm -rf src/static/assets/
+rm -rf staticfiles/
+rm -f src/templates/index.html
 
 # 1. Build React app
 echo "📦 Building React app with Vite..."
 cd frontend || { echo "❌ Could not cd into frontend/"; exit 1; }
-npm run build || { echo "❌ React build failed"; exit 1; }
+npm install || { echo "❌ npm install failed"; exit 1; }
+npx vite build || { echo "❌ Vite build failed"; exit 1; }
 cd ..
 
 # 2. Clean old Django static/template files
