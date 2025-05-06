@@ -5,13 +5,13 @@ DEBUG = False
 ALLOWED_HOSTS = ['nfl-pickems.onrender.com']
 
 CORS_ALLOWED_ORIGINS = [
-    "https://nfl-pickems-frontend.onrender.com",
+    "https://nfl-pickems.onrender.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://nfl-pickems-frontend.onrender.com",
+    "https://nfl-pickems.onrender.com",
 ]
 
 SESSION_COOKIE_SAMESITE = "None"
