@@ -15,7 +15,7 @@ cd ..
 # 2. Clean old Django static/template files
 echo "🧹 Cleaning Django static + template..."
 rm -rf src/static/assets/
-rm -rf src/staticfiles/
+rm -rf staticfiles/
 rm -f src/templates/index.html
 
 # 3. Copy new React build to Django
@@ -24,14 +24,13 @@ mkdir -p src/static/assets/
 cp -R frontend/dist/assets/* src/static/assets/ || { echo "❌ Asset copy failed"; exit 1; }
 cp frontend/dist/index.html src/templates/index.html || { echo "❌ index.html copy failed"; exit 1; }
 
-# 4. Patch index.html with Django static tags
-echo "🧠 Patching static paths in index.html..."
+# 4. Patch index.html with Django static tags (safe version)
+echo "🧠 Patching index.html static asset paths..."
 sed -i '' '1s;^;{% load static %}\n;' src/templates/index.html
-sed -i '' "s|/static/assets/|{% static 'assets/|g" src/templates/index.html
-sed -i '' "s|.js\"|.js' %}|g" src/templates/index.html
-sed -i '' "s|.css\"|.css' %}|g" src/templates/index.html
-sed -i '' "s|.png\"|.png' %}|g" src/templates/index.html
-sed -i '' "s|.svg\"|.svg' %}|g" src/templates/index.html
+sed -i '' -E "s|/static/assets/([^\"]+\.js)|{% static 'assets/\1' %}|g" src/templates/index.html
+sed -i '' -E "s|/static/assets/([^\"]+\.css)|{% static 'assets/\1' %}|g" src/templates/index.html
+sed -i '' -E "s|/static/assets/([^\"]+\.png)|{% static 'assets/\1' %}|g" src/templates/index.html
+sed -i '' -E "s|/static/assets/([^\"]+\.svg)|{% static 'assets/\1' %}|g" src/templates/index.html
 
 # 5. Collect Django static files
 echo "📦 Running collectstatic..."
