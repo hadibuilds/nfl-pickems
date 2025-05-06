@@ -34,6 +34,10 @@ sed -i -E "s|/static/assets/([^\"]+\.svg)|{% static 'assets/\1' %}|g" src/templa
 echo "📦 Running collectstatic (prod)..."
 python src/manage.py collectstatic --noinput --settings=nfl_pickems.settings.prod
 
+# Make migrations before applying
+echo "🧬 Making migrations..."
+python src/manage.py makemigrations --settings=nfl_pickems.settings.prod
+
 # Run migrations
 echo "🧱 Running migrations..."
 python src/manage.py migrate --settings=nfl_pickems.settings.prod
@@ -47,7 +51,7 @@ if [[ $DJANGO_ADMIN_USERNAME && $DJANGO_ADMIN_EMAIL && $DJANGO_ADMIN_PASSWORD ]]
     --email "$DJANGO_ADMIN_EMAIL" \
     --settings=nfl_pickems.settings.prod
 else
-  echo "⚠️ Skipping superuser creation. Make sure DJANGO_SUPERUSER_USERNAME, EMAIL, and PASSWORD are set."
+  echo "⚠️ Skipping superuser creation. Make sure DJANGO_ADMIN_USERNAME, EMAIL, and PASSWORD are set."
 fi
 
 echo "✅ [RENDER] Sync complete."
