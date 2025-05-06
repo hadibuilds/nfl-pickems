@@ -43,15 +43,19 @@ echo "🧱 Running migrations..."
 python src/manage.py migrate --settings=nfl_pickems.settings.prod
 
 # Create superuser (if env vars are set)
-if [[ $DJANGO_ADMIN_USERNAME && $DJANGO_ADMIN_EMAIL && $DJANGO_ADMIN_PASSWORD ]]; then
-  echo "👤 Creating superuser..."
-  python src/manage.py createsuperuser \
-    --noinput \
-    --username "$DJANGO_ADMIN_USERNAME" \
-    --email "$DJANGO_ADMIN_EMAIL" \
-    --settings=nfl_pickems.settings.prod
-else
-  echo "⚠️ Skipping superuser creation. Make sure DJANGO_ADMIN_USERNAME, EMAIL, and PASSWORD are set."
-fi
+echo "👤 Creating superuser..."
+python src/manage.py shell --settings=nfl_pickems.settings.prod << END
+from django.contrib.auth import get_user_model
+User = get_user_model()
+username = "${DJANGO_ADMIN_USERNAME}"
+email = "${DJANGO_ADMIN_EMAIL}"
+password = "${DJANGO_ADMIN_PASSWORD}"
+
+if not User.objects.filter(username=username).exists():
+    User.objects.create_superuser(username=username, email=email, password=password)
+    print("✅ Superuser created.")
+else:
+    print("ℹ️ Superuser already exists.")
+END
 
 echo "✅ [RENDER] Sync complete."
