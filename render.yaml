@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: nfl-pickems
+    runtime: python
+    buildCommand: "./sync_frontend.sh"
+    startCommand: "gunicorn nfl_pickems.wsgi:application --log-file -"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: nfl_pickems.settings.prod
+
+      - key: SECRET_KEY
+        value: ${SECRET_KEY}
+
+      - key: INVITE_CODE
+        value: ${INVITE_CODE}
+
+      - key: DJANGO_ADMIN_USERNAME
+        value: ${DJANGO_ADMIN_USERNAME}
+
+      - key: DJANGO_ADMIN_EMAIL
+        value: ${DJANGO_ADMIN_EMAIL}
+
+      - key: DJANGO_ADMIN_PASSWORD
+        value: ${DJANGO_ADMIN_PASSWORD}
+
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pickems-db
+          property: connectionString
+
+    preDeployCommand: |
+      python src/manage.py migrate --settings=nfl_pickems.settings.prod
+      python src/manage.py shell --settings=nfl_pickems.settings.prod -c "
+from django.contrib.auth import get_user_model
+import os
+User = get_user_model()
+if not User.objects.filter(username=os.environ['DJANGO_ADMIN_USERNAME']).exists():
+    User.objects.create_superuser(
+        os.environ['DJANGO_ADMIN_USERNAME'],
+        os.environ['DJANGO_ADMIN_EMAIL'],
+        os.environ['DJANGO_ADMIN_PASSWORD']
+    )
+"
