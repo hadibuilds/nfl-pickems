@@ -30,8 +30,24 @@ sed -i -E "s|/static/assets/([^\"]+\.css)|{% static 'assets/\1' %}|g" src/templa
 sed -i -E "s|/static/assets/([^\"]+\.png)|{% static 'assets/\1' %}|g" src/templates/index.html
 sed -i -E "s|/static/assets/([^\"]+\.svg)|{% static 'assets/\1' %}|g" src/templates/index.html
 
-# Collect static (Django handles venv automatically on Render)
+# Collect static files
 echo "📦 Running collectstatic (prod)..."
 python src/manage.py collectstatic --noinput --settings=nfl_pickems.settings.prod
+
+# Run migrations
+echo "🧱 Running migrations..."
+python src/manage.py migrate --settings=nfl_pickems.settings.prod
+
+# Create superuser (if env vars are set)
+if [[ $DJANGO_SUPERUSER_USERNAME && $DJANGO_SUPERUSER_EMAIL && $DJANGO_SUPERUSER_PASSWORD ]]; then
+  echo "👤 Creating superuser..."
+  python src/manage.py createsuperuser \
+    --noinput \
+    --username "$DJANGO_SUPERUSER_USERNAME" \
+    --email "$DJANGO_SUPERUSER_EMAIL" \
+    --settings=nfl_pickems.settings.prod
+else
+  echo "⚠️ Skipping superuser creation. Make sure DJANGO_SUPERUSER_USERNAME, EMAIL, and PASSWORD are set."
+fi
 
 echo "✅ [RENDER] Sync complete."
