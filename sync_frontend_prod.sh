@@ -39,12 +39,12 @@ echo "🧱 Running migrations..."
 python src/manage.py migrate --settings=nfl_pickems.settings.prod
 
 # Create superuser (if env vars are set)
-if [[ $DJANGO_SUPERUSER_USERNAME && $DJANGO_SUPERUSER_EMAIL && $DJANGO_SUPERUSER_PASSWORD ]]; then
+if [[ $DJANGO_ADMIN_USERNAME && $DJANGO_ADMIN_EMAIL && $DJANGO_ADMIN_PASSWORD ]]; then
   echo "👤 Creating superuser..."
   python src/manage.py createsuperuser \
     --noinput \
-    --username "$DJANGO_SUPERUSER_USERNAME" \
-    --email "$DJANGO_SUPERUSER_EMAIL" \
+    --username "$DJANGO_ADMIN_USERNAME" \
+    --email "$DJANGO_ADMIN_EMAIL" \
     --settings=nfl_pickems.settings.prod
 else
   echo "⚠️ Skipping superuser creation. Make sure DJANGO_SUPERUSER_USERNAME, EMAIL, and PASSWORD are set."
