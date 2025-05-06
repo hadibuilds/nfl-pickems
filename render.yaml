@@ -2,7 +2,7 @@ services:
   - type: web
     name: nfl-pickems
     runtime: python
-    buildCommand: "./sync_frontend.sh"
+    buildCommand: "./sync_frontend_prod.sh"
     startCommand: "gunicorn nfl_pickems.wsgi:application --log-file -"
     envVars:
       - key: DJANGO_SETTINGS_MODULE
