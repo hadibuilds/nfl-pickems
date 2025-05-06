@@ -25,6 +25,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkWhoAmI = async () => {
+    const csrf = getCookie("csrftoken");
+    if (!csrf) {
+      console.warn("⚠️ Missing CSRF token before /whoami call");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/whoami/`, {
+        credentials: 'include',
+        headers: { 'X-CSRFToken': csrf },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUserInfo(data?.username ? data : null);
+      } else {
+        setUserInfo(null);
+      }
+    } catch (err) {
+      console.error("❌ Failed to fetch whoami:", err);
+      setUserInfo(null);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       await prefetchCSRF(); // always fetch CSRF on first load

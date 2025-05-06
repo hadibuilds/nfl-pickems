@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import blackLogo from "../assets/pickem2_black.png";
+import whiteLogo from "../assets/pickem2_white.png";
 
 export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
   const location = useLocation();
@@ -16,13 +18,13 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
       <div className="flex items-center justify-between px-3 py-2 max-w-7xl mx-auto h-full">
         <Link to="/">
           <img
-            src="/pickem2_black.png"
-            alt="Pick Em Logo"
+            src={blackLogo}
+            alt="Pick Em Logo-Black"
             className="h-28 sm:h-28 object-contain dark:hidden"
           />
           <img
-            src="/pickem2_white.png"
-            alt="Pick Em Logo"
+            src={whiteLogo}
+            alt="Pick Em Logo-White"
             className="h-28 sm:h-28 object-contain hidden dark:inline"
           />
         </Link>

@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
+  base: '/static/', // ✅ Ensures assets use Django's static prefix
   plugins: [
     react(),
     viteStaticCopy({
@@ -14,4 +15,8 @@ export default defineConfig({
       ],
     }),
   ],
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
 });
