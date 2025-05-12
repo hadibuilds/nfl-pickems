@@ -11,6 +11,17 @@ import WeekSelector from "./pages/WeekSelector";
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './context/AuthContext';
 import { getCookie } from './utils/cookies';
+import { useLocation } from 'react-router-dom';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 export default function App() {
   const { userInfo, isLoading, logout } = useAuth();
@@ -125,6 +136,7 @@ export default function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Navbar userInfo={userInfo} onLogout={logout} isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-transform duration-300 ${isOpen ? "-translate-x-64" : "translate-x-0"}`}>
         <Routes>

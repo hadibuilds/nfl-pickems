@@ -15,14 +15,14 @@ export default function WeekPage({
   return (
     <div className="pt-16 px-4">
       <div className="flex justify-start mb-6">
-      <button
-        onClick={() => navigate(-1)}
-        className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-gray-100 dark:bg-[#2d2d2d] text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-[#3a3a3a] transition"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-gray-100 dark:bg-[#2d2d2d] text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-[#3a3a3a] transition"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
       </div>
       <h1 className="text-4xl text-center mb-8">Week {weekNumber} Games</h1>
       {weekGames.length === 0 ? (
@@ -50,18 +50,33 @@ export default function WeekPage({
                     <div className="time-line">{formattedTime}</div>
                   </div>
                   <p className="matchup">
-                    {game.away_team} @ {game.home_team}
+                    {game.away_team} @ {game.home_team}{' '}
+                    {game.locked && <span className="ml-2 text-gray-500">🔒</span>}
                   </p>
                   <div className="button-row">
                     <button
-                      className={`team-button ${moneyLineSelections[game.id] === game.away_team ? 'selected' : ''}`}
-                      onClick={() => handleMoneyLineClick(game, game.away_team)}
+                      className={`team-button ${moneyLineSelections[game.id] === game.away_team ? 'selected' : ''} ${game.locked ? 'bg-gray-400 cursor-not-allowed opacity-50' : ''}`}
+                      onClick={(e) => {
+                        if (game.locked) {
+                          e.preventDefault();
+                          return;
+                        }
+                        handleMoneyLineClick(game, game.away_team);
+                      }}
+                      disabled={game.locked}
                     >
                       {game.away_team}
                     </button>
                     <button
-                      className={`team-button ${moneyLineSelections[game.id] === game.home_team ? 'selected' : ''}`}
-                      onClick={() => handleMoneyLineClick(game, game.home_team)}
+                      className={`team-button ${moneyLineSelections[game.id] === game.home_team ? 'selected' : ''} ${game.locked ? 'bg-gray-400 cursor-not-allowed opacity-50' : ''}`}
+                      onClick={(e) => {
+                        if (game.locked) {
+                          e.preventDefault();
+                          return;
+                        }
+                        handleMoneyLineClick(game, game.home_team);
+                      }}
+                      disabled={game.locked}
                     >
                       {game.home_team}
                     </button>
@@ -76,13 +91,23 @@ export default function WeekPage({
                 {/* Prop Bet Section */}
                 {game.prop_bets && game.prop_bets.length > 0 && (
                   <div className="game-section prop-bet">
-                    <p className="prop-question">{game.prop_bets[0].question}</p>
+                    <p className="prop-question">
+                      {game.prop_bets[0].question}{' '}
+                      {game.locked && <span className="ml-2 text-gray-500">🔒</span>}
+                    </p>
                     <div className="button-row">
                       {game.prop_bets[0].options.map((option, index) => (
                         <button
                           key={index}
-                          className={`propbet-button ${propBetSelections[game.prop_bets[0].id] === option ? 'selected' : ''}`}
-                          onClick={() => handlePropBetClick(game, option)}
+                          className={`propbet-button ${propBetSelections[game.prop_bets[0].id] === option ? 'selected' : ''} ${game.locked ? 'bg-gray-400 cursor-not-allowed opacity-50' : ''}`}
+                          onClick={(e) => {
+                            if (game.locked) {
+                              e.preventDefault();
+                              return;
+                            }
+                            handlePropBetClick(game, option);
+                          }}
+                          disabled={game.locked}
                         >
                           {option}
                         </button>
