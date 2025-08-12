@@ -2,9 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Full-page background color fix */
+/* FORCE consistent dark theme - no light/dark mode switching */
 html, body {
-  @apply bg-white dark:bg-[#1E1E20];
+  background-color: #1E1E20 !important;
+  color: rgba(255, 255, 255, 0.87) !important;
 }
 
 :root {
@@ -12,8 +13,8 @@ html, body {
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(221, 14, 176, 0.87);
+  /* REMOVED: color-scheme: light dark; */
+  color: rgba(255, 255, 255, 0.87);  /* WHITE TEXT */
   background-color: #1E1E20;
 
   font-synthesis: none;
@@ -40,7 +41,6 @@ body {
   min-height: 100vh;
 }
 
-
 h1 {
   font-family: 'General Sans', system-ui, sans-serif;
   font-size: 3.2em;
@@ -54,7 +54,8 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #2d2d2d;  /* CHANGED from #1a1a1a */
+  color: white;  /* ADDED for consistency */
   cursor: pointer;
   transition: border-color 0.25s;
 }
@@ -63,18 +64,6 @@ button:hover {
 }
 button:focus,
 button:focus-visible {
-  outline: 0.5px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #8B5CF6;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #a78bfa;
-  }
-  button {
-    background-color: #2d2d2d;
-  }
+  outline: 2px solid #8B5CF6;  /* PURPLE instead of browser default */
+  outline-offset: 2px;
 }
