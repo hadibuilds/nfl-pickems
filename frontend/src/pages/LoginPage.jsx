@@ -22,9 +22,9 @@ export default function LoginPage() {
         const res = await fetch(`${API_BASE}/accounts/api/csrf/`, {
           credentials: "include",
         });
-        console.log("âœ… CSRF prefetched on login:", res.status);
+        console.log("✅ CSRF prefetched on login:", res.status);
       } catch (err) {
-        console.error("âŒ Failed to prefetch CSRF on login:", err);
+        console.error("❌ Failed to prefetch CSRF on login:", err);
       }
     };
 
@@ -74,20 +74,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full flex items-start justify-center bg-white dark:bg-[#1E1E20] px-6 pt-20 pb-12">
-      <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] bg-white dark:bg-[#2d2d2d] p-8 sm:p-10 rounded-xl shadow-md text-base">
+    <div className="w-full flex items-start justify-center px-6 pt-20 pb-12" style={{ backgroundColor: '#1E1E20' }}>
+      <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] p-8 sm:p-10 rounded-xl shadow-md text-base" style={{ backgroundColor: '#2d2d2d' }}>
         <div className="text-center mb-6">
-          <h2 className="text-4xl font-bold text-gray-800 dark:text-white">
-            Log In <span role="img" aria-label="wave">ðŸ‘‹</span>
+          <h2 className="text-4xl font-bold text-white">
+            Log In
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-2 text-base">
+          <p className="mt-2 text-base" style={{ color: '#9ca3af' }}>
             Access your Pick 'Em League
           </p>
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="identifier" className="block text-sm font-medium mb-1" style={{ color: '#d1d5db' }}>
               Username or Email
             </label>
             <input
@@ -97,12 +97,16 @@ export default function LoginPage() {
               required
               value={formData.identifier}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 outline-none dark:bg-[#2d2d2d] dark:text-white text-base"
+              className="w-full px-4 py-3 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
+              style={{ 
+                backgroundColor: '#1f1f1f',
+                border: '1px solid #4b5563'
+              }}
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: '#d1d5db' }}>
               Password
             </label>
             <div className="relative">
@@ -113,11 +117,16 @@ export default function LoginPage() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 pr-10 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 outline-none dark:bg-[#2d2d2d] dark:text-white text-base"
+                className="w-full px-4 py-3 pr-10 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
+                style={{ 
+                  backgroundColor: '#1f1f1f',
+                  border: '1px solid #4b5563'
+                }}
               />
               <div
                 onClick={toggleVisibility}
-                className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-300"
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer hover:text-gray-300"
+                style={{ color: '#9ca3af' }}
               >
                 {isVisible ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </div>
@@ -125,7 +134,7 @@ export default function LoginPage() {
           </div>
 
           <div className="flex items-center justify-between">
-            <label htmlFor="remember" className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+            <label htmlFor="remember" className="flex items-center text-sm" style={{ color: '#9ca3af' }}>
               <input
                 id="remember"
                 name="remember"
@@ -138,7 +147,8 @@ export default function LoginPage() {
             </label>
             <a
               href={`${API_BASE}/accounts/api/password-reset/`}
-              className="text-sm text-blue-600 hover:underline ml-4"
+              className="text-sm hover:underline ml-4"
+              style={{ color: '#8B5CF6' }}
             >
               Forgot password?
             </a>
@@ -146,15 +156,16 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-md text-base"
+            className="w-full font-semibold py-3 rounded-md text-base text-white hover:bg-violet-700 transition"
+            style={{ backgroundColor: '#8B5CF6' }}
           >
             Log In
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600 mt-4 dark:text-gray-300">
-          Donâ€™t have an account?{" "}
-          <Link to="/signup" className="text-blue-600 hover:underline">
+        <p className="text-center text-sm mt-4" style={{ color: '#9ca3af' }}>
+          Don't have an account?{" "}
+          <Link to="/signup" className="hover:underline" style={{ color: '#8B5CF6' }}>
             Sign up
           </Link>
         </p>

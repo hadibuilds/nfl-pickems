@@ -42,8 +42,8 @@ export default function WeekPage({
   // Use real results from backend
   const activeGameResults = gameResults;
   
-  console.log('Ã°Å¸Å½Â® WeekPage gameResults prop:', gameResults);
-  console.log('Ã°Å¸Å½Â¯ Active game results:', activeGameResults);
+  console.log('🎮 WeekPage gameResults prop:', gameResults);
+  console.log('🎯 Active game results:', activeGameResults);
 
   // Helper function to format date and time
   const formatGameDateTime = (startTime) => {
@@ -114,7 +114,7 @@ export default function WeekPage({
           height: '18px',
           textAlign: 'center'
         }}>
-          {isCorrect ? 'Ã¢Å“â€' : 'Ã¢Å“â€”'}
+          {isCorrect ? '✓' : '✗'}
         </span>
       </div>
     );
@@ -146,7 +146,8 @@ export default function WeekPage({
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-gray-100 dark:bg-[#2d2d2d] text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-[#3a3a3a] transition"
+          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl text-white hover:bg-[#3a3a3a] transition"
+          style={{ backgroundColor: '#2d2d2d' }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -157,7 +158,8 @@ export default function WeekPage({
         <button
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition disabled:opacity-50"
+          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl text-white hover:bg-[#1d4ed8] transition disabled:opacity-50"
+          style={{ backgroundColor: '#1e40af' }}
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
@@ -173,7 +175,7 @@ export default function WeekPage({
       </div>
 
       {/* Page title */}
-      <h1 className="text-4xl text-center mb-8 font-bold text-gray-900 dark:text-white">
+      <h1 className="text-4xl text-center mb-8 font-bold text-white">
         Week {weekNumber} Games
       </h1>
 
@@ -189,7 +191,7 @@ export default function WeekPage({
 
       {/* Games grid */}
       {weekGames.length === 0 ? (
-        <p className="text-center text-gray-600 dark:text-gray-400">
+        <p className="text-center" style={{ color: '#9ca3af' }}>
           No games available for this week.
         </p>
       ) : (
@@ -218,7 +220,7 @@ export default function WeekPage({
                   {/* Matchup display */}
                   <p className="matchup">
                     {game.away_team} @ {game.home_team}
-                    {locked && <span className="lock-icon">Ã°Å¸â€â€™</span>}
+                    {locked && <span className="lock-icon">🔒</span>}
                   </p>
 
                   {/* Team selection buttons */}
@@ -275,7 +277,7 @@ export default function WeekPage({
                     
                     <p className="prop-question">
                       {game.prop_bets[0].question}
-                      {locked && <span className="lock-icon">Ã°Å¸â€â€™</span>}
+                      {locked && <span className="lock-icon">🔒</span>}
                     </p>
 
                     {/* Prop bet option buttons */}

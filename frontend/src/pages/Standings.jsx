@@ -47,14 +47,18 @@ export default function Standings() {
   });
 
   return (
-    <div className="flex justify-start items-start pt-20 min-h-screen w-full px-4 sm:px-6">
+    <div className="flex justify-start items-start pt-20 min-h-screen w-full px-4 sm:px-6" style={{ backgroundColor: '#1E1E20' }}>
       <div className="w-full max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">League Standings</h1>
+        <h1 className="text-3xl font-bold mb-4 text-white">League Standings</h1>
 
         <div className="relative inline-block text-left mb-6" ref={dropdownRef}>
           <button
             onClick={() => setOpen(!open)}
-            className="inline-flex justify-between w-48 px-4 py-2 text-sm font-medium bg-gray-200 dark:bg-[#1f1f1f] text-gray-900 dark:text-white border border-gray-400 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-300 dark:hover:bg-[#2a2a2a] focus:outline-none"
+            className="inline-flex justify-between w-48 px-4 py-2 text-sm font-medium rounded-md shadow-sm focus:outline-none text-white hover:bg-[#3a3a3a] transition"
+            style={{ 
+              backgroundColor: '#2d2d2d',
+              border: '1px solid #4b5563'
+            }}
           >
             {selectedWeek ? `Week ${selectedWeek}` : 'All Weeks (Total)'}
             <svg className="w-4 h-4 ml-2 mt-[2px]" viewBox="0 0 20 20" fill="currentColor">
@@ -63,7 +67,7 @@ export default function Standings() {
           </button>
 
           {open && (
-            <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-gray-200 dark:bg-[#1f1f1f] text-gray-900 dark:text-white ring-1 ring-gray-300 dark:ring-gray-700">
+            <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg text-white ring-1" style={{ backgroundColor: '#2d2d2d', borderColor: '#4b5563' }}>
               <ul className="py-1 text-sm">
                 <li>
                   <button
@@ -71,7 +75,7 @@ export default function Standings() {
                       setSelectedWeek(null);
                       setOpen(false);
                     }}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-300 dark:hover:bg-[#2a2a2a]"
+                    className="w-full px-4 py-2 text-left text-white hover:bg-[#3a3a3a] transition"
                   >
                     All Weeks (Total)
                   </button>
@@ -83,7 +87,7 @@ export default function Standings() {
                         setSelectedWeek(week);
                         setOpen(false);
                       }}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-300 dark:hover:bg-[#2a2a2a]"
+                      className="w-full px-4 py-2 text-left text-white hover:bg-[#3a3a3a] transition"
                     >
                       Week {week}
                     </button>
@@ -95,17 +99,17 @@ export default function Standings() {
         </div>
 
         <div className="overflow-x-auto rounded-xl shadow-lg">
-          <table className="min-w-full text-sm text-left text-gray-900 dark:text-white">
-            <thead className="bg-gray-200 dark:bg-[#1f1f1f] text-xs uppercase font-semibold tracking-wider">
+          <table className="min-w-full text-sm text-left text-white">
+            <thead className="text-xs uppercase font-semibold tracking-wider" style={{ backgroundColor: '#2d2d2d' }}>
               <tr>
-                <th className="px-5 py-3">Rank</th>
-                <th className="px-5 py-3">User</th>
-                <th className="px-5 py-3">
+                <th className="px-5 py-3 text-white">Rank</th>
+                <th className="px-5 py-3 text-white">User</th>
+                <th className="px-5 py-3 text-white">
                   {selectedWeek ? `Week ${selectedWeek}` : 'Total'}
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-gray-100 dark:bg-[#262626] divide-y divide-gray-300 dark:divide-gray-700">
+            <tbody className="divide-y" style={{ backgroundColor: '#1f1f1f', borderColor: '#4b5563' }}>
               {sortedStandings.map((entry, index) => {
                 const points = selectedWeek
                   ? entry.weekly_scores[selectedWeek] || 0
@@ -114,11 +118,12 @@ export default function Standings() {
                 return (
                   <tr
                     key={entry.username}
-                    className="bg-gray-100 dark:bg-[#262626] hover:bg-gray-300 dark:hover:bg-[#333333]"
+                    className="hover:bg-[#2a2a2a] transition text-white"
+                    style={{ backgroundColor: '#1f1f1f' }}
                   >
-                    <td className="px-5 py-3 whitespace-nowrap">{index + 1}</td>
-                    <td className="px-5 py-3 whitespace-nowrap">{entry.username}</td>
-                    <td className="px-5 py-3 whitespace-nowrap text-center">{points}</td>
+                    <td className="px-5 py-3 whitespace-nowrap text-white">{index + 1}</td>
+                    <td className="px-5 py-3 whitespace-nowrap text-white">{entry.username}</td>
+                    <td className="px-5 py-3 whitespace-nowrap text-center text-white">{points}</td>
                   </tr>
                 );
               })}
