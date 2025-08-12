@@ -27,15 +27,15 @@ mkdir -p src/static/assets/
 cp -R frontend/dist/assets/* src/static/assets/ || { echo "❌ Asset copy failed"; exit 1; }
 cp frontend/dist/index.html src/templates/index.html || { echo "❌ index.html copy failed"; exit 1; }
 
-# 4. Patch index.html with Django static tags (safe version)
+# 4. Patch index.html with Django static tags (Windows sed version)
 echo "🧠 Patching index.html static asset paths..."
-sed -i '' '1s;^;{% load static %}\n;' src/templates/index.html
-sed -i '' -E "s|/static/assets/([^\"]+\.js)|{% static 'assets/\1' %}|g" src/templates/index.html
-sed -i '' -E "s|/static/assets/([^\"]+\.css)|{% static 'assets/\1' %}|g" src/templates/index.html
-sed -i '' -E "s|/static/assets/([^\"]+\.png)|{% static 'assets/\1' %}|g" src/templates/index.html
-sed -i '' -E "s|/static/assets/([^\"]+\.svg)|{% static 'assets/\1' %}|g" src/templates/index.html
+sed -i '1s;^;{% load static %}\n;' src/templates/index.html
+sed -i -E "s|/static/assets/([^\"]+\.js)|{% static 'assets/\1' %}|g" src/templates/index.html
+sed -i -E "s|/static/assets/([^\"]+\.css)|{% static 'assets/\1' %}|g" src/templates/index.html
+sed -i -E "s|/static/assets/([^\"]+\.png)|{% static 'assets/\1' %}|g" src/templates/index.html
+sed -i -E "s|/static/assets/([^\"]+\.svg)|{% static 'assets/\1' %}|g" src/templates/index.html
 
-# 5. Collect Django static files
+# 5. Collect Django static files (Windows virtual environment activation)
 echo "📦 Running collectstatic..."
 source venv_pickems/Scripts/activate || { echo "❌ Could not activate virtualenv"; exit 1; }
 python src/manage.py collectstatic --noinput --settings=nfl_pickems.settings.dev || { echo "❌ collectstatic failed"; exit 1; }

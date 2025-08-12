@@ -1,3 +1,10 @@
+/*
+ * Main App Component with Game Results Support and Theme Provider
+ * Fetches games, user predictions, and game results for showing pick accuracy
+ * Passes all data to WeekPage for displaying checkmarks on correct/incorrect picks
+ * Wraps entire app with ThemeProvider for light/dark mode toggle
+ */
+
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import './App.css';
@@ -10,6 +17,7 @@ import Standings from './pages/Standings';
 import WeekSelector from "./pages/WeekSelector"; 
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { getCookie } from './utils/cookies';
 import { useLocation } from 'react-router-dom';
 
@@ -28,60 +36,107 @@ export default function App() {
   const [games, setGames] = useState([]);
   const [moneyLineSelections, setMoneyLineSelections] = useState({});
   const [propBetSelections, setPropBetSelections] = useState({});
+  const [gameResults, setGameResults] = useState({});
   const [isOpen, setIsOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
+  // Extract data fetching into separate functions for reuse
+  const fetchGameData = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/games/api/games/`, {
+        credentials: 'include',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch games');
+      const data = await res.json();
+      setGames(data);
+    } catch (err) {
+      console.error('Error fetching games:', err);
+      setGames([]);
+    }
+  };
+
+  const fetchUserPredictions = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/predictions/api/get-user-predictions/`, {
+        credentials: 'include',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch predictions');
+      const data = await res.json();
+
+      const moneyLine = data.predictions.reduce((acc, cur) => {
+        acc[cur.game_id] = cur.predicted_winner;
+        return acc;
+      }, {});
+      const propBets = data.prop_bets.reduce((acc, cur) => {
+        acc[cur.prop_bet_id] = cur.answer;
+        return acc;
+      }, {});
+
+      setMoneyLineSelections(moneyLine);
+      setPropBetSelections(propBets);
+    } catch (err) {
+      console.error('Error fetching predictions:', err);
+      setMoneyLineSelections({});
+      setPropBetSelections({});
+    }
+  };
+
+  const fetchGameResults = async () => {
+    try {
+      console.log('🔄 Fetching game results...');
+      const res = await fetch(`${API_BASE}/predictions/api/game-results/`, {
+        credentials: 'include',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch game results');
+      const data = await res.json();
+      
+      console.log('📊 Raw game results from API:', data);
+      
+      // Transform the results into the expected format
+      const resultsMap = {};
+      data.forEach(result => {
+        resultsMap[result.game_id] = {
+          winner: result.winning_team,
+          prop_result: result.prop_bet_result
+        };
+      });
+      
+      console.log('🎯 Transformed results map:', resultsMap);
+      setGameResults(resultsMap);
+    } catch (err) {
+      console.error('Error fetching game results:', err);
+      setGameResults({});
+    }
+  };
+
+  // Refresh all data
+  const refreshAllData = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        fetchGameData(),
+        fetchUserPredictions(),
+        fetchGameResults()
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchGameData = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/games/api/games/`, {
-          credentials: 'include',
-          headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-          },
-        });
-        if (!res.ok) throw new Error('Failed to fetch games');
-        const data = await res.json();
-        setGames(data);
-      } catch (err) {
-        console.error('Error fetching games:', err);
-        setGames([]);
-      }
-    };
-
-    const fetchUserPredictions = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/predictions/api/get-user-predictions/`, {
-          credentials: 'include',
-          headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-          },
-        });
-        if (!res.ok) throw new Error('Failed to fetch predictions');
-        const data = await res.json();
-
-        const moneyLine = data.predictions.reduce((acc, cur) => {
-          acc[cur.game_id] = cur.predicted_winner;
-          return acc;
-        }, {});
-        const propBets = data.prop_bets.reduce((acc, cur) => {
-          acc[cur.prop_bet_id] = cur.answer;
-          return acc;
-        }, {});
-
-        setMoneyLineSelections(moneyLine);
-        setPropBetSelections(propBets);
-      } catch (err) {
-        console.error('Error fetching predictions:', err);
-        setMoneyLineSelections({});
-        setPropBetSelections({});
-      }
-    };
-
     if (userInfo && !isLoading) {
-      fetchGameData();
-      fetchUserPredictions();
+      refreshAllData();
     }
   }, [userInfo, isLoading]);
 
@@ -135,11 +190,12 @@ export default function App() {
     : [];
 
   return (
-    <Router>
-      <ScrollToTop />
-      <Navbar userInfo={userInfo} onLogout={logout} isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div className={`transition-transform duration-300 ${isOpen ? "-translate-x-64" : "translate-x-0"}`}>
-        <Routes>
+    <ThemeProvider>
+      <Router>
+        <ScrollToTop />
+        <Navbar userInfo={userInfo} onLogout={logout} isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`transition-transform duration-300 ${isOpen ? "-translate-x-64" : "translate-x-0"}`}>
+          <Routes>
           <Route
             path="/"
             element={
@@ -158,6 +214,9 @@ export default function App() {
                   propBetSelections={propBetSelections}
                   handleMoneyLineClick={handleMoneyLineClick}
                   handlePropBetClick={handlePropBetClick}
+                  gameResults={gameResults}
+                  onRefresh={refreshAllData}
+                  isRefreshing={isRefreshing}
                 />
               </PrivateRoute>
             } 
@@ -193,5 +252,6 @@ export default function App() {
         </Routes>
       </div>
     </Router>
+  </ThemeProvider>
   );
 }

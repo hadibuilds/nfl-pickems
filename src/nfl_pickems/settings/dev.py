@@ -1,4 +1,5 @@
 from .base import *
+import os
 
 DEBUG = True
 
@@ -18,4 +19,6 @@ SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = False
 
-print("🔧 Loaded DEV settings")
+if not os.environ.get('DEV_SETTINGS_LOADED'):
+    print("🔧 Loaded DEV settings")
+    os.environ['DEV_SETTINGS_LOADED'] = '1'
