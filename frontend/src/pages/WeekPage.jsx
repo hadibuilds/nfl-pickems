@@ -159,7 +159,7 @@ export default function WeekPage({
           onClick={onRefresh}
           disabled={isRefreshing}
           className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl text-white hover:bg-[#1d4ed8] transition disabled:opacity-50"
-          style={{ backgroundColor: '#1e40af' }}
+          style={{ backgroundColor: '#7c3aed' }}
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
