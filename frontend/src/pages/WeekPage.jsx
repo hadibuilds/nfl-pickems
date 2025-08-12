@@ -1,11 +1,7 @@
 /*
- * Enhanced WeekPage Component
- * Displays games for a specific week with improved UI:
- * - Progress indicator showing pick completion and points
- * - Better date/time formatting and positioning
- * - Enhanced locked game styling with visual indicators
- * - Result indicators for correct/incorrect predictions
- * - Improved responsive layout and spacing
+ * Cleaned WeekPage Component - PURE CSS ONLY
+ * Removed ALL Tailwind classes to fix mobile/desktop inconsistencies
+ * Uses only custom CSS classes for consistent styling
  */
 
 import React from 'react';
@@ -18,7 +14,7 @@ export default function WeekPage({
   propBetSelections,
   handleMoneyLineClick,
   handlePropBetClick,
-  gameResults = {}, // Add gameResults prop for showing correct/incorrect picks
+  gameResults = {},
   onRefresh,
   isRefreshing = false
 }) {
@@ -26,19 +22,6 @@ export default function WeekPage({
   const navigate = useNavigate();
   const weekGames = games.filter(game => game.week === parseInt(weekNumber));
 
-  // TEMPORARY: Mock game results for testing checkmarks
-  // Remove this when you have real backend data
-  const mockGameResults = {};
-  // COMMENTED OUT - using real data now
-  // weekGames.forEach((game, index) => {
-  //   if (game.locked) { // Only add results for locked games
-  //     mockGameResults[game.id] = {
-  //       winner: index % 2 === 0 ? game.home_team : game.away_team, // Alternate winners
-  //       prop_result: game.prop_bets?.[0]?.options?.[0] || null // First option wins
-  //     };
-  //   }
-  // });
-  
   // Use real results from backend
   const activeGameResults = gameResults;
   
@@ -62,7 +45,7 @@ export default function WeekPage({
     return { dayAndDate, formattedTime };
   };
 
-  // Helper function to get section result indicator - COMPLETELY OUTSIDE LAYOUT
+  // Helper function to get section result indicator
   const getSectionResultIndicator = (game, isMoneyLineSection, gameIndex) => {
     if (!activeGameResults[game.id]) return null;
     
@@ -72,7 +55,6 @@ export default function WeekPage({
       userSelection = moneyLineSelections[game.id];
       actualResult = activeGameResults[game.id].winner;
     } else {
-      // Prop bet section
       if (!game.prop_bets || game.prop_bets.length === 0) return null;
       userSelection = propBetSelections[game.prop_bets[0].id];
       actualResult = activeGameResults[game.id].prop_result;
@@ -95,7 +77,6 @@ export default function WeekPage({
           pointerEvents: 'none',
           color: isCorrect ? '#10B981' : '#EF4444',
           lineHeight: '1',
-          // CRITICAL: Remove from layout flow completely
           width: '0px',
           height: '0px',
           overflow: 'visible',
@@ -114,7 +95,7 @@ export default function WeekPage({
           height: '18px',
           textAlign: 'center'
         }}>
-          {isCorrect ? '✔' : '✗'}
+          {isCorrect ? '✓' : '✗'}
         </span>
       </div>
     );
@@ -141,27 +122,27 @@ export default function WeekPage({
   };
 
   return (
-    <div className="pt-16 px-4">
+    <div className="week-page-container">
       {/* Back button and refresh */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="week-page-header">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-gray-100 dark:bg-[#2d2d2d] text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-[#3a3a3a] transition"
+          className="back-button"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         
-        {/* Refresh button for testing */}
+        {/* Refresh button */}
         <button
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition disabled:opacity-50"
+          className={`refresh-button ${isRefreshing ? 'refreshing' : ''}`}
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
-            className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} 
+            className={`refresh-icon ${isRefreshing ? 'spinning' : ''}`} 
             fill="none" 
             viewBox="0 0 24 24" 
             stroke="currentColor"
@@ -173,7 +154,7 @@ export default function WeekPage({
       </div>
 
       {/* Page title */}
-      <h1 className="text-4xl text-center mb-8 font-bold text-gray-900 dark:text-white">
+      <h1 className="week-page-title">
         Week {weekNumber} Games
       </h1>
 
@@ -189,11 +170,11 @@ export default function WeekPage({
 
       {/* Games grid */}
       {weekGames.length === 0 ? (
-        <p className="text-center text-gray-600 dark:text-gray-400">
+        <p className="no-games-text">
           No games available for this week.
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="games-grid">
           {weekGames.map((game, gameIndex) => {
             const { dayAndDate, formattedTime } = formatGameDateTime(game.start_time);
             const locked = game.locked || new Date(game.start_time) <= new Date();

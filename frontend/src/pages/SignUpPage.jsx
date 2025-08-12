@@ -73,7 +73,7 @@ export default function SignUpPage() {
       <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] bg-white dark:bg-[#2d2d2d] p-8 sm:p-10 rounded-xl shadow-md text-base">
         <div className="text-center mb-6">
           <h2 className="text-4xl font-bold text-gray-800 dark:text-white">
-            Sign Up <span role="img" aria-label="wave">👋</span>
+            Sign Up <span role="img" aria-label="wave">ðŸ‘‹</span>
           </h2>
           <p className="text-gray-500 dark:text-gray-400 mt-2 text-base">
             Join the Pick 'Em League
