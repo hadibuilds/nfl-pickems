@@ -22,9 +22,9 @@ export default function LoginPage() {
         const res = await fetch(`${API_BASE}/accounts/api/csrf/`, {
           credentials: "include",
         });
-        console.log("✅ CSRF prefetched on login:", res.status);
+        console.log("âœ… CSRF prefetched on login:", res.status);
       } catch (err) {
-        console.error("❌ Failed to prefetch CSRF on login:", err);
+        console.error("âŒ Failed to prefetch CSRF on login:", err);
       }
     };
 
@@ -78,7 +78,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] bg-white dark:bg-[#2d2d2d] p-8 sm:p-10 rounded-xl shadow-md text-base">
         <div className="text-center mb-6">
           <h2 className="text-4xl font-bold text-gray-800 dark:text-white">
-            Log In <span role="img" aria-label="wave">👋</span>
+            Log In <span role="img" aria-label="wave">ðŸ‘‹</span>
           </h2>
           <p className="text-gray-500 dark:text-gray-400 mt-2 text-base">
             Access your Pick 'Em League
@@ -153,7 +153,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-sm text-gray-600 mt-4 dark:text-gray-300">
-          Don’t have an account?{" "}
+          Donâ€™t have an account?{" "}
           <Link to="/signup" className="text-blue-600 hover:underline">
             Sign up
           </Link>
