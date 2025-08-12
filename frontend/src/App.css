@@ -399,8 +399,8 @@
 .team-button:focus-visible,
 .propbet-button:focus,
 .propbet-button:focus-visible {
-  outline: 2px solid #8B5CF6;
-  outline-offset: 2px;
+  outline: 0.5px solid #8B5CF6;
+  outline-offset: 0.5px;
 }
 
 .team-button:disabled:focus,
