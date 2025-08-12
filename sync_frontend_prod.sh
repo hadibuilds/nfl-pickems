@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -o errexit  # Exit immediately if a command fails
 
 echo "🔄 [RENDER] Syncing React → Django..."
