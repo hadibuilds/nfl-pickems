@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -o errexit  # Exit immediately if a command fails
 
 echo "🔄 [RENDER] Syncing React → Django..."
 
@@ -9,9 +10,12 @@ rm -rf src/static/assets/
 rm -rf staticfiles/
 rm -f src/templates/index.html
 
+echo "📦 Installing Python packages..."
+pip install -r requirements.txt
+
 # Build React
 echo "📦 Installing & building frontend (Render)..."
-cd frontend || exit 1
+cd frontend
 npm install
 npx vite build
 cd ..
