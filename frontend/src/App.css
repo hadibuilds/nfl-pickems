@@ -1,4 +1,9 @@
-#root {
+/*
+ * Enhanced styles for NFL Pick'ems application
+ * Includes improved date/time positioning, locked game states, and better spacing
+ */
+
+ #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
@@ -11,7 +16,6 @@
   will-change: filter;
   transition: filter 300ms;
 }
-
 
 @keyframes logo-spin {
   from {
@@ -43,6 +47,7 @@
   align-items: center;
 }
 
+/* Enhanced game box styling - FIXED DIMENSIONS */
 .game-box {
   background-color: #1f1f1f;
   border-radius: 12px;
@@ -54,6 +59,31 @@
   overflow: hidden;
   padding: 0;
   margin-bottom: 20px;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+  /* FORCE FIXED DIMENSIONS */
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Desktop only: Wider cards for better spacing */
+@media (min-width: 769px) {
+  .game-box {
+    max-width: 480px;
+  }
+}
+
+/* Locked game styling - only gray out if NO results yet */
+.game-box.locked:not(.has-results) {
+  opacity: 0.7;
+  filter: grayscale(0.3);
+  background-color: #2a2a2a;
+}
+
+/* Cards with results look normal */
+.game-box.has-results {
+  opacity: 1;
+  filter: none;
+  background-color: #1f1f1f;
 }
 
 .game-section {
@@ -61,6 +91,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* PREVENT EXPANSION */
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
 }
 
 .money-line {
@@ -68,9 +103,21 @@
   background-color: #2d2d2d;
 }
 
+.game-box.locked:not(.has-results) .money-line {
+  background-color: #333333;
+}
+
+.game-box.has-results .money-line {
+  background-color: #2d2d2d;
+}
+
 .prop-bet {
   background-color: #1f1f1f;
-  padding: 8px 16px 16px 16px; /* Reduce top padding only */
+  padding: 8px 16px 16px 16px;
+}
+
+.game-box.locked .prop-bet {
+  background-color: #2a2a2a;
 }
 
 .divider-line {
@@ -83,8 +130,38 @@
   font-size: 1.1rem;
   font-weight: none;
   margin-top: 4px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   text-align: center;
+  line-height: 1.4;
+}
+
+/* Only add padding to matchup text (money-line section) for date/time spacing */
+.matchup {
+  /* Padding only applied to desktop via media query below */
+}
+
+/* Prop question stays centered without any padding */
+.prop-question {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Desktop adjustments for matchup text only */
+@media (min-width: 769px) {
+  .matchup {
+    margin-top: 12px;
+    /* Properly center with equal padding on both sides */
+    padding-left: 110px;
+    padding-right: 110px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  /* Prop question remains centered on desktop too */
+  .prop-question {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 .button-row {
@@ -92,60 +169,274 @@
   gap: 12px;
 }
 
-/* Ensure button size remains constant even after selection */
+/* Enhanced button styling */
 .team-button, .propbet-button {
-  padding: 10px 20px;
-  border: 2px solid transparent;  /* Use transparent border by default */
+  padding: 12px 24px;
+  border: 2px solid transparent;
   border-radius: 8px;
   background-color: #383850;
   color: white;
-  font-weight: bold;
+  font-weight: normal;
   cursor: pointer;
-  transition: background-color 0.2s ease, border 0.2s ease;
-  box-sizing: border-box;  /* Ensure padding and border do not affect size */
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+  min-width: 80px;
 }
 
 .team-button:hover,
 .propbet-button:hover {
   background-color: #8B5CF6;
+  transform: translateY(-1px);
 }
 
-.money-line-header {
-  position: relative;
-  text-align: center;
-  margin-bottom: 10px;
+/* Base button hover - ONLY for enabled buttons */
+.team-button:not(:disabled):hover,
+.propbet-button:not(:disabled):hover {
+  background-color: #8B5CF6 !important;
+  transform: translateY(-1px) !important;
 }
 
-.matchup {
-  font-size: 1.1rem;
+/* COMPLETELY disable ALL hover effects on disabled buttons */
+.team-button:disabled,
+.propbet-button:disabled {
+  pointer-events: none !important;
+}
+
+.team-button:disabled:hover,
+.propbet-button:disabled:hover,
+.team-button[disabled]:hover,
+.propbet-button[disabled]:hover {
+  background-color: inherit !important;
+  transform: none !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+/* Remove the old hover rules completely */
+
+.team-button.selected, .propbet-button.selected {
+  background-color: #7C3AED;
+  border-color: #7C3AED;
+  outline: none;
+}
+
+.team-button.selected:hover, .propbet-button.selected:hover {
+  background-color: #7C3AED;
+}
+
+/* Locked button states */
+.team-button:disabled, .propbet-button:disabled {
+  background-color: #555555 !important;
+  color: #999999 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  border-color: #555555 !important;
+}
+
+/* Keep selected styling even when disabled */
+.team-button.selected:disabled, .propbet-button.selected:disabled {
+  background-color: #7C3AED !important;
+  color: white !important;
+  border-color: #7C3AED !important;
+  opacity: 0.8;
+}
+
+/* Correct prediction styling */
+.team-button.selected.correct:disabled, .propbet-button.selected.correct:disabled {
+  background-color: #10B981 !important;
+  border-color: #10B981 !important;
+  color: white !important;
+  opacity: 1;
+}
+
+/* Incorrect prediction styling */
+.team-button.selected.incorrect:disabled, .propbet-button.selected.incorrect:disabled {
+  background-color: #EF4444 !important;
+  border-color: #EF4444 !important;
+  color: white !important;
+  opacity: 1;
+}
+
+/* Section result indicators - positioned absolutely in corner */
+.section-result-indicator {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 18px;
   font-weight: bold;
+  z-index: 10;
+  pointer-events: none;
 }
 
+.section-result-indicator.correct {
+  color: #10B981 !important;
+}
+
+.section-result-indicator.incorrect {
+  color: #EF4444 !important;
+}
+
+/* Ensure sections have relative positioning for absolute indicators */
+.money-line {
+  position: relative;
+  background-color: #2d2d2d;
+}
+
+.game-box.locked .money-line {
+  background-color: #333333;
+}
+
+.prop-bet {
+  position: relative;
+  background-color: #1f1f1f;
+  padding: 8px 16px 16px 16px;
+}
+
+.game-box.locked:not(.has-results) .prop-bet {
+  background-color: #2a2a2a;
+}
+
+.game-box.has-results .prop-bet {
+  background-color: #1f1f1f;
+}
+
+.team-button:disabled:hover, .propbet-button:disabled:hover {
+  background-color: #555555 !important;
+  transform: none !important;
+}
+
+.team-button.selected:disabled:hover, .propbet-button.selected:disabled:hover {
+  background-color: #7C3AED !important;
+  transform: none !important;
+}
+
+/* Enhanced date/time positioning */
 .game-datetime {
   position: absolute;
   top: 8px;
   left: 12px;
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 12px;
   color: #bbb;
+  line-height: 1.1;
+  z-index: 1;
+  min-width: 60px;
 }
 
-.team-button.selected, .propbet-button.selected {
-  background-color: #7C3AED;  /* Highlight background */
-  border-color: #7C3AED;  /* Highlight border color */
-  outline: none; /* Remove the default focus outline */
+.date-line {
+  font-weight: 600;
+  margin-bottom: 2px;
+  white-space: nowrap;
 }
 
-.team-button.selected:hover, .propbet-button.selected:hover {
-  background-color: #7C3AED;  /* Keep same background on hover */
+.time-line {
+  font-weight: 400;
+  opacity: 0.9;
+  white-space: nowrap;
 }
 
+/* Desktop-specific date/time adjustments */
+@media (min-width: 769px) {
+  .game-datetime {
+    top: 10px;
+    left: 16px;
+    font-size: 14px;
+    min-width: 90px;
+  }
+  
+  .date-line {
+    margin-bottom: 3px;
+  }
+}
+
+/* Lock icon styling */
+.lock-icon {
+  color: #888;
+  font-size: 14px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* Progress indicator styling */
+.progress-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 16px 24px;
+  background-color: #2d2d2d;
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.progress-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  width: 200px;
+  height: 8px;
+  background-color: #444;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #7C3AED;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+/* Focus states */
 .team-button:focus,
 .team-button:focus-visible,
-.team-button:hover,
 .propbet-button:focus,
-.propbet-button:focus-visible,
-.propbet-button:hover {
-  outline: none !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
+.propbet-button:focus-visible {
+  outline: 2px solid #8B5CF6;
+  outline-offset: 2px;
+}
+
+.team-button:disabled:focus,
+.propbet-button:disabled:focus {
+  outline: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .game-box {
+    margin: 16px 0;
+    max-width: 100%;
+  }
+  
+  .game-datetime {
+    top: 8px;
+    left: 12px;
+    font-size: 12px;
+  }
+  
+  .team-button, .propbet-button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    min-width: 70px;
+  }
+  
+  .matchup, .prop-question {
+    font-size: 1rem;
+  }
+  
+  .progress-indicator {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+  }
+  
+  .progress-bar {
+    width: 150px;
+  }
 }

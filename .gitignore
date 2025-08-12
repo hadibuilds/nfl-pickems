@@ -2,7 +2,8 @@ __pycache__/
 *.py[cod]
 *~
 .DS_Store
-myenv/
+venv_pickems/
 db.sqlite3
 .vscode/
 .env
+node_modules

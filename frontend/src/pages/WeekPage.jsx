@@ -1,20 +1,149 @@
+/*
+ * Enhanced WeekPage Component
+ * Displays games for a specific week with improved UI:
+ * - Progress indicator showing pick completion and points
+ * - Better date/time formatting and positioning
+ * - Enhanced locked game styling with visual indicators
+ * - Result indicators for correct/incorrect predictions
+ * - Improved responsive layout and spacing
+ */
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ProgressIndicator from '../components/ProgressIndicator';
 
 export default function WeekPage({
   games,
   moneyLineSelections,
   propBetSelections,
   handleMoneyLineClick,
-  handlePropBetClick
+  handlePropBetClick,
+  gameResults = {}, // Add gameResults prop for showing correct/incorrect picks
+  onRefresh,
+  isRefreshing = false
 }) {
   const { weekNumber } = useParams();
   const navigate = useNavigate();
   const weekGames = games.filter(game => game.week === parseInt(weekNumber));
 
+  // TEMPORARY: Mock game results for testing checkmarks
+  // Remove this when you have real backend data
+  const mockGameResults = {};
+  // COMMENTED OUT - using real data now
+  // weekGames.forEach((game, index) => {
+  //   if (game.locked) { // Only add results for locked games
+  //     mockGameResults[game.id] = {
+  //       winner: index % 2 === 0 ? game.home_team : game.away_team, // Alternate winners
+  //       prop_result: game.prop_bets?.[0]?.options?.[0] || null // First option wins
+  //     };
+  //   }
+  // });
+  
+  // Use real results from backend
+  const activeGameResults = gameResults;
+  
+  console.log('🎮 WeekPage gameResults prop:', gameResults);
+  console.log('🎯 Active game results:', activeGameResults);
+
+  // Helper function to format date and time
+  const formatGameDateTime = (startTime) => {
+    const gameDate = new Date(startTime);
+    const dayAndDate = gameDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const formattedTime = gameDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    
+    return { dayAndDate, formattedTime };
+  };
+
+  // Helper function to get section result indicator - COMPLETELY OUTSIDE LAYOUT
+  const getSectionResultIndicator = (game, isMoneyLineSection, gameIndex) => {
+    if (!activeGameResults[game.id]) return null;
+    
+    let userSelection, actualResult;
+    
+    if (isMoneyLineSection) {
+      userSelection = moneyLineSelections[game.id];
+      actualResult = activeGameResults[game.id].winner;
+    } else {
+      // Prop bet section
+      if (!game.prop_bets || game.prop_bets.length === 0) return null;
+      userSelection = propBetSelections[game.prop_bets[0].id];
+      actualResult = activeGameResults[game.id].prop_result;
+    }
+    
+    if (!userSelection || !actualResult) return null;
+    
+    const isCorrect = userSelection === actualResult;
+    
+    return (
+      <div 
+        style={{
+          position: 'absolute',
+          top: isMoneyLineSection ? '6px' : 'auto',
+          bottom: isMoneyLineSection ? 'auto' : '6px', 
+          right: '8px',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          zIndex: 1000,
+          pointerEvents: 'none',
+          color: isCorrect ? '#10B981' : '#EF4444',
+          lineHeight: '1',
+          // CRITICAL: Remove from layout flow completely
+          width: '0px',
+          height: '0px',
+          overflow: 'visible',
+          margin: '0',
+          padding: '0',
+          border: 'none',
+          outline: 'none'
+        }}
+      >
+        <span style={{
+          position: 'absolute',
+          right: '0',
+          top: '0',
+          display: 'block',
+          width: '18px',
+          height: '18px',
+          textAlign: 'center'
+        }}>
+          {isCorrect ? '✔' : '✗'}
+        </span>
+      </div>
+    );
+  };
+
+  // Helper function to get button class based on results
+  const getButtonClass = (baseClass, isSelected, game, selection, isMoneyLine = true) => {
+    let className = `${baseClass} ${isSelected ? 'selected' : ''}`;
+    
+    const locked = game.locked || new Date(game.start_time) <= new Date();
+    
+    if (locked && isSelected && activeGameResults[game.id]) {
+      const actualResult = isMoneyLine 
+        ? activeGameResults[game.id].winner 
+        : activeGameResults[game.id].prop_result;
+      
+      if (actualResult) {
+        const isCorrect = selection === actualResult;
+        className += isCorrect ? ' correct' : ' incorrect';
+      }
+    }
+    
+    return className;
+  };
+
   return (
     <div className="pt-16 px-4">
-      <div className="flex justify-start mb-6">
+      {/* Back button and refresh */}
+      <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate(-1)}
           className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-gray-100 dark:bg-[#2d2d2d] text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-[#3a3a3a] transition"
@@ -23,67 +152,117 @@ export default function WeekPage({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
+        
+        {/* Refresh button for testing */}
+        <button
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800 transition disabled:opacity-50"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>{isRefreshing ? 'Syncing...' : 'Sync'}</span>
+        </button>
       </div>
-      <h1 className="text-4xl text-center mb-8">Week {weekNumber} Games</h1>
+
+      {/* Page title */}
+      <h1 className="text-4xl text-center mb-8 font-bold text-gray-900 dark:text-white">
+        Week {weekNumber} Games
+      </h1>
+
+      {/* Progress indicator */}
+      {weekGames.length > 0 && (
+        <ProgressIndicator 
+          games={weekGames}
+          moneyLineSelections={moneyLineSelections}
+          propBetSelections={propBetSelections}
+          gameResults={gameResults}
+        />
+      )}
+
+      {/* Games grid */}
       {weekGames.length === 0 ? (
-        <p className="text-center">No games available for this week.</p>
+        <p className="text-center text-gray-600 dark:text-gray-400">
+          No games available for this week.
+        </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {weekGames.map((game) => {
-            const startTime = new Date(game.start_time);
-            const dayAndDate = startTime.toLocaleDateString('en-US', {
-              weekday: 'short',
-              month: '2-digit',
-              day: '2-digit',
-            });
-            const formattedTime = startTime.toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true,
-            });
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {weekGames.map((game, gameIndex) => {
+            const { dayAndDate, formattedTime } = formatGameDateTime(game.start_time);
+            const locked = game.locked || new Date(game.start_time) <= new Date();
+            const hasResults = activeGameResults[game.id] ? true : false;
 
             return (
-              <div key={game.id} className="game-box">
+              <div 
+                key={game.id} 
+                className={`game-box ${locked ? 'locked' : ''} ${hasResults ? 'has-results' : ''}`}
+              >
+                {/* Money Line Section */}
                 <div className="game-section money-line">
+                  {/* Section result indicator */}
+                  {getSectionResultIndicator(game, true, gameIndex)}
+                  
+                  {/* Date and time display */}
                   <div className="game-datetime">
                     <div className="date-line">{dayAndDate}</div>
                     <div className="time-line">{formattedTime}</div>
                   </div>
+
+                  {/* Matchup display */}
                   <p className="matchup">
-                    {game.away_team} @ {game.home_team}{' '}
-                    {game.locked && <span className="ml-2 text-gray-500">🔒</span>}
+                    {game.away_team} @ {game.home_team}
+                    {locked && <span className="lock-icon">🔒</span>}
                   </p>
+
+                  {/* Team selection buttons */}
                   <div className="button-row">
                     <button
-                      className={`team-button ${moneyLineSelections[game.id] === game.away_team ? 'selected' : ''} ${game.locked ? 'bg-gray-400 cursor-not-allowed opacity-50' : ''}`}
-                      onClick={(e) => {
-                        if (game.locked) {
-                          e.preventDefault();
-                          return;
+                      className={getButtonClass(
+                        'team-button',
+                        moneyLineSelections[game.id] === game.away_team,
+                        game,
+                        game.away_team,
+                        true
+                      )}
+                      onClick={() => {
+                        if (!locked) {
+                          handleMoneyLineClick(game, game.away_team);
                         }
-                        handleMoneyLineClick(game, game.away_team);
                       }}
-                      disabled={game.locked}
+                      disabled={locked}
+                      aria-label={`Select ${game.away_team} to win`}
                     >
                       {game.away_team}
                     </button>
                     <button
-                      className={`team-button ${moneyLineSelections[game.id] === game.home_team ? 'selected' : ''} ${game.locked ? 'bg-gray-400 cursor-not-allowed opacity-50' : ''}`}
-                      onClick={(e) => {
-                        if (game.locked) {
-                          e.preventDefault();
-                          return;
+                      className={getButtonClass(
+                        'team-button',
+                        moneyLineSelections[game.id] === game.home_team,
+                        game,
+                        game.home_team,
+                        true
+                      )}
+                      onClick={() => {
+                        if (!locked) {
+                          handleMoneyLineClick(game, game.home_team);
                         }
-                        handleMoneyLineClick(game, game.home_team);
                       }}
-                      disabled={game.locked}
+                      disabled={locked}
+                      aria-label={`Select ${game.home_team} to win`}
                     >
                       {game.home_team}
                     </button>
                   </div>
                 </div>
 
-                {/* Divider Line */}
+                {/* Divider line (only show if prop bets exist) */}
                 {game.prop_bets && game.prop_bets.length > 0 && (
                   <div className="divider-line" />
                 )}
@@ -91,23 +270,33 @@ export default function WeekPage({
                 {/* Prop Bet Section */}
                 {game.prop_bets && game.prop_bets.length > 0 && (
                   <div className="game-section prop-bet">
+                    {/* Section result indicator */}
+                    {getSectionResultIndicator(game, false, gameIndex)}
+                    
                     <p className="prop-question">
-                      {game.prop_bets[0].question}{' '}
-                      {game.locked && <span className="ml-2 text-gray-500">🔒</span>}
+                      {game.prop_bets[0].question}
+                      {locked && <span className="lock-icon">🔒</span>}
                     </p>
+
+                    {/* Prop bet option buttons */}
                     <div className="button-row">
                       {game.prop_bets[0].options.map((option, index) => (
                         <button
                           key={index}
-                          className={`propbet-button ${propBetSelections[game.prop_bets[0].id] === option ? 'selected' : ''} ${game.locked ? 'bg-gray-400 cursor-not-allowed opacity-50' : ''}`}
-                          onClick={(e) => {
-                            if (game.locked) {
-                              e.preventDefault();
-                              return;
+                          className={getButtonClass(
+                            'propbet-button',
+                            propBetSelections[game.prop_bets[0].id] === option,
+                            game,
+                            option,
+                            false
+                          )}
+                          onClick={() => {
+                            if (!locked) {
+                              handlePropBetClick(game, option);
                             }
-                            handlePropBetClick(game, option);
                           }}
-                          disabled={game.locked}
+                          disabled={locked}
+                          aria-label={`Select ${option} for prop bet`}
                         >
                           {option}
                         </button>

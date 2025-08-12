@@ -2,7 +2,7 @@
 set -o errexit  # Exit immediately if a command fails
 
 echo "📦 Installing Python packages..."
-pip install -r src/requirements.txt
+pip install -r requirements.txt
 
 echo "🎨 Collecting static files..."
 python src/manage.py collectstatic --noinput

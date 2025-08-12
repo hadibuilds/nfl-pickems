@@ -139,3 +139,37 @@ def get_standings(request):
         "weeks": all_weeks,
         "selected_week": int(selected_week) if selected_week and selected_week.isdigit() else None
     })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_game_results(request):
+    """
+    API endpoint to get results for completed games
+    Returns game_id, winning_team, and prop_bet_result for games that have results
+    """
+    try:
+        from games.models import Game
+        
+        # Get all games that have results (winner is set)
+        completed_games = Game.objects.filter(
+            winner__isnull=False
+        ).prefetch_related('prop_bets')
+        
+        results = []
+        for game in completed_games:
+            # Get prop bet result if exists
+            prop_result = None
+            if game.prop_bets.exists():
+                prop_bet = game.prop_bets.first()
+                prop_result = prop_bet.correct_answer
+            
+            results.append({
+                'game_id': game.id,
+                'winning_team': game.winner,
+                'prop_bet_result': prop_result
+            })
+        
+        return Response(results)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
