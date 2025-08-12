@@ -408,35 +408,249 @@
   outline: none;
 }
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .game-box {
-    margin: 16px 0;
-    max-width: 100%;
+/* Main navbar container */
+.navbar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 50;
+  background-color: rgba(30, 30, 32, 0.7);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  height: 64px;
+}
+
+@media (min-width: 640px) {
+  .navbar-container {
+    height: 72px;
   }
-  
-  .game-datetime {
-    top: 8px;
-    left: 12px;
-    font-size: 12px;
+}
+
+/* Navbar content wrapper */
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  max-width: 80rem;
+  margin: 0 auto;
+  height: 100%;
+}
+
+/* Logo styling */
+.navbar-logo {
+  height: 7rem;
+  object-fit: contain;
+}
+
+@media (min-width: 640px) {
+  .navbar-logo {
+    height: 7rem;
   }
-  
-  .team-button, .propbet-button {
-    padding: 10px 16px;
-    font-size: 0.9rem;
-    min-width: 70px;
+}
+
+/* Right side container */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Auth buttons */
+.auth-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.login-button {
+  background-color: #2d2d2d;
+  color: white;
+}
+
+.login-button:hover {
+  background-color: #3a3a3a;
+}
+
+.signup-button {
+  background-color: #8B5CF6;
+  color: white;
+}
+
+.signup-button:hover {
+  background-color: #7C3AED;
+}
+
+.auth-icon {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+/* Desktop navigation */
+.desktop-nav {
+  display: none;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .desktop-nav {
+    display: flex;
   }
-  
-  .matchup, .prop-question {
-    font-size: 1rem;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: #8B5CF6;
+}
+
+.logout-button {
+  color: white;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.logout-button:hover {
+  color: #EF4444;
+}
+
+/* Mobile menu toggle */
+.mobile-menu-toggle {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .mobile-menu-toggle {
+    display: none;
   }
-  
-  .progress-indicator {
-    margin-bottom: 20px;
-    padding: 12px 16px;
+}
+
+.hamburger-button {
+  position: relative;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.hamburger-button:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.hamburger-line {
+  height: 0.125rem;
+  width: 1.5rem;
+  background-color: white;
+  transition: all 0.3s ease-in-out;
+  margin: 0.125rem 0;
+}
+
+.hamburger-line-1 {
+  transform: translateY(-0.375rem);
+}
+
+.hamburger-line-1-open {
+  transform: rotate(45deg) translateY(0.375rem);
+}
+
+.hamburger-line-2 {
+  opacity: 1;
+}
+
+.hamburger-line-2-open {
+  opacity: 0;
+}
+
+.hamburger-line-3 {
+  transform: translateY(0.375rem);
+}
+
+.hamburger-line-3-open {
+  transform: rotate(-45deg) translateY(-0.375rem);
+}
+
+/* Mobile sidebar */
+.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 16rem;
+  z-index: 40;
+  transition: transform 0.3s ease;
+  background-color: #1E1E20;
+}
+
+@media (min-width: 768px) {
+  .mobile-sidebar {
+    display: none;
   }
-  
-  .progress-bar {
-    width: 150px;
-  }
+}
+
+.mobile-sidebar-open {
+  transform: translateX(0);
+}
+
+.mobile-sidebar-closed {
+  transform: translateX(100%);
+}
+
+.mobile-sidebar-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 5rem;
+  gap: 1.5rem;
+}
+
+.mobile-nav-link {
+  font-size: 1.25rem;
+  color: white;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.mobile-nav-link:hover {
+  color: #8B5CF6;
+}
+
+.mobile-logout-button {
+  font-size: 1.25rem;
+  color: white;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.mobile-logout-button:hover {
+  color: #EF4444;
 }

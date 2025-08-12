@@ -1,13 +1,11 @@
 /*
- * Enhanced Navbar Component with Theme Toggle
- * Includes existing dark mode support plus manual theme toggle button
- * Shows different logos based on current theme
+ * Cleaned Navbar Component - Consistent Dark Theme Only
+ * Removed ALL Tailwind dark: classes and theme toggle
+ * Uses only fixed dark color scheme for all devices
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import ThemeToggle from "./ThemeToggle";
-import blackLogo from "../assets/pickem2_black.png";
 import whiteLogo from "../assets/pickem2_white.png";
 
 export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
@@ -21,33 +19,25 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
   };
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-white/70 dark:bg-[#1E1E20]/70 backdrop-blur-lg shadow-sm transition-colors duration-300 h-[64px] sm:h-[72px]">
-      <div className="flex items-center justify-between px-3 py-2 max-w-7xl mx-auto h-full">
+    <nav className="navbar-container">
+      <div className="navbar-content">
         <Link to="/">
           <img
-            src={blackLogo}
-            alt="Pick Em Logo-Black"
-            className="h-28 sm:h-28 object-contain dark:hidden"
-          />
-          <img
             src={whiteLogo}
-            alt="Pick Em Logo-White"
-            className="h-28 sm:h-28 object-contain hidden dark:inline"
+            alt="Pick Em Logo"
+            className="navbar-logo"
           />
         </Link>
 
         {/* Right side content */}
-        <div className="flex items-center space-x-4">
-          {/* Theme toggle - always visible */}
-          <ThemeToggle />
-
+        <div className="navbar-right">
           {/* Pill-style Auth Buttons for Unauthenticated Users */}
           {!userInfo && location.pathname === "/signup" && (
             <Link
               to="/login"
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-gray-100 dark:bg-[#2d2d2d] text-gray-800 dark:text-white font-medium text-sm hover:bg-gray-200 dark:hover:bg-[#3a3a3a] transition"
+              className="auth-button login-button"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="auth-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
               </svg>
               <span>Login</span>
@@ -57,9 +47,9 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
           {!userInfo && location.pathname === "/login" && (
             <Link
               to="/signup"
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl bg-violet-100 text-violet-700 font-medium text-sm hover:bg-violet-200 transition"
+              className="auth-button signup-button"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="auth-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               <span>Sign Up</span>
@@ -68,12 +58,12 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
 
           {/* Desktop Links */}
           {userInfo && (
-            <div className="hidden md:flex items-center space-x-10">
-              <Link to="/" className="text-gray-700 dark:text-gray-200 hover:text-[#5F5F5F]">Home</Link>
-              <Link to="/standings" className="text-gray-700 dark:text-gray-200 hover:text-[#5F5F5F]">Standings</Link>
+            <div className="desktop-nav">
+              <Link to="/" className="nav-link">Home</Link>
+              <Link to="/standings" className="nav-link">Standings</Link>
               <button
                 onClick={handleLogout}
-                className="text-gray-700 dark:text-gray-200 hover:text-red-500 bg-transparent border-none outline-none px-0 py-0 leading-none"
+                className="logout-button"
               >
                 Logout
               </button>
@@ -82,14 +72,14 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
 
           {/* Hamburger menu for mobile — only for logged-in users */}
           {userInfo && (
-            <div className="md:hidden">
+            <div className="mobile-menu-toggle">
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative z-50 flex flex-col justify-center items-center bg-transparent border-none outline-none p-2 focus:outline-none focus:ring-0"
+                className="hamburger-button"
               >
-                <span className={`h-0.5 w-6 bg-gray-700 dark:bg-white transition-all duration-300 ease-in-out ${isOpen ? "rotate-45 translate-y-1.5" : "-translate-y-1.5"}`} />
-                <span className={`h-0.5 w-6 my-0.5 bg-gray-700 dark:bg-white transition-all duration-300 ease-in-out ${isOpen ? "opacity-0" : "opacity-100"}`} />
-                <span className={`h-0.5 w-6 bg-gray-700 dark:bg-white transition-all duration-300 ease-in-out ${isOpen ? "-rotate-45 -translate-y-1.5" : "translate-y-1.5"}`} />
+                <span className={`hamburger-line ${isOpen ? "hamburger-line-1-open" : "hamburger-line-1"}`} />
+                <span className={`hamburger-line ${isOpen ? "hamburger-line-2-open" : "hamburger-line-2"}`} />
+                <span className={`hamburger-line ${isOpen ? "hamburger-line-3-open" : "hamburger-line-3"}`} />
               </button>
             </div>
           )}
@@ -97,22 +87,22 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
       </div>
 
       {/* Push Sidebar */}
-      <div className={`fixed top-0 right-0 h-full w-64 z-40 transition-transform duration-300 transform bg-white dark:bg-[#1E1E20] md:hidden ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
-        <div className="flex flex-col items-center justify-start pt-20 space-y-6">
+      <div className={`mobile-sidebar ${isOpen ? "mobile-sidebar-open" : "mobile-sidebar-closed"}`}>
+        <div className="mobile-sidebar-content">
           {userInfo && (
-            <Link to="/" onClick={() => setIsOpen(false)} className="text-xl text-gray-700 dark:text-gray-200 hover:text-[#5F5F5F]">Home</Link>
+            <Link to="/" onClick={() => setIsOpen(false)} className="mobile-nav-link">Home</Link>
           )}
           {userInfo && (
-            <Link to="/standings" onClick={() => setIsOpen(false)} className="text-xl text-gray-700 dark:text-gray-200 hover:text-[#5F5F5F]">Standings</Link>
+            <Link to="/standings" onClick={() => setIsOpen(false)} className="mobile-nav-link">Standings</Link>
           )}
           {!userInfo && location.pathname !== "/login" && (
-            <Link to="/login" onClick={() => setIsOpen(false)} className="text-xl text-gray-700 dark:text-gray-200 hover:text-[#5F5F5F]">Login</Link>
+            <Link to="/login" onClick={() => setIsOpen(false)} className="mobile-nav-link">Login</Link>
           )}
           {!userInfo && location.pathname !== "/signup" && (
-            <Link to="/signup" onClick={() => setIsOpen(false)} className="text-xl text-gray-700 dark:text-gray-200 hover:text-[#5F5F5F]">Sign Up</Link>
+            <Link to="/signup" onClick={() => setIsOpen(false)} className="mobile-nav-link">Sign Up</Link>
           )}
           {userInfo && (
-            <button onClick={handleLogout} className="text-xl text-gray-700 dark:text-gray-200 hover:text-red-500 bg-transparent border-none outline-none">Logout</button>
+            <button onClick={handleLogout} className="mobile-logout-button">Logout</button>
           )}
         </div>
       </div>
