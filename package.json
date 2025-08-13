@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "@heroui/react": "^2.8.2",
+    "canvas-confetti": "^1.9.3",
+    "framer-motion": "^12.23.12",
     "typewriter-effect": "^2.22.0"
   }
 }
