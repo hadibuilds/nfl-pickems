@@ -808,7 +808,6 @@
     margin: 16px 0;
     width: 75vw;
     max-width: none;
-    border-radius: 5;
   }
   
   .game-datetime {
@@ -831,7 +830,6 @@
     margin-bottom: 20px;
     width: 75vw;
     max-width: none;
-    border-radius: 5;
     padding: 12px 16px;
   }
   
