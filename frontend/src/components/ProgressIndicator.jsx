@@ -95,39 +95,31 @@ export default function ProgressIndicator({
 
   return (
     <div className="progress-indicator">
-      {/* Main progress line */}
-      <div className="progress-text">
-        {hasResults && (
-          <span style={{ color: '#10B981', fontWeight: '600', marginRight: '12px' }}>
-            Points: {overallProgress.points}/{overallProgress.maxPoints}
-          </span>
-        )}
+      {/* Picks made - above progress bar */}
+      <div className="progress-text" style={{ fontSize: '1.3rem' }}>
         <span>Picks made: {overallProgress.made}/{overallProgress.total}</span>
       </div>
       
       {/* Progress bar */}
-      <div className="progress-bar">
+      <div className="progress-bar" style={{ width: '300px' }}>
         <div 
           className="progress-fill" 
           style={{ width: `${progressPercentage}%` }}
         />
       </div>
       
-      {/* Detailed breakdown */}
-      <div style={{ 
-        fontSize: '0.85rem', 
-        color: '#bbb', 
-        marginTop: '8px',
-        display: 'flex',
-        gap: '16px',
-        flexWrap: 'wrap',
-        justifyContent: 'center'
-      }}>
-        <span>Games: {moneyLineProgress.made}/{moneyLineProgress.total}</span>
-        {propBetProgress.total > 0 && (
-          <span>Props: {propBetProgress.made}/{propBetProgress.total}</span>
-        )}
-      </div>
+      {/* Points - below progress bar */}
+      {hasResults && (
+        <div style={{ 
+          fontSize: '1.2rem', 
+          color: '#10B981', 
+          fontWeight: '600',
+          marginTop: '8px',
+          textAlign: 'center'
+        }}>
+          Points: {overallProgress.points}/{overallProgress.maxPoints}
+        </div>
+      )}
     </div>
   );
 }
