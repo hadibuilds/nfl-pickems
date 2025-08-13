@@ -1,10 +1,10 @@
 /*
- * Enhanced WeekPage Component
+ * FIXED: Enhanced WeekPage Component
  * Displays games for a specific week with improved UI:
  * - Progress indicator showing pick completion and points
  * - Better date/time formatting and positioning
  * - Enhanced locked game styling with visual indicators
- * - Result indicators for correct/incorrect predictions
+ * - FIXED: Result indicators for correct/incorrect predictions (both top-right now)
  * - Improved responsive layout and spacing
  */
 
@@ -26,24 +26,11 @@ export default function WeekPage({
   const navigate = useNavigate();
   const weekGames = games.filter(game => game.week === parseInt(weekNumber));
 
-  // TEMPORARY: Mock game results for testing checkmarks
-  // Remove this when you have real backend data
-  const mockGameResults = {};
-  // COMMENTED OUT - using real data now
-  // weekGames.forEach((game, index) => {
-  //   if (game.locked) { // Only add results for locked games
-  //     mockGameResults[game.id] = {
-  //       winner: index % 2 === 0 ? game.home_team : game.away_team, // Alternate winners
-  //       prop_result: game.prop_bets?.[0]?.options?.[0] || null // First option wins
-  //     };
-  //   }
-  // });
-  
   // Use real results from backend
   const activeGameResults = gameResults;
   
-  console.log('🎮 WeekPage gameResults prop:', gameResults);
-  console.log('🎯 Active game results:', activeGameResults);
+  console.log('🔮 WeekPage gameResults prop:', gameResults);
+  console.log('🔯 Active game results:', activeGameResults);
 
   // Helper function to format date and time
   const formatGameDateTime = (startTime) => {
@@ -62,7 +49,7 @@ export default function WeekPage({
     return { dayAndDate, formattedTime };
   };
 
-  // Helper function to get section result indicator - COMPLETELY OUTSIDE LAYOUT
+  // FIXED: Helper function to get section result indicator - BOTH TOP-RIGHT NOW
   const getSectionResultIndicator = (game, isMoneyLineSection, gameIndex) => {
     if (!activeGameResults[game.id]) return null;
     
@@ -84,10 +71,10 @@ export default function WeekPage({
     
     return (
       <div 
+        className="section-result-indicator"
         style={{
           position: 'absolute',
-          top: isMoneyLineSection ? '6px' : 'auto',
-          bottom: isMoneyLineSection ? 'auto' : '6px', 
+          top: '6px', // FIXED: Both sections now use top positioning
           right: '8px',
           fontSize: '18px',
           fontWeight: 'bold',
@@ -272,7 +259,7 @@ export default function WeekPage({
                 {/* Prop Bet Section */}
                 {game.prop_bets && game.prop_bets.length > 0 && (
                   <div className="game-section prop-bet">
-                    {/* Section result indicator */}
+                    {/* FIXED: Section result indicator - now top-right for both sections */}
                     {getSectionResultIndicator(game, false, gameIndex)}
                     
                     <p className="prop-question">
