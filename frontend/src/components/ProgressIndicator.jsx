@@ -96,12 +96,12 @@ export default function ProgressIndicator({
   return (
     <div className="progress-indicator">
       {/* Picks made - above progress bar */}
-      <div className="progress-text" style={{ fontSize: '1.3rem' }}>
+      <div className="progress-text">
         <span>Picks made: {overallProgress.made}/{overallProgress.total}</span>
       </div>
       
       {/* Progress bar */}
-      <div className="progress-bar" style={{ width: '300px' }}>
+      <div className="progress-bar">
         <div 
           className="progress-fill" 
           style={{ width: `${progressPercentage}%` }}
@@ -111,7 +111,7 @@ export default function ProgressIndicator({
       {/* Points - below progress bar */}
       {hasResults && (
         <div style={{ 
-          fontSize: '1.2rem', 
+          fontSize: '0.85rem', 
           color: '#10B981', 
           fontWeight: '600',
           marginTop: '8px',
