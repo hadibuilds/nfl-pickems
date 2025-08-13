@@ -380,7 +380,7 @@
 }
 
 .progress-bar {
-  width: 200px;
+  width: 50%;
   height: 8px;
   background-color: #444;
   border-radius: 4px;
@@ -806,7 +806,9 @@
 @media (max-width: 768px) {
   .game-box {
     margin: 16px 0;
-    max-width: 100%;
+    width: 75vw;
+    max-width: none;
+    border-radius: 5;
   }
   
   .game-datetime {
@@ -827,11 +829,14 @@
   
   .progress-indicator {
     margin-bottom: 20px;
+    width: 75vw;
+    max-width: none;
+    border-radius: 5;
     padding: 12px 16px;
   }
   
   .progress-bar {
-    width: 150px;
+    width: 50vw;
   }
   
   /* Week card mobile adjustments */
