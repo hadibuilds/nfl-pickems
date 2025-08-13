@@ -13,10 +13,10 @@ export default function WeekSelector() {
           <Link
             key={week}
             to={`/week/${week}`}
-            className="inline-flex items-center space-x-2 px-5 py-2 rounded-full font-semibold text-base text-white hover:bg-violet-600 transition"
+            className="items-center space-x-2 px-4 py-2 rounded-full font-semibold text-base text-white hover:bg-violet-600 transition"
             style={{ backgroundColor: '#2d2d2d' }}
           >
-            <span>Week {week}</span>
+            <span>{week}</span>
           </Link>
         ))}
       </div>
