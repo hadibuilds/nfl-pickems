@@ -175,7 +175,7 @@ export default function WeekPage({
       </div>
 
       {/* Page title */}
-      <h1 className="text-4xl text-center mb-8 font-bold text-white">
+      <h1 className="text-4xl text-center mb-8 text-white">
         Week {weekNumber} Games
       </h1>
 
