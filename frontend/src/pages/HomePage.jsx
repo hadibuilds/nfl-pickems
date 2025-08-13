@@ -33,15 +33,15 @@ function HomePage() {
       </h1>
       {userInfo ? (
         <div>
-          <h2 className="text-white text-2xl mt-10">Good luck, {userInfo.username}!</h2>
+          <h2 className="text-white text-2xl mt-10">Welcome back, {userInfo.username}!</h2>
           <Link
             to="/weeks"
-            className="mt-10 inline-flex items-center space-x-2 px-5 py-2 rounded-full bg-violet-100 text-violet-700 font-semibold text-lg hover:bg-violet-200 hover:text-violet-600 transition"
+            className="mt-10 inline-flex items-center space-x-2 px-5 py-2 rounded-full bg-[#2d2d2d] text-white font-semibold text-lg hover:bg-[#2d2d2d] hover:text-violet-400 transition"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
             </svg>
-            <span>Games</span>
+            <span>Enter</span>
           </Link>
         </div>
       ) : (
