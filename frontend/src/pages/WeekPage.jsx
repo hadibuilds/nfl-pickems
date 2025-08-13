@@ -166,15 +166,17 @@ export default function WeekPage({
         Week {weekNumber} Games
       </h1>
 
-      {/* Progress indicator */}
-      {weekGames.length > 0 && (
-        <ProgressIndicator 
-          games={weekGames}
-          moneyLineSelections={moneyLineSelections}
-          propBetSelections={propBetSelections}
-          gameResults={gameResults}
-        />
-      )}
+      {/* Scaled content */}
+      <div className="week-page-wrapper">
+        {/* Progress indicator */}
+        {weekGames.length > 0 && (
+          <ProgressIndicator 
+            games={weekGames}
+            moneyLineSelections={moneyLineSelections}
+            propBetSelections={propBetSelections}
+            gameResults={gameResults}
+          />
+        )}
 
       {/* Games grid */}
       {weekGames.length === 0 ? (
@@ -299,5 +301,6 @@ export default function WeekPage({
         </div>
       )}
     </div>
+  </div>
   );
 }
