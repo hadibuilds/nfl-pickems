@@ -31,17 +31,16 @@ function HomePage() {
       <Typewriter
         onInit={(typewriter) => {
           typewriter.changeDelay(75)
-          typewriter.typeString("Good luck to everyone,")
+          typewriter.typeString("Good luck everyone,\n")
             .changeDelay(75)
             .pauseFor(1500)
-            .deleteAll()
             .start();
-          typewriter.typeString("except Abdallah.")
+          typewriter.typeString("<span style='font-size: 0.7em; opacity: 0.8;'>except Abdallah.</span>")
             .changeDelay(75)
-            .pauseFor(1500)
-            .deleteAll()
+            .pauseFor(1000)
+            .deleteChars(18)
             .start();
-          typewriter.typeString("Happy Pickems!")
+          typewriter.typeString("!")
         }}
       />
       </h1>
