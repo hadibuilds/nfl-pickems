@@ -651,6 +651,8 @@
   outline: none;
   cursor: pointer;
   transition: color 0.2s ease;
+  padding: 0;
+  margin: 0;
 }
 
 .mobile-logout-button:hover {

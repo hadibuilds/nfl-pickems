@@ -59,7 +59,7 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
           {/* Desktop Links */}
           {userInfo && (
             <div className="desktop-nav">
-              <Link to="/" className="nav-link">Home</Link>
+              <Link to="/weeks" className="nav-link">Games</Link>
               <Link to="/standings" className="nav-link">Standings</Link>
               <button
                 onClick={handleLogout}
@@ -90,7 +90,7 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
       <div className={`mobile-sidebar ${isOpen ? "mobile-sidebar-open" : "mobile-sidebar-closed"}`}>
         <div className="mobile-sidebar-content">
           {userInfo && (
-            <Link to="/" onClick={() => setIsOpen(false)} className="mobile-nav-link">Home</Link>
+            <Link to="/weeks" onClick={() => setIsOpen(false)} className="mobile-nav-link">Games</Link>
           )}
           {userInfo && (
             <Link to="/standings" onClick={() => setIsOpen(false)} className="mobile-nav-link">Standings</Link>
