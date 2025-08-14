@@ -529,13 +529,13 @@
 
 /* Logo styling */
 .navbar-logo {
-  height: 7rem;
+  height: 2rem;
   object-fit: contain;
 }
 
 @media (min-width: 640px) {
   .navbar-logo {
-    height: 7rem;
+    height: 2rem;
   }
 }
 
