@@ -329,7 +329,7 @@ export default function WeekPage({
 
                   {/* BOTTOM SECTION - Prop Bet */}
                   {game.prop_bets && game.prop_bets.length > 0 && (
-                    <div className={`game-section prop-bet ${game.prop_bets[0].category === 'take_the_bait' ? 'take-the-bait' : ''}`}>
+                    <div className="game-section prop-bet">
                       {/* Points badge */}
                       <div className="points-badge">2pts</div>
                       
