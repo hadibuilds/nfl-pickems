@@ -214,6 +214,20 @@ export default function WeekPage({
                 >
                   {/* TOP SECTION - Game Info Only */}
                   <div className="game-info-section">
+                    {/* Lock icon - positioned like points badges in other sections */}
+                    {locked && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        color: '#888',
+                        fontSize: '16px',
+                        zIndex: 5
+                      }}>
+                        🔒
+                      </div>
+                    )}
+                    
                     <div className="team-matchup">
                       <span className="team-matchup-text">{game.away_team}</span>
                       <span className="vs-separator">vs</span>
@@ -222,7 +236,6 @@ export default function WeekPage({
                     
                     <div className="game-details">
                       <span className="game-time">{dayAndDate} • {formattedTime} PST</span>
-                      {locked && <span className="lock-icon">🔒</span>}
                     </div>
                   </div>
 
@@ -316,7 +329,7 @@ export default function WeekPage({
 
                   {/* BOTTOM SECTION - Prop Bet */}
                   {game.prop_bets && game.prop_bets.length > 0 && (
-                    <div className="game-section prop-bet">
+                    <div className={`game-section prop-bet ${game.prop_bets[0].category === 'take_the_bait' ? 'take-the-bait' : ''}`}>
                       {/* Points badge */}
                       <div className="points-badge">2pts</div>
                       
@@ -325,7 +338,6 @@ export default function WeekPage({
                       
                       <p className="prop-question">
                         {game.prop_bets[0].question}
-                        {locked && <span className="lock-icon">🔒</span>}
                       </p>
 
                       <div className="button-row">

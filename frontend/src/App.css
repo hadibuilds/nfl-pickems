@@ -68,7 +68,8 @@
 /* Desktop only: Wider cards for better spacing */
 @media (min-width: 769px) {
   .game-box {
-    max-width: 420px;
+    min-width: 320px;
+    max-width: 400px;
   }
 }
 
@@ -136,11 +137,11 @@
 }
 
 /* =================================================================
-   UPDATED: MIDDLE SECTION - MONEY LINE (Light Gray)
+   UPDATED: MIDDLE SECTION - MONEY LINE (Light Gray) - No top padding
    ================================================================= */
 
 .game-section {
-  padding: 40px 16px 16px 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -148,6 +149,11 @@
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
+}
+
+/* Special padding for take-the-bait prop bets only */
+.game-section.prop-bet.take-the-bait {
+  padding: 40px 16px 16px 16px;
 }
 
 .money-line {
@@ -164,12 +170,12 @@
 }
 
 /* =================================================================
-   UPDATED: BOTTOM SECTION - PROP BET (Dark Gray)
+   UPDATED: BOTTOM SECTION - PROP BET (Dark Gray) - Conditional padding
    ================================================================= */
 
 .prop-bet {
   background-color: #1f1f1f;
-  padding: 40px 16px 16px 16px;
+  padding: 16px;
   position: relative;
 }
 
@@ -207,10 +213,17 @@
   position: absolute;
   top: 6px;
   right: 2px;
-  color: #10B981;
   font-size: 16px;
   font-weight: 900;
   z-index: 10;
+}
+
+.game-box .checkmark.correct {
+  color: #10B981;
+}
+
+.game-box .checkmark.incorrect {
+  color: #EF4444;
 }
 
 /* =================================================================
