@@ -1,6 +1,7 @@
 /*
  * Enhanced styles for NFL Pick'ems application
  * Includes improved date/time positioning, locked game states, and better spacing
+ * UPDATED: New three-section card design with proper spacing
  */
 
  #root {
@@ -47,20 +48,19 @@
   align-items: center;
 }
 
-/* Enhanced game box styling - FIXED DIMENSIONS */
+/* UPDATED: Enhanced game box styling */
 .game-box {
-  background-color: #1f1f1f;
-  border-radius: 12px;
+  background-color: #2d2d2d;
+  border-radius: 16px;
   margin: 20px 0;
-  max-width: 400px;
+  max-width: 420px;
   width: 100%;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   color: white;
   overflow: hidden;
   padding: 0;
   margin-bottom: 20px;
   transition: opacity 0.3s ease, filter 0.3s ease;
-  /* FORCE FIXED DIMENSIONS */
   min-width: 0;
   box-sizing: border-box;
 }
@@ -68,30 +68,82 @@
 /* Desktop only: Wider cards for better spacing */
 @media (min-width: 769px) {
   .game-box {
-    max-width: 480px;
+    max-width: 420px;
   }
 }
 
 /* Locked game styling - only gray out if NO results yet */
 .game-box.locked:not(.has-results) {
-  opacity: 0.7;
-  filter: grayscale(0.3);
-  background-color: #2a2a2a;
+  opacity: 0.8;
+  background-color: #3a3a3a;
 }
 
 /* Cards with results look normal */
 .game-box.has-results {
   opacity: 1;
   filter: none;
-  background-color: #1f1f1f;
+  background-color: #2d2d2d;
 }
 
+/* =================================================================
+   NEW: TOP SECTION - GAME INFO (Dark Gray)
+   ================================================================= */
+
+.game-box .game-info-section {
+  background-color: #1f1f1f;
+  padding: 16px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.game-box.locked:not(.has-results) .game-info-section {
+  background-color: #2a2a2a;
+}
+
+/* Team matchup styling */
+.game-box .team-matchup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.game-box .team-matchup-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.game-box .vs-separator {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Game time styling */
+.game-box .game-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.game-box .game-time {
+  font-weight: 500;
+}
+
+/* =================================================================
+   UPDATED: MIDDLE SECTION - MONEY LINE (Light Gray)
+   ================================================================= */
+
 .game-section {
-  padding: 16px;
+  padding: 40px 16px 16px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* PREVENT EXPANSION */
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
@@ -104,27 +156,76 @@
 }
 
 .game-box.locked:not(.has-results) .money-line {
-  background-color: #333333;
+  background-color: #3a3a3a;
 }
 
 .game-box.has-results .money-line {
   background-color: #2d2d2d;
 }
 
+/* =================================================================
+   UPDATED: BOTTOM SECTION - PROP BET (Dark Gray)
+   ================================================================= */
+
 .prop-bet {
   background-color: #1f1f1f;
-  padding: 8px 16px 16px 16px;
+  padding: 40px 16px 16px 16px;
+  position: relative;
 }
 
-.game-box.locked .prop-bet {
+.game-box.locked:not(.has-results) .prop-bet {
   background-color: #2a2a2a;
 }
 
+.game-box.has-results .prop-bet {
+  background-color: #1f1f1f;
+}
+
+/* =================================================================
+   NEW: POINTS BADGES - Hugging Top Corners
+   ================================================================= */
+
+.game-box .points-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: #1d4ed8;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  z-index: 5;
+}
+
+/* =================================================================
+   NEW: CHECKMARKS - Transparent, Top Corner Positioning
+   ================================================================= */
+
+.game-box .checkmark {
+  position: absolute;
+  top: 6px;
+  right: 2px;
+  color: #10B981;
+  font-size: 16px;
+  font-weight: 900;
+  z-index: 10;
+}
+
+/* =================================================================
+   DIVIDERS
+   ================================================================= */
+
 .divider-line {
-  height: 2px;
-  background-color: #444;
+  height: 1px;
+  background-color: #4b5563;
   width: 100%;
 }
+
+/* =================================================================
+   PRESERVED: All your existing text and spacing styles
+   ================================================================= */
 
 .matchup, .prop-question {
   font-size: 1.1rem;
@@ -135,12 +236,6 @@
   line-height: 1.4;
 }
 
-/* Only add padding to matchup text (money-line section) for date/time spacing */
-.matchup {
-  /* Padding only applied to desktop via media query below */
-}
-
-/* Prop question stays centered without any padding */
 .prop-question {
   padding-left: 0;
   padding-right: 0;
@@ -150,14 +245,12 @@
 @media (min-width: 769px) {
   .matchup {
     margin-top: 12px;
-    /* Properly center with equal padding on both sides */
     padding-left: 110px;
     padding-right: 110px;
     margin-left: 0;
     margin-right: 0;
   }
   
-  /* Prop question remains centered on desktop too */
   .prop-question {
     padding-left: 0;
     padding-right: 0;
@@ -169,7 +262,10 @@
   gap: 12px;
 }
 
-/* Enhanced button styling */
+/* =================================================================
+   PRESERVED: All your existing button styling
+   ================================================================= */
+
 .team-button, .propbet-button {
   padding: 12px 24px;
   border: 2px solid transparent;
@@ -212,8 +308,6 @@
   cursor: not-allowed !important;
   pointer-events: none !important;
 }
-
-/* Remove the old hover rules completely */
 
 .team-button.selected, .propbet-button.selected {
   background-color: #7C3AED;
@@ -258,13 +352,13 @@
   opacity: 1;
 }
 
-/* Section result indicators - positioned absolutely in corner */
+/* UPDATED: Section result indicators - positioned in top corner */
 .section-result-indicator {
   position: absolute;
   top: 6px;
-  right: 8px;
-  font-size: 18px;
-  font-weight: bold;
+  right: 2px;
+  font-size: 16px;
+  font-weight: 900;
   z-index: 10;
   pointer-events: none;
 }
@@ -277,30 +371,6 @@
   color: #EF4444 !important;
 }
 
-/* Ensure sections have relative positioning for absolute indicators */
-.money-line {
-  position: relative;
-  background-color: #2d2d2d;
-}
-
-.game-box.locked .money-line {
-  background-color: #333333;
-}
-
-.prop-bet {
-  position: relative;
-  background-color: #1f1f1f;
-  padding: 8px 16px 16px 16px;
-}
-
-.game-box.locked:not(.has-results) .prop-bet {
-  background-color: #2a2a2a;
-}
-
-.game-box.has-results .prop-bet {
-  background-color: #1f1f1f;
-}
-
 .team-button:disabled:hover, .propbet-button:disabled:hover {
   background-color: #555555 !important;
   transform: none !important;
@@ -311,7 +381,7 @@
   transform: none !important;
 }
 
-/* Enhanced date/time positioning */
+/* PRESERVED: Date/time positioning (keeping your existing system) */
 .game-datetime {
   position: absolute;
   top: 8px;
@@ -338,7 +408,6 @@
   white-space: nowrap;
 }
 
-/* Desktop-specific date/time adjustments */
 @media (min-width: 769px) {
   .game-datetime {
     top: 10px;
@@ -359,6 +428,10 @@
   margin-left: 6px;
   vertical-align: middle;
 }
+
+/* =================================================================
+   PRESERVED: All your existing progress, navbar, and other styles
+   ================================================================= */
 
 /* Progress indicator styling */
 .progress-indicator {

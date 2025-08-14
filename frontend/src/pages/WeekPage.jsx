@@ -1,11 +1,9 @@
 /*
- * FIXED: Enhanced WeekPage Component
- * Displays games for a specific week with improved UI:
- * - Progress indicator showing pick completion and points
- * - Better date/time formatting and positioning
- * - Enhanced locked game styling with visual indicators
- * - FIXED: Result indicators for correct/incorrect predictions (both top-right now)
- * - Improved responsive layout and spacing
+ * UPDATED: Enhanced WeekPage Component with New Card Design
+ * Features: Three-section layout, team logos, points badges, transparent checkmarks
+ * - Top section: Game info (team matchup, date/time)
+ * - Middle section: Money line with team logos and 1pt badge
+ * - Bottom section: Prop bet with 2pts badge
  */
 
 import React from 'react';
@@ -18,7 +16,7 @@ export default function WeekPage({
   propBetSelections,
   handleMoneyLineClick,
   handlePropBetClick,
-  gameResults = {}, // Add gameResults prop for showing correct/incorrect picks
+  gameResults = {},
   onRefresh,
   isRefreshing = false
 }) {
@@ -28,29 +26,81 @@ export default function WeekPage({
 
   // Use real results from backend
   const activeGameResults = gameResults;
-  
-  console.log('🔮 WeekPage gameResults prop:', gameResults);
-  console.log('🔯 Active game results:', activeGameResults);
 
-  // Helper function to format date and time
+  // Helper function to get team logo URL from GitHub (for abbreviations from database)
+  const getTeamLogo = (teamAbbr) => {
+    const teamLogos = {
+      // Map abbreviations to mascot filenames
+      'ARI': 'cardinals.png',
+      'ATL': 'falcons.png',
+      'BAL': 'ravens.png',
+      'BUF': 'bills.png',
+      'CAR': 'panthers.png',
+      'CHI': 'bears.png',
+      'CIN': 'bengals.png',
+      'CLE': 'browns.png',
+      'DAL': 'cowboys.png',
+      'DEN': 'broncos.png',
+      'DET': 'lions.png',
+      'GB': 'packers.png',
+      'HOU': 'texans.png',
+      'IND': 'colts.png',
+      'JAX': 'jaguars.png',
+      'KC': 'chiefs.png',
+      'LV': 'raiders.png',
+      'LAC': 'chargers.png',
+      'LAR': 'rams.png',
+      'MIA': 'dolphins.png',
+      'MIN': 'vikings.png',
+      'NE': 'patriots.png',
+      'NO': 'saints.png',
+      'NYG': 'giants.png',
+      'NYJ': 'jets.png',
+      'PHI': 'eagles.png',
+      'PIT': 'steelers.png',
+      'SF': '49ers.png',
+      'SEA': 'seahawks.png',
+      'TB': 'buccaneers.png',
+      'TEN': 'titans.png',
+      'WAS': 'commanders.png'
+    };
+
+    const logoFile = teamLogos[teamAbbr];
+    if (logoFile) {
+      return `https://raw.githubusercontent.com/hadibuilds/team-logos/master/NFL/${logoFile}`;
+    }
+    
+    // Fallback: if abbreviation not found, try lowercase
+    console.warn(`No logo found for team abbreviation: ${teamAbbr}`);
+    return `https://raw.githubusercontent.com/hadibuilds/team-logos/master/NFL/${teamAbbr.toLowerCase()}.png`;
+  };
+
+  // Helper function to format date and time in PST
   const formatGameDateTime = (startTime) => {
     const gameDate = new Date(startTime);
-    const dayAndDate = gameDate.toLocaleDateString('en-US', {
+    
+    const pstOptions = {
+      timeZone: 'America/Los_Angeles',
       weekday: 'short',
       month: '2-digit',
       day: '2-digit',
-    });
-    const formattedTime = gameDate.toLocaleTimeString('en-US', {
+    };
+    
+    const timeOptions = {
+      timeZone: 'America/Los_Angeles',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
-    });
+    };
+    
+    const dayAndDate = gameDate.toLocaleDateString('en-US', pstOptions);
+    const formattedTime = gameDate.toLocaleTimeString('en-US', timeOptions);
     
     return { dayAndDate, formattedTime };
   };
 
-  // FIXED: Helper function to get section result indicator - BOTH TOP-RIGHT NOW
-  const getSectionResultIndicator = (game, isMoneyLineSection, gameIndex) => {
+  // Helper function to get section result indicator (checkmarks)
+  const getSectionResultIndicator = (game, isMoneyLineSection) => {
     if (!activeGameResults[game.id]) return null;
     
     let userSelection, actualResult;
@@ -59,7 +109,6 @@ export default function WeekPage({
       userSelection = moneyLineSelections[game.id];
       actualResult = activeGameResults[game.id].winner;
     } else {
-      // Prop bet section
       if (!game.prop_bets || game.prop_bets.length === 0) return null;
       userSelection = propBetSelections[game.prop_bets[0].id];
       actualResult = activeGameResults[game.id].prop_result;
@@ -70,39 +119,8 @@ export default function WeekPage({
     const isCorrect = userSelection === actualResult;
     
     return (
-      <div 
-        className="section-result-indicator"
-        style={{
-          position: 'absolute',
-          top: '6px', // FIXED: Both sections now use top positioning
-          right: '8px',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          zIndex: 1000,
-          pointerEvents: 'none',
-          color: isCorrect ? '#10B981' : '#EF4444',
-          lineHeight: '1',
-          // CRITICAL: Remove from layout flow completely
-          width: '0px',
-          height: '0px',
-          overflow: 'visible',
-          margin: '0',
-          padding: '0',
-          border: 'none',
-          outline: 'none'
-        }}
-      >
-        <span style={{
-          position: 'absolute',
-          right: '0',
-          top: '0',
-          display: 'block',
-          width: '18px',
-          height: '18px',
-          textAlign: 'center'
-        }}>
-          {isCorrect ? '✓' : '✗'}
-        </span>
+      <div className={`checkmark ${isCorrect ? 'correct' : 'incorrect'}`}>
+        {isCorrect ? '✓' : '✗'}
       </div>
     );
   };
@@ -141,12 +159,11 @@ export default function WeekPage({
           </svg>
         </button>
         
-        {/* Refresh button for testing */}
         <button
           onClick={onRefresh}
           disabled={isRefreshing}
           className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl text-white hover:bg-[#1d4ed8] transition disabled:opacity-50"
-          style={{ backgroundColor: '#7c3aed' }}
+          style={{ backgroundColor: '#2d2d2d' }}
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
@@ -178,129 +195,169 @@ export default function WeekPage({
           />
         )}
 
-      {/* Games grid */}
-      {weekGames.length === 0 ? (
-        <p className="text-center" style={{ color: '#9ca3af' }}>
-          No games available for this week.
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {weekGames.map((game, gameIndex) => {
-            const { dayAndDate, formattedTime } = formatGameDateTime(game.start_time);
-            const locked = game.locked || new Date(game.start_time) <= new Date();
-            const hasResults = activeGameResults[game.id] ? true : false;
+        {/* Games grid */}
+        {weekGames.length === 0 ? (
+          <p className="text-center" style={{ color: '#9ca3af' }}>
+            No games available for this week.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {weekGames.map((game, gameIndex) => {
+              const { dayAndDate, formattedTime } = formatGameDateTime(game.start_time);
+              const locked = game.locked || new Date(game.start_time) <= new Date();
+              const hasResults = activeGameResults[game.id] ? true : false;
 
-            return (
-              <div 
-                key={game.id} 
-                className={`game-box ${locked ? 'locked' : ''} ${hasResults ? 'has-results' : ''}`}
-              >
-                {/* Money Line Section */}
-                <div className="game-section money-line">
-                  {/* Section result indicator */}
-                  {getSectionResultIndicator(game, true, gameIndex)}
-                  
-                  {/* Date and time display */}
-                  <div className="game-datetime">
-                    <div className="date-line">{dayAndDate}</div>
-                    <div className="time-line">{formattedTime}</div>
-                  </div>
-
-                  {/* Matchup display */}
-                  <p className="matchup">
-                    {game.away_team} @ {game.home_team}
-                    {locked && <span className="lock-icon">🔒</span>}
-                  </p>
-
-                  {/* Team selection buttons */}
-                  <div className="button-row">
-                    <button
-                      className={getButtonClass(
-                        'team-button',
-                        moneyLineSelections[game.id] === game.away_team,
-                        game,
-                        game.away_team,
-                        true
-                      )}
-                      onClick={() => {
-                        if (!locked) {
-                          handleMoneyLineClick(game, game.away_team);
-                        }
-                      }}
-                      disabled={locked}
-                      aria-label={`Select ${game.away_team} to win`}
-                    >
-                      {game.away_team}
-                    </button>
-                    <button
-                      className={getButtonClass(
-                        'team-button',
-                        moneyLineSelections[game.id] === game.home_team,
-                        game,
-                        game.home_team,
-                        true
-                      )}
-                      onClick={() => {
-                        if (!locked) {
-                          handleMoneyLineClick(game, game.home_team);
-                        }
-                      }}
-                      disabled={locked}
-                      aria-label={`Select ${game.home_team} to win`}
-                    >
-                      {game.home_team}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Divider line (only show if prop bets exist) */}
-                {game.prop_bets && game.prop_bets.length > 0 && (
-                  <div className="divider-line" />
-                )}
-
-                {/* Prop Bet Section */}
-                {game.prop_bets && game.prop_bets.length > 0 && (
-                  <div className="game-section prop-bet">
-                    {/* FIXED: Section result indicator - now top-right for both sections */}
-                    {getSectionResultIndicator(game, false, gameIndex)}
+              return (
+                <div 
+                  key={game.id} 
+                  className={`game-box ${locked ? 'locked' : ''} ${hasResults ? 'has-results' : ''}`}
+                >
+                  {/* TOP SECTION - Game Info Only */}
+                  <div className="game-info-section">
+                    <div className="team-matchup">
+                      <span className="team-matchup-text">{game.away_team}</span>
+                      <span className="vs-separator">vs</span>
+                      <span className="team-matchup-text">{game.home_team}</span>
+                    </div>
                     
-                    <p className="prop-question">
-                      {game.prop_bets[0].question}
+                    <div className="game-details">
+                      <span className="game-time">{dayAndDate} • {formattedTime} PST</span>
                       {locked && <span className="lock-icon">🔒</span>}
-                    </p>
-
-                    {/* Prop bet option buttons */}
-                    <div className="button-row">
-                      {game.prop_bets[0].options.map((option, index) => (
-                        <button
-                          key={index}
-                          className={getButtonClass(
-                            'propbet-button',
-                            propBetSelections[game.prop_bets[0].id] === option,
-                            game,
-                            option,
-                            false
-                          )}
-                          onClick={() => {
-                            if (!locked) {
-                              handlePropBetClick(game, option);
-                            }
-                          }}
-                          disabled={locked}
-                          aria-label={`Select ${option} for prop bet`}
-                        >
-                          {option}
-                        </button>
-                      ))}
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+
+                  {/* DIVIDER */}
+                  <div className="divider-line" />
+
+                  {/* MIDDLE SECTION - Money Line */}
+                  <div className="game-section money-line">
+                    {/* Points badge */}
+                    <div className="points-badge">1pt</div>
+                    
+                    {/* Checkmark */}
+                    {getSectionResultIndicator(game, true)}
+                    
+                    {/* Team buttons with logos */}
+                    <div className="button-row">
+                      <button
+                        className={getButtonClass(
+                          'team-button',
+                          moneyLineSelections[game.id] === game.away_team,
+                          game,
+                          game.away_team,
+                          true
+                        )}
+                        onClick={() => {
+                          if (!locked) {
+                            handleMoneyLineClick(game, game.away_team);
+                          }
+                        }}
+                        disabled={locked}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <img 
+                          src={getTeamLogo(game.away_team)} 
+                          alt={`${game.away_team} logo`}
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            objectFit: 'contain'
+                          }}
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                        <span style={{fontSize: '0.8rem', fontWeight: '600'}}>{game.away_team}</span>
+                      </button>
+                      
+                      <button
+                        className={getButtonClass(
+                          'team-button',
+                          moneyLineSelections[game.id] === game.home_team,
+                          game,
+                          game.home_team,
+                          true
+                        )}
+                        onClick={() => {
+                          if (!locked) {
+                            handleMoneyLineClick(game, game.home_team);
+                          }
+                        }}
+                        disabled={locked}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <img 
+                          src={getTeamLogo(game.home_team)} 
+                          alt={`${game.home_team} logo`}
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            objectFit: 'contain'
+                          }}
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                        <span style={{fontSize: '0.8rem', fontWeight: '600'}}>{game.home_team}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* DIVIDER (only if prop bets exist) */}
+                  {game.prop_bets && game.prop_bets.length > 0 && (
+                    <div className="divider-line" />
+                  )}
+
+                  {/* BOTTOM SECTION - Prop Bet */}
+                  {game.prop_bets && game.prop_bets.length > 0 && (
+                    <div className="game-section prop-bet">
+                      {/* Points badge */}
+                      <div className="points-badge">2pts</div>
+                      
+                      {/* Checkmark */}
+                      {getSectionResultIndicator(game, false)}
+                      
+                      <p className="prop-question">
+                        {game.prop_bets[0].question}
+                        {locked && <span className="lock-icon">🔒</span>}
+                      </p>
+
+                      <div className="button-row">
+                        {game.prop_bets[0].options.map((option, index) => (
+                          <button
+                            key={index}
+                            className={getButtonClass(
+                              'propbet-button',
+                              propBetSelections[game.prop_bets[0].id] === option,
+                              game,
+                              option,
+                              false
+                            )}
+                            onClick={() => {
+                              if (!locked) {
+                                handlePropBetClick(game, option);
+                              }
+                            }}
+                            disabled={locked}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
   );
 }
