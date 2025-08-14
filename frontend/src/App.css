@@ -891,7 +891,7 @@
 /* Scale up everything in the week page */
 .week-page-wrapper {
   transform: scale(1.1);
-  transform-origin: top left; /* Keeps it centered when scaling */
+  transform-origin: top center; /* Keeps it centered when scaling */
 }
 
 /* Mobile responsiveness */
