@@ -103,7 +103,7 @@ export default function WeekSelector() {
   };
 
   return (
-    <div className="min-h-screen py-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
+    <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {weeks.map((week) => {
