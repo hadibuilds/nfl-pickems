@@ -229,7 +229,7 @@ const [touchEndX, setTouchEndX] = useState(0);
       if (!touchStartX || !touchEndX) return;
       
       const swipeDistance = touchEndX - touchStartX;
-      const minSwipeDistance = 50; // Minimum pixels for a valid swipe
+      const minSwipeDistance = 20; // Minimum pixels for a valid swipe
       
       // Right swipe (positive distance) and menu is open
       if (swipeDistance > minSwipeDistance && isOpen) {
