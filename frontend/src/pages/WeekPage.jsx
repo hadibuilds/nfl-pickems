@@ -184,7 +184,7 @@ export default function WeekPage({
       // Ensure spinner shows for at least 1 second, even if API is faster
       await Promise.all([
         handleMoneyLineClick(game, team),
-        new Promise(resolve => setTimeout(resolve, 1000))
+        new Promise(resolve => setTimeout(resolve, 500))
       ]);
       
       // Show saved state
@@ -253,7 +253,7 @@ export default function WeekPage({
       // Ensure spinner shows for at least 1 second, even if API is faster
       await Promise.all([
         handlePropBetClick(game, answer),
-        new Promise(resolve => setTimeout(resolve, 1000))
+        new Promise(resolve => setTimeout(resolve, 500))
       ]);
       
       // Show saved state
