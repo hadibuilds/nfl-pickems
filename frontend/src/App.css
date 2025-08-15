@@ -188,7 +188,143 @@
 }
 
 /* =================================================================
-   NEW: POINTS BADGES - Hugging Top Corners
+   SAVE STATE INDICATORS - Real-time Save Feedback
+   ================================================================= */
+
+/* Base positioning for all save state indicators */
+.save-spinner,
+.save-success,
+.save-error {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  z-index: 5;
+}
+
+/* Spinning save indicator */
+.save-spinner {
+  background-color: #6366f1; /* Indigo for loading state */
+  color: white;
+}
+
+.spinner-icon {
+  animation: spin 1s linear infinite;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Saved success indicator */
+.save-success {
+  background-color: #10B981; /* Green for success */
+  color: white;
+  animation: saveSuccess 0.3s ease-in-out;
+}
+
+.saved-icon {
+  font-size: 12px;
+  animation: checkmarkPop 0.4s ease-out;
+}
+
+@keyframes saveSuccess {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes checkmarkPop {
+  0% {
+    transform: scale(0.5);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Error state indicator */
+.save-error {
+  background-color: #EF4444; /* Red for error */
+  color: white;
+  animation: errorPulse 0.5s ease-in-out;
+}
+
+.error-icon {
+  font-size: 12px;
+  animation: errorShake 0.5s ease-in-out;
+}
+
+@keyframes errorPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes errorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* Fade out animations for auto-clearing states */
+.save-success.fade-out,
+.save-error.fade-out {
+  animation: fadeOut 0.5s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* =================================================================
+   PRESERVED: POINTS BADGES - For Future Correct Prediction Display
    ================================================================= */
 
 .game-box .points-badge {
@@ -203,6 +339,27 @@
   border-radius: 12px;
   letter-spacing: 0.5px;
   z-index: 5;
+}
+
+/* Future use: Points badges only on correct predictions */
+.game-box .points-badge.correct-prediction {
+  background-color: #10B981; /* Green for correct predictions */
+  animation: correctBadge 0.6s ease-out;
+}
+
+@keyframes correctBadge {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* =================================================================
@@ -285,7 +442,7 @@
   border-radius: 8px;
   background-color: #383850;
   color: white;
-  font-weight: normal;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   box-sizing: border-box;
