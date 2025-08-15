@@ -105,32 +105,39 @@ export default function WeekPage({
     return { dayAndDate, formattedTime };
   };
 
-  // Helper function to get section result indicator (checkmarks)
-  const getSectionResultIndicator = (game, isMoneyLineSection) => {
+ // Helper function to get correct prediction point badge (green badges for correct answers only)
+  const getCorrectPredictionBadge = (game, isMoneyLineSection) => {
     if (!activeGameResults[game.id]) return null;
-    
-    let userSelection, actualResult;
-    
+  
+    let userSelection, actualResult, points;
+  
     if (isMoneyLineSection) {
       userSelection = moneyLineSelections[game.id];
       actualResult = activeGameResults[game.id].winner;
+      points = 1; // 1pt for money line
     } else {
       if (!game.prop_bets || game.prop_bets.length === 0) return null;
       userSelection = propBetSelections[game.prop_bets[0].id];
       actualResult = activeGameResults[game.id].prop_result;
+      points = 2; // 2pts for prop bet
     }
-    
+  
     if (!userSelection || !actualResult) return null;
-    
+  
     const isCorrect = userSelection === actualResult;
-    
-    return (
-      <div className={`checkmark ${isCorrect ? 'correct' : 'incorrect'}`}>
-        {isCorrect ? '✓' : '✗'}
-      </div>
-    );
+  
+    // Only show badge if prediction is correct
+    if (isCorrect) {
+      return (
+        <div className="points-badge correct-prediction">
+          {points}pt{points > 1 ? 's' : ''}
+        </div>
+      );
+    }
+  
+    // Return nothing if incorrect
+    return null;
   };
-
   // Helper function to get save state indicator (spinner/saved/error)
   const getSaveStateIndicator = (game, isMoneyLineSection) => {
     const stateKey = `${game.id}-${isMoneyLineSection ? 'moneyline' : 'propbet'}`;
@@ -422,8 +429,8 @@ export default function WeekPage({
                     {/* Save state indicator (replaces points badge) */}
                     {getSaveStateIndicator(game, true)}
                     
-                    {/* Checkmark for results */}
-                    {getSectionResultIndicator(game, true)}
+                    {/* Correct prediction badge */}
+                    {getCorrectPredictionBadge(game, true)}
                     
                     {/* Team buttons with logos */}
                     <div className="button-row">
@@ -508,8 +515,8 @@ export default function WeekPage({
                       {/* Save state indicator (replaces points badge) */}
                       {getSaveStateIndicator(game, false)}
                       
-                      {/* Checkmark for results */}
-                      {getSectionResultIndicator(game, false)}
+                      {/* Correct prediction badge */}
+                      {getCorrectPredictionBadge(game, false)}
                       
                       <p className="prop-question">
                         {game.prop_bets[0].question}

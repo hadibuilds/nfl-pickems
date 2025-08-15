@@ -269,7 +269,12 @@ export default function App() {
             path="/weeks"
             element={
               <PrivateRoute>
-                <WeekSelector />
+                <WeekSelector 
+                  games={sortedGames}
+                  gameResults={gameResults}
+                  moneyLineSelections={moneyLineSelections}
+                  propBetSelections={propBetSelections}
+                />
               </PrivateRoute>
             }
           />
