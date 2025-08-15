@@ -137,12 +137,12 @@ export default function WeekPage({
     const saveState = saveStates[stateKey];
     
     if (!saveState) return null;
-    
+
     switch (saveState) {
       case 'saving':
         return (
           <div className="save-spinner">
-            <div className="spinner-icon">⟳</div>
+            <div className="simple-spinner"></div>
           </div>
         );
       case 'saved':
@@ -161,6 +161,7 @@ export default function WeekPage({
         return null;
     }
   };
+
   // Enhanced money line click handler with save feedback
   const handleMoneyLineClickWithFeedback = async (game, team) => {
     if (game.locked) return;

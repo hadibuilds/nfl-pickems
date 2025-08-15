@@ -191,8 +191,35 @@
    SAVE STATE INDICATORS - Real-time Save Feedback
    ================================================================= */
 
-/* Base positioning for all save state indicators */
-.save-spinner,
+/* Spinner container with HeroUI component */
+.save-spinner {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  z-index: 5;
+}
+
+.simple-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid #8B5CF6;
+  border-right: 2px solid #7C3AED;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Success and error states (same styling as before) */
 .save-success,
 .save-error {
   position: absolute;
@@ -207,26 +234,6 @@
   font-size: 0.75rem;
   font-weight: 700;
   z-index: 5;
-}
-
-/* Spinning save indicator */
-.save-spinner {
-  background-color: #6366f1; /* Indigo for loading state */
-  color: white;
-}
-
-.spinner-icon {
-  animation: spin 1s linear infinite;
-  font-size: 14px;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Saved success indicator */
@@ -252,18 +259,6 @@
   100% {
     transform: scale(1);
     opacity: 1;
-  }
-}
-
-@keyframes checkmarkPop {
-  0% {
-    transform: scale(0.5);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
   }
 }
 
@@ -442,7 +437,7 @@
   border-radius: 8px;
   background-color: #383850;
   color: white;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   box-sizing: border-box;
