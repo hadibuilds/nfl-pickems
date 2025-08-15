@@ -339,7 +339,6 @@
 /* Future use: Points badges only on correct predictions */
 .game-box .points-badge.correct-prediction {
   background-color: #10B981; /* Green for correct predictions */
-  animation: correctBadge 0.6s ease-out;
 }
 
 @keyframes correctBadge {
@@ -355,27 +354,6 @@
     transform: scale(1);
     opacity: 1;
   }
-}
-
-/* =================================================================
-   NEW: CHECKMARKS - Transparent, Top Corner Positioning
-   ================================================================= */
-
-.game-box .checkmark {
-  position: absolute;
-  top: 6px;
-  right: 2px;
-  font-size: 16px;
-  font-weight: 900;
-  z-index: 10;
-}
-
-.game-box .checkmark.correct {
-  color: #10B981;
-}
-
-.game-box .checkmark.incorrect {
-  color: #EF4444;
 }
 
 /* =================================================================

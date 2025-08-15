@@ -1,51 +1,119 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-export default function WeekSelector() {
+export default function WeekSelector({ 
+  games = [], 
+  gameResults = {}, 
+  moneyLineSelections = {}, 
+  propBetSelections = {} 
+}) {
   const totalWeeks = 18;
   const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
-  
-  // TODO: Replace these with real data from your backend/context
-  // You'll need to pass these as props or get from context:
-  // - games data for each week
-  // - current week number
-  // - completed weeks with points
-  // - game results
-  
-  const getWeekStatus = (weekNumber) => {
+
+  const getCurrentNFLWeek = () => {
     const now = new Date();
+    const firstTuesday = new Date('2025-09-02T16:00:00Z'); // Sept 2, 2025 8 AM PST
+    const seasonStart = new Date('2025-08-14T00:00:00Z'); // Week 1 opens early (today)
     
-    // FOR TESTING: Week 1 starts today and lasts 4 weeks (28 days)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Start of today
+    // EXCEPTION: Week 1 starts early (August 14) but ends on normal schedule
+    if (now >= seasonStart && now < firstTuesday) {
+      return 1; // Extended Week 1 period
+    }
     
-    if (weekNumber === 1) {
-      // Week 1 is current for 4 weeks starting today
-      const week1End = new Date(today);
-      week1End.setDate(today.getDate() + 28); // 4 weeks from today
+    // Normal weekly logic starting from Week 1's official Tuesday
+    for (let weekNumber = 1; weekNumber <= 18; weekNumber++) {
+      const weekStart = new Date(firstTuesday);
+      weekStart.setDate(firstTuesday.getDate() + ((weekNumber - 1) * 7));
       
-      if (now >= today && now < week1End) {
-        return {
-          status: 'current',
-          points: null,
-          label: 'Current Week'
-        };
-      } else if (now >= week1End) {
-        return {
-          status: 'completed',
-          points: null,
-          label: 'Completed'
-        };
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 7); // Next Tuesday
+      
+      // If now is between this Tuesday and next Tuesday, this is the current week
+      if (now >= weekStart && now < weekEnd) {
+        return weekNumber;
       }
-    } else {
-      // All other weeks are upcoming for now
+    }
+    
+    // If we're after Week 18 ends, return null (post-season)
+    return null;
+  };
+
+  const getWeekStatus = (weekNumber) => {
+    const currentNFLWeek = getCurrentNFLWeek();
+    const weekGames = games.filter(game => game.week === weekNumber);
+    
+    // If no games, it's upcoming (shouldn't happen since you populated all weeks)
+    if (weekGames.length === 0) {
       return {
         status: 'upcoming',
         points: null,
         label: 'Coming Soon'
       };
     }
-    
+
+    // Check if ALL games have results (winner field populated in database)
+    // AND all prop bets have correct_answer populated
+    const allGamesHaveResults = weekGames.every(game => {
+      // Check if game has winner (from your Game.winner field)
+      const hasMoneyLineResult = gameResults[game.id]?.winner;
+      
+      // Check if all prop bets have correct_answer (from your PropBet.correct_answer field)
+      const hasPropResult = !game.prop_bets?.length || 
+        game.prop_bets.every(propBet => gameResults[game.id]?.prop_result);
+      
+      return hasMoneyLineResult && hasPropResult;
+    });
+
+    // If all games have results, week is completed
+    if (allGamesHaveResults) {
+      // Calculate total points earned for this week
+      let totalPoints = 0;
+      
+      weekGames.forEach(game => {
+        // Money line points (1pt) - based on Game.winner vs user prediction
+        const userMoneyLinePick = moneyLineSelections[game.id];
+        const actualWinner = gameResults[game.id]?.winner;
+        if (userMoneyLinePick === actualWinner) {
+          totalPoints += 1;
+        }
+        
+        // Prop bet points (2pts) - based on PropBet.correct_answer vs user prediction
+        if (game.prop_bets?.length > 0) {
+          const userPropPick = propBetSelections[game.prop_bets[0].id];
+          const actualPropResult = gameResults[game.id]?.prop_result;
+          if (userPropPick === actualPropResult) {
+            totalPoints += 2;
+          }
+        }
+      });
+
+      return {
+        status: 'completed',
+        points: totalPoints,
+        label: 'Completed'
+      };
+    }
+
+    // If this is THE current NFL week and not completed, it's current
+    if (weekNumber === currentNFLWeek) {
+      return {
+        status: 'current',
+        points: null,
+        label: 'Current Week'
+      };
+    }
+
+    // If week is before current week but not completed, it's still current
+    // (in case games got postponed or results delayed)
+    if (weekNumber < currentNFLWeek && !allGamesHaveResults) {
+      return {
+        status: 'current',
+        points: null,
+        label: 'In Progress'
+      };
+    }
+
+    // Otherwise it's upcoming
     return {
       status: 'upcoming',
       points: null,

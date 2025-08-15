@@ -80,7 +80,18 @@ class PropBetPrediction(models.Model):
         unique_together = ('user', 'prop_bet')
 
     def save(self, *args, **kwargs):
-        if hasattr(self, 'prop_bet') and hasattr(self.prop_bet, 'game') and self.prop_bet.game.is_locked:
+    # Allow updates to correctness even when locked
+        if self.pk:
+            old = PropBetPrediction.objects.get(pk=self.pk)
+            updating_correctness_only = (
+                self.user == old.user and
+                self.prop_bet == old.prop_bet and
+                self.answer == old.answer
+            )
+        else:
+            updating_correctness_only = False
+
+        if hasattr(self, 'prop_bet') and hasattr(self.prop_bet, 'game') and self.prop_bet.game.is_locked and not updating_correctness_only:
             if not any('django/contrib/admin' in frame.filename for frame in inspect.stack()):
                 raise ValueError("This prop bet is locked. You cannot change your prediction.")
 
