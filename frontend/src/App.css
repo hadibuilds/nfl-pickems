@@ -1044,7 +1044,7 @@
 
 /* Scale up everything in the week page */
 .week-page-wrapper {
-  transform: scale(1);
+  transform: scale(1.15);
   transform-origin: top center; /* Keeps it centered when scaling */
 }
 
