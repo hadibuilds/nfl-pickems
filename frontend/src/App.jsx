@@ -40,6 +40,9 @@ export default function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const [touchStartX, setTouchStartX] = useState(0);
+const [touchEndX, setTouchEndX] = useState(0);
+
   const API_BASE = import.meta.env.VITE_API_URL;
 
   // Extract data fetching into separate functions for reuse
@@ -212,14 +215,43 @@ export default function App() {
   const sortedGames = Array.isArray(games)
     ? [...games].sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
     : [];
+  
+  const handleTouchStart = (e) => {
+      setTouchStartX(e.targetTouches[0].clientX);
+  };
+    
+  const handleTouchEnd = (e) => {
+      setTouchEndX(e.changedTouches[0].clientX);
+      handleSwipe();
+  };
+    
+  const handleSwipe = () => {
+      if (!touchStartX || !touchEndX) return;
+      
+      const swipeDistance = touchEndX - touchStartX;
+      const minSwipeDistance = 50; // Minimum pixels for a valid swipe
+      
+      // Right swipe (positive distance) and menu is open
+      if (swipeDistance > minSwipeDistance && isOpen) {
+        setIsOpen(false);
+      }
+      
+      // Reset touch positions
+      setTouchStartX(0);
+      setTouchEndX(0);
+   };
 
   return (
     <ThemeProvider>
       <Router>
         <ScrollToTop />
         <Navbar userInfo={userInfo} onLogout={logout} isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div className={`transition-transform duration-300 ${isOpen ? "-translate-x-64" : "translate-x-0"}`}>
-          <Routes>
+        <div 
+          className={`transition-transform duration-300 ${isOpen ? "-translate-x-[40vw]" : "translate-x-0"}`} 
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        > 
+          <Routes>  
           <Route
             path="/"
             element={

@@ -99,7 +99,7 @@ export default function WeekSelector({
       return {
         status: 'current',
         points: null,
-        label: 'Current Week'
+        label: 'Current'
       };
     }
 

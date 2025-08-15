@@ -341,21 +341,6 @@
   background-color: #10B981; /* Green for correct predictions */
 }
 
-@keyframes correctBadge {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 /* =================================================================
    DIVIDERS
    ================================================================= */
@@ -820,8 +805,8 @@
   top: 0;
   right: 0;
   height: 100%;
-  width: 50vw; /* CHANGED: from 16rem to 50vw to prevent logo overlap */
-  max-width: 50vw; /* ADDED: Ensure it never exceeds 50% */
+  width: 40vw; /* CHANGED: from 16rem to 50vw to prevent logo overlap */
+  max-width: 40vw; /* ADDED: Ensure it never exceeds 50% */
   z-index: 40;
   transition: transform 0.3s ease;
   background-color: #1E1E20;
