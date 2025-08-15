@@ -516,15 +516,16 @@
   }
 }
 
-/* Navbar content wrapper */
+/* UPDATED: Navbar content wrapper - matches page content padding */
 .navbar-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  max-width: 80rem;
-  margin: 0 auto;
+  padding: 8px 16px; /* CHANGED: from 8px 12px to 8px 16px to match px-4 */
+  /* REMOVED: max-width: 80rem; margin: 0 auto; */
   height: 100%;
+  width: 100%; /* ADDED: Full width to match page content approach */
+  box-sizing: border-box; /* ADDED: Ensure padding is included in width */
 }
 
 /* Logo styling */
@@ -683,13 +684,14 @@
   transform: rotate(-45deg) translateY(-0.375rem);
 }
 
-/* Mobile sidebar */
+/* Mobile sidebar - UPDATED: Limited to 50% viewport width */
 .mobile-sidebar {
   position: fixed;
   top: 0;
   right: 0;
   height: 100%;
-  width: 16rem;
+  width: 50vw; /* CHANGED: from 16rem to 50vw to prevent logo overlap */
+  max-width: 50vw; /* ADDED: Ensure it never exceeds 50% */
   z-index: 40;
   transition: transform 0.3s ease;
   background-color: #1E1E20;
