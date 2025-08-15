@@ -1,12 +1,12 @@
 /*
- * UPDATED: Enhanced WeekPage Component with New Card Design
- * Features: Three-section layout, team logos, points badges, transparent checkmarks
- * - Top section: Game info (team matchup, date/time)
- * - Middle section: Money line with team logos and 1pt badge
- * - Bottom section: Prop bet with 2pts badge
+ * UPDATED: Enhanced WeekPage Component with Real-time Save Feedback
+ * Features: Spinner and saved animations replace points badges during save operations
+ * - Spinner shows during API POST request
+ * - Brief saved animation confirms database update
+ * - Points badges removed (CSS preserved for future correct prediction display)
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ProgressIndicator from '../components/ProgressIndicator';
 
@@ -23,6 +23,12 @@ export default function WeekPage({
   const { weekNumber } = useParams();
   const navigate = useNavigate();
   const weekGames = games.filter(game => game.week === parseInt(weekNumber));
+
+  // Save state management for real-time feedback
+  const [saveStates, setSaveStates] = useState({});
+  // Format: { 'gameId-moneyline': 'saving'|'saved'|'error', 'gameId-propbet': 'saving'|'saved'|'error' }
+
+  const [saveTimeouts, setSaveTimeouts] = useState({});
 
   // Use real results from backend
   const activeGameResults = gameResults;
@@ -123,6 +129,174 @@ export default function WeekPage({
         {isCorrect ? '✓' : '✗'}
       </div>
     );
+  };
+
+  // Helper function to get save state indicator (spinner/saved/error)
+  const getSaveStateIndicator = (game, isMoneyLineSection) => {
+    const stateKey = `${game.id}-${isMoneyLineSection ? 'moneyline' : 'propbet'}`;
+    const saveState = saveStates[stateKey];
+    
+    if (!saveState) return null;
+    
+    switch (saveState) {
+      case 'saving':
+        return (
+          <div className="save-spinner">
+            <div className="spinner-icon">⟳</div>
+          </div>
+        );
+      case 'saved':
+        return (
+          <div className="save-success">
+            <div className="saved-icon">✓</div>
+          </div>
+        );
+      case 'error':
+        return (
+          <div className="save-error">
+            <div className="error-icon">⚠</div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+  // Enhanced money line click handler with save feedback
+  const handleMoneyLineClickWithFeedback = async (game, team) => {
+    if (game.locked) return;
+    
+    const stateKey = `${game.id}-moneyline`;
+    
+    // Clear any existing timeout for this section
+    if (saveTimeouts[stateKey]) {
+      clearTimeout(saveTimeouts[stateKey]);
+      setSaveTimeouts(prev => {
+        const newTimeouts = { ...prev };
+        delete newTimeouts[stateKey];
+        return newTimeouts;
+      });
+    }
+    
+    try {
+      // Show spinner
+      setSaveStates(prev => ({ ...prev, [stateKey]: 'saving' }));
+      
+      // Ensure spinner shows for at least 1 second, even if API is faster
+      await Promise.all([
+        handleMoneyLineClick(game, team),
+        new Promise(resolve => setTimeout(resolve, 1000))
+      ]);
+      
+      // Show saved state
+      setSaveStates(prev => ({ ...prev, [stateKey]: 'saved' }));
+      
+      // Set new timeout and track it
+      const timeoutId = setTimeout(() => {
+        setSaveStates(prev => {
+          const newState = { ...prev };
+          delete newState[stateKey];
+          return newState;
+        });
+        setSaveTimeouts(prev => {
+          const newTimeouts = { ...prev };
+          delete newTimeouts[stateKey];
+          return newTimeouts;
+        });
+      }, 2000);
+      
+      setSaveTimeouts(prev => ({ ...prev, [stateKey]: timeoutId }));
+      
+    } catch (error) {
+      // Show error state
+      setSaveStates(prev => ({ ...prev, [stateKey]: 'error' }));
+      
+      // Set error timeout and track it
+      const timeoutId = setTimeout(() => {
+        setSaveStates(prev => {
+          const newState = { ...prev };
+          delete newState[stateKey];
+          return newState;
+        });
+        setSaveTimeouts(prev => {
+          const newTimeouts = { ...prev };
+          delete newTimeouts[stateKey];
+          return newTimeouts;
+        });
+      }, 3000);
+      
+      setSaveTimeouts(prev => ({ ...prev, [stateKey]: timeoutId }));
+      
+      console.error('Failed to save money line selection:', error);
+    }
+  };
+
+  // Enhanced prop bet click handler with save feedback
+  const handlePropBetClickWithFeedback = async (game, answer) => {
+    if (game.locked) return;
+    
+    const stateKey = `${game.id}-propbet`;
+    
+    // Clear any existing timeout for this section
+    if (saveTimeouts[stateKey]) {
+      clearTimeout(saveTimeouts[stateKey]);
+      setSaveTimeouts(prev => {
+        const newTimeouts = { ...prev };
+        delete newTimeouts[stateKey];
+        return newTimeouts;
+      });
+    }
+    
+    try {
+      // Show spinner
+      setSaveStates(prev => ({ ...prev, [stateKey]: 'saving' }));
+      
+      // Ensure spinner shows for at least 1 second, even if API is faster
+      await Promise.all([
+        handlePropBetClick(game, answer),
+        new Promise(resolve => setTimeout(resolve, 1000))
+      ]);
+      
+      // Show saved state
+      setSaveStates(prev => ({ ...prev, [stateKey]: 'saved' }));
+      
+      // Set new timeout and track it
+      const timeoutId = setTimeout(() => {
+        setSaveStates(prev => {
+          const newState = { ...prev };
+          delete newState[stateKey];
+          return newState;
+        });
+        setSaveTimeouts(prev => {
+          const newTimeouts = { ...prev };
+          delete newTimeouts[stateKey];
+          return newTimeouts;
+        });
+      }, 2000);
+      
+      setSaveTimeouts(prev => ({ ...prev, [stateKey]: timeoutId }));
+      
+    } catch (error) {
+      // Show error state
+      setSaveStates(prev => ({ ...prev, [stateKey]: 'error' }));
+      
+      // Set error timeout and track it
+      const timeoutId = setTimeout(() => {
+        setSaveStates(prev => {
+          const newState = { ...prev };
+          delete newState[stateKey];
+          return newState;
+        });
+        setSaveTimeouts(prev => {
+          const newTimeouts = { ...prev };
+          delete newTimeouts[stateKey];
+          return newTimeouts;
+        });
+      }, 3000);
+      
+      setSaveTimeouts(prev => ({ ...prev, [stateKey]: timeoutId }));
+      
+      console.error('Failed to save prop bet selection:', error);
+    }
   };
 
   // Helper function to get button class based on results
@@ -244,10 +418,10 @@ export default function WeekPage({
 
                   {/* MIDDLE SECTION - Money Line */}
                   <div className="game-section money-line">
-                    {/* Points badge */}
-                    <div className="points-badge">1pt</div>
+                    {/* Save state indicator (replaces points badge) */}
+                    {getSaveStateIndicator(game, true)}
                     
-                    {/* Checkmark */}
+                    {/* Checkmark for results */}
                     {getSectionResultIndicator(game, true)}
                     
                     {/* Team buttons with logos */}
@@ -262,7 +436,7 @@ export default function WeekPage({
                         )}
                         onClick={() => {
                           if (!locked) {
-                            handleMoneyLineClick(game, game.away_team);
+                            handleMoneyLineClickWithFeedback(game, game.away_team);
                           }
                         }}
                         disabled={locked}
@@ -296,7 +470,7 @@ export default function WeekPage({
                         )}
                         onClick={() => {
                           if (!locked) {
-                            handleMoneyLineClick(game, game.home_team);
+                            handleMoneyLineClickWithFeedback(game, game.home_team);
                           }
                         }}
                         disabled={locked}
@@ -330,10 +504,10 @@ export default function WeekPage({
                   {/* BOTTOM SECTION - Prop Bet */}
                   {game.prop_bets && game.prop_bets.length > 0 && (
                     <div className="game-section prop-bet">
-                      {/* Points badge */}
-                      <div className="points-badge">2pts</div>
+                      {/* Save state indicator (replaces points badge) */}
+                      {getSaveStateIndicator(game, false)}
                       
-                      {/* Checkmark */}
+                      {/* Checkmark for results */}
                       {getSectionResultIndicator(game, false)}
                       
                       <p className="prop-question">
@@ -353,7 +527,7 @@ export default function WeekPage({
                             )}
                             onClick={() => {
                               if (!locked) {
-                                handlePropBetClick(game, option);
+                                handlePropBetClickWithFeedback(game, option);
                               }
                             }}
                             disabled={locked}

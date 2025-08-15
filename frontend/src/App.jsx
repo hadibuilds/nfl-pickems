@@ -143,7 +143,7 @@ export default function App() {
   const handleMoneyLineClick = async (game, team) => {
     if (game.locked) return;
     const updated = { ...moneyLineSelections, [game.id]: team };
-
+  
     try {
       const res = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
         method: 'POST',
@@ -154,20 +154,33 @@ export default function App() {
         body: JSON.stringify({ game_id: game.id, predicted_winner: team }),
         credentials: 'include',
       });
+      
       const data = await res.json();
-      if (data.success) setMoneyLineSelections(updated);
+      
+      if (!res.ok) {
+        throw new Error(data.message || `HTTP error! status: ${res.status}`);
+      }
+      
+      if (data.success) {
+        setMoneyLineSelections(updated);
+        return data; // Return success data
+      } else {
+        throw new Error(data.message || 'Save failed');
+      }
     } catch (err) {
       console.error("Failed to save moneyline selection:", err);
+      throw err; // Re-throw to trigger error state in WeekPage
     }
   };
-
+  
+  // Find this function in your App.jsx and replace it:
   const handlePropBetClick = async (game, answer) => {
     if (game.locked) return;
     const propBetId = game.prop_bets?.[0]?.id;
     if (!propBetId) return;
-
+  
     const updated = { ...propBetSelections, [propBetId]: answer };
-
+  
     try {
       const res = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
         method: 'POST',
@@ -178,13 +191,24 @@ export default function App() {
         body: JSON.stringify({ prop_bet_id: propBetId, answer }),
         credentials: 'include',
       });
+      
       const data = await res.json();
-      if (data.success) setPropBetSelections(updated);
+      
+      if (!res.ok) {
+        throw new Error(data.message || `HTTP error! status: ${res.status}`);
+      }
+      
+      if (data.success) {
+        setPropBetSelections(updated);
+        return data; // Return success data
+      } else {
+        throw new Error(data.message || 'Save failed');
+      }
     } catch (err) {
       console.error("Failed to save prop bet selection:", err);
+      throw err; // Re-throw to trigger error state in WeekPage
     }
   };
-
   const sortedGames = Array.isArray(games)
     ? [...games].sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
     : [];
