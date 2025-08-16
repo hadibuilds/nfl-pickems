@@ -26,16 +26,32 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch(`${API_BASE}/accounts/api/user/`, {
+        // First ensure we have CSRF token
+        await fetch(`${API_BASE}/accounts/api/csrf/`, {
           credentials: 'include',
         });
+
+        // Try the whoami endpoint (like your old version)
+        const res = await fetch(`${API_BASE}/accounts/api/whoami/`, {
+          credentials: 'include',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+          },
+        });
+        
+        console.log('Auth check response:', res.status, res.statusText);
         
         if (res.ok) {
           const userData = await res.json();
-          setUserInfo(userData);
+          console.log('Auth check data:', userData);
+          setUserInfo(userData?.username ? userData : null);
+        } else {
+          console.log('Auth check failed - user not logged in');
+          setUserInfo(null);
         }
       } catch (err) {
         console.error('Auth check failed:', err);
+        setUserInfo(null);
       } finally {
         setIsLoading(false);
       }
