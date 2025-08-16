@@ -1,18 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { useAuth } from "../context/AuthContext";
-
-const getCookie = (name) => {
-  const cookie = document.cookie
-    .split("; ")
-    .find(row => row.startsWith(name + "="));
-  return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
-};
+import { useAuthWithNavigation } from "../hooks/useAuthWithNavigation";
+import { getCookie } from "../utils/cookies";
 
 export default function SignUpPage() {
-  const { setUserInfo } = useAuth();
-  const navigate = useNavigate();
+  const { setUserInfo, navigate } = useAuthWithNavigation();
 
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState({

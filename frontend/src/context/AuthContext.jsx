@@ -1,139 +1,113 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+/*
+ * Authentication Context - Clean Version
+ * Only handles auth state, no navigation logic
+ * Components handle their own navigation after auth actions
+ */
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const getCookie = (name) => {
-    const value = document.cookie
-      .split('; ')
-      .find(row => row.startsWith(name + '='));
-    return value ? decodeURIComponent(value.split('=')[1]) : null;
-  };
+  const API_BASE = import.meta.env.VITE_API_URL;
 
-  const prefetchCSRF = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/csrf/`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-      console.log("✅ Prefetched CSRF:", res.status);
-    } catch (err) {
-      console.error("❌ Failed to fetch CSRF token:", err);
-    }
-  };
-
-  const checkWhoAmI = async () => {
-    const csrf = getCookie("csrftoken");
-    if (!csrf) {
-      console.warn("⚠️ Missing CSRF token before /whoami call");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/whoami/`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': csrf },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setUserInfo(data?.username ? data : null);
-      } else {
-        setUserInfo(null);
-      }
-    } catch (err) {
-      console.error("❌ Failed to fetch whoami:", err);
-      setUserInfo(null);
-    }
-  };
-
+  // Check if user is already logged in on app start
   useEffect(() => {
-    const init = async () => {
-      await prefetchCSRF(); // always fetch CSRF on first load
-
-      if (localStorage.getItem("justLoggedOut")) {
-        console.log("⏸️ Skipping whoami check due to logout");
-        localStorage.removeItem("justLoggedOut");
-        setIsLoading(false);
-        return;
-      }
-
-      const shouldRunAuthCheck =
-        !window.location.pathname.startsWith('/login') &&
-        !window.location.pathname.startsWith('/signup');
-
-      if (!shouldRunAuthCheck) {
-        setIsLoading(false);
-        return;
-      }
-
-      const csrf = getCookie('csrftoken');
-      if (!csrf) {
-        console.warn("⚠️ No CSRF token present before whoami call.");
-        setIsLoading(false);
-        return;
-      }
-
+    const checkAuth = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/whoami/`, {
+        const res = await fetch(`${API_BASE}/accounts/api/user/`, {
           credentials: 'include',
-          headers: { 'X-CSRFToken': csrf },
         });
-
+        
         if (res.ok) {
-          const data = await res.json();
-          setUserInfo(data?.username ? data : null);
-        } else {
-          setUserInfo(null);
+          const userData = await res.json();
+          setUserInfo(userData);
         }
-      } catch {
-        setUserInfo(null);
+      } catch (err) {
+        console.error('Auth check failed:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    init();
-  }, []);
+    checkAuth();
+  }, [API_BASE]);
 
-  const logout = async () => {
+  // Login function - only handles auth, no navigation
+  const login = async (credentials) => {
     try {
-      console.log("🚪 Logging out...");
-
-      await fetch(`${import.meta.env.VITE_API_URL}/accounts/api/logout/`, {
+      const res = await fetch(`${API_BASE}/accounts/api/login/`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': getCookie('csrftoken'),
         },
+        body: JSON.stringify(credentials),
       });
 
-      console.log("✅ Logged out. Flushing session...");
-
-      // Wait briefly to let session flush
-      await new Promise(res => setTimeout(res, 100));
-
-      // Trigger a fresh anonymous session and CSRF
-      await prefetchCSRF();
-
-      // Reload into fresh state
-      localStorage.setItem("justLoggedOut", "true");
-      setUserInfo(null);
-      window.location.href = "/login";
+      const data = await res.json();
+      
+      if (res.ok) {
+        setUserInfo(data);
+        return { success: true, user: data };
+      } else {
+        return { success: false, error: data.detail || 'Login failed' };
+      }
     } catch (err) {
-      console.error("❌ Logout error:", err);
+      return { success: false, error: 'Network error. Please try again.' };
     }
   };
 
+  // Logout function - only clears auth state, no navigation
+  const logout = async () => {
+    try {
+      await fetch(`${API_BASE}/accounts/api/logout/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      });
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      // Always clear user info, even if API call fails
+      setUserInfo(null);
+      localStorage.setItem('justLoggedOut', 'true');
+    }
+  };
+
+  const value = {
+    userInfo,
+    setUserInfo,
+    isLoading,
+    login,
+    logout,
+  };
+
   return (
-    <AuthContext.Provider value={{ userInfo, setUserInfo, logout, isLoading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+// Helper function for CSRF token
+const getCookie = (name) => {
+  const cookie = document.cookie
+    .split("; ")
+    .find(row => row.startsWith(name + "="));
+  return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
+};

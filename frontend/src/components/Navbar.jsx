@@ -1,20 +1,20 @@
 /*
- * Cleaned Navbar Component - Consistent Dark Theme Only
- * Removed ALL Tailwind dark: classes and theme toggle
- * Uses only fixed dark color scheme for all devices
+ * Updated Navbar Component 
+ * Uses useAuthWithNavigation instead of separate hooks
+ * Clean logout with proper navigation
  */
 
 import React from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useAuthWithNavigation } from "../hooks/useAuthWithNavigation";
 import whiteLogo from "../assets/pickem2_white.png";
 
-export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
+export default function Navbar({ isOpen, setIsOpen }) {
   const location = useLocation();
-  const navigate = useNavigate();
+  const { userInfo, logoutAndRedirect } = useAuthWithNavigation();
 
   const handleLogout = async () => {
-    await onLogout();
-    navigate("/login");
+    await logoutAndRedirect('/login'); // This now works properly!
     setIsOpen(false);
   };
 
@@ -50,7 +50,7 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
               className="auth-button signup-button"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="auth-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               <span>Sign Up</span>
             </Link>
@@ -70,7 +70,7 @@ export default function Navbar({ userInfo, onLogout, isOpen, setIsOpen }) {
             </div>
           )}
 
-          {/* Hamburger menu for mobile — only for logged-in users */}
+          {/* Hamburger menu for mobile */}
           {userInfo && (
             <div className="mobile-menu-toggle">
               <button

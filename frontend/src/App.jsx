@@ -246,7 +246,7 @@ const [touchEndX, setTouchEndX] = useState(0);
     <ThemeProvider>
       <Router>
         <ScrollToTop />
-        <Navbar userInfo={userInfo} onLogout={logout} isOpen={isOpen} setIsOpen={setIsOpen} />
+        <Navbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
         <div 
           className={`transition-transform duration-300 ${isOpen ? "-translate-x-[40vw]" : "translate-x-0"}`} 
           onTouchStart={handleTouchStart}
