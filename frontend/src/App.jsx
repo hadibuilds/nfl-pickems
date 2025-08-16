@@ -1,12 +1,12 @@
 /*
- * Main App Component with Game Results Support and Theme Provider
- * Fetches games, user predictions, and game results for showing pick accuracy
- * Passes all data to WeekPage for displaying checkmarks on correct/incorrect picks
- * Wraps entire app with ThemeProvider for light/dark mode toggle
+ * Main App Component - PERFORMANCE OPTIMIZED
+ * Uses useMemo and useCallback to prevent unnecessary re-renders
+ * Memoizes expensive operations like sorting and date calculations
+ * FIXED: Prevents recreating objects/functions on every render
  */
 
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import './App.css';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -32,21 +32,20 @@ function ScrollToTop() {
 }
 
 export default function App() {
-  const { userInfo, isLoading, logout } = useAuth();
+  const { userInfo, isLoading } = useAuth();
   const [games, setGames] = useState([]);
   const [moneyLineSelections, setMoneyLineSelections] = useState({});
   const [propBetSelections, setPropBetSelections] = useState({});
   const [gameResults, setGameResults] = useState({});
   const [isOpen, setIsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
   const [touchStartX, setTouchStartX] = useState(0);
-const [touchEndX, setTouchEndX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
-  // Extract data fetching into separate functions for reuse
-  const fetchGameData = async () => {
+  // ✅ OPTIMIZED: Memoize data fetching functions to prevent recreation
+  const fetchGameData = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/games/api/games/`, {
         credentials: 'include',
@@ -61,9 +60,9 @@ const [touchEndX, setTouchEndX] = useState(0);
       console.error('Error fetching games:', err);
       setGames([]);
     }
-  };
+  }, [API_BASE]);
 
-  const fetchUserPredictions = async () => {
+  const fetchUserPredictions = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/predictions/api/get-user-predictions/`, {
         credentials: 'include',
@@ -90,9 +89,9 @@ const [touchEndX, setTouchEndX] = useState(0);
       setMoneyLineSelections({});
       setPropBetSelections({});
     }
-  };
+  }, [API_BASE]);
 
-  const fetchGameResults = async () => {
+  const fetchGameResults = useCallback(async () => {
     try {
       console.log('🔄 Fetching game results...');
       const res = await fetch(`${API_BASE}/predictions/api/game-results/`, {
@@ -121,10 +120,10 @@ const [touchEndX, setTouchEndX] = useState(0);
       console.error('Error fetching game results:', err);
       setGameResults({});
     }
-  };
+  }, [API_BASE]);
 
-  // Refresh all data
-  const refreshAllData = async () => {
+  // ✅ OPTIMIZED: Memoize refresh function to prevent recreation
+  const refreshAllData = useCallback(async () => {
     setIsRefreshing(true);
     try {
       await Promise.all([
@@ -135,16 +134,10 @@ const [touchEndX, setTouchEndX] = useState(0);
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [fetchGameData, fetchUserPredictions, fetchGameResults]);
 
-  useEffect(() => {
-    if (userInfo && !isLoading) {
-      refreshAllData();
-    }
-  }, [userInfo, isLoading]);
-
-  // Replace your handleMoneyLineClick function in App.jsx with this:
-  const handleMoneyLineClick = async (game, team) => {
+  // ✅ OPTIMIZED: Memoize handlers to prevent recreation on every render
+  const handleMoneyLineClick = useCallback(async (game, team) => {
     if (game.locked) return;
 
     try {
@@ -165,7 +158,7 @@ const [touchEndX, setTouchEndX] = useState(0);
       }
     
       if (data.success) {
-      // FIX: Use functional state update instead of pre-computed object
+        // Use functional state update to prevent race conditions
         setMoneyLineSelections(prev => ({ ...prev, [game.id]: team }));
         return data;
       } else {
@@ -175,10 +168,9 @@ const [touchEndX, setTouchEndX] = useState(0);
       console.error("Failed to save moneyline selection:", err);
       throw err;
     }
-  };
+  }, [API_BASE]);
 
-// Replace your handlePropBetClick function in App.jsx with this:
-  const handlePropBetClick = async (game, answer) => {
+  const handlePropBetClick = useCallback(async (game, answer) => {
     if (game.locked) return;
     const propBetId = game.prop_bets?.[0]?.id;
     if (!propBetId) return;
@@ -201,7 +193,7 @@ const [touchEndX, setTouchEndX] = useState(0);
       }
     
       if (data.success) {
-      // FIX: Use functional state update instead of pre-computed object
+        // Use functional state update to prevent race conditions
         setPropBetSelections(prev => ({ ...prev, [propBetId]: answer }));
         return data;
       } else {
@@ -211,36 +203,55 @@ const [touchEndX, setTouchEndX] = useState(0);
       console.error("Failed to save prop bet selection:", err);
       throw err;
     } 
-  };
+  }, [API_BASE]);
 
-  const sortedGames = Array.isArray(games)
-    ? [...games].sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
-    : [];
-  
-  const handleTouchStart = (e) => {
-      setTouchStartX(e.targetTouches[0].clientX);
-  };
+  // ✅ HUGE OPTIMIZATION: Memoize sortedGames to prevent recreation on every render
+  const sortedGames = useMemo(() => {
+    if (!Array.isArray(games)) return [];
     
-  const handleTouchEnd = (e) => {
-      setTouchEndX(e.changedTouches[0].clientX);
-      handleSwipe();
-  };
+    console.log('🔄 Recalculating sortedGames (should only happen when games change)');
     
-  const handleSwipe = () => {
-      if (!touchStartX || !touchEndX) return;
-      
-      const swipeDistance = touchEndX - touchStartX;
-      const minSwipeDistance = 10; // Minimum pixels for a valid swipe
-      
-      // Right swipe (positive distance) and menu is open
-      if (swipeDistance > minSwipeDistance && isOpen) {
-        setIsOpen(false);
-      }
-      
-      // Reset touch positions
-      setTouchStartX(0);
-      setTouchEndX(0);
-   };
+    // Pre-calculate dates to avoid repeated Date parsing
+    const gamesWithDates = games.map(game => ({
+      ...game,
+      _sortDate: new Date(game.start_time).getTime() // Cache parsed date as timestamp
+    }));
+    
+    return gamesWithDates.sort((a, b) => a._sortDate - b._sortDate);
+  }, [games]); // Only recalculate when games array actually changes
+
+  // ✅ OPTIMIZED: Memoize touch handlers
+  const handleTouchStart = useCallback((e) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+  }, []);
+    
+  const handleTouchEnd = useCallback((e) => {
+    setTouchEndX(e.changedTouches[0].clientX);
+    handleSwipe();
+  }, []);
+    
+  const handleSwipe = useCallback(() => {
+    if (!touchStartX || !touchEndX) return;
+    
+    const swipeDistance = touchEndX - touchStartX;
+    const minSwipeDistance = 10;
+    
+    // Right swipe and menu is open
+    if (swipeDistance > minSwipeDistance && isOpen) {
+      setIsOpen(false);
+    }
+    
+    // Reset touch positions
+    setTouchStartX(0);
+    setTouchEndX(0);
+  }, [touchStartX, touchEndX, isOpen]);
+
+  // Initial data loading - only when user info is available
+  useEffect(() => {
+    if (userInfo && !isLoading) {
+      refreshAllData();
+    }
+  }, [userInfo, isLoading, refreshAllData]);
 
   return (
     <ThemeProvider>
@@ -253,67 +264,67 @@ const [touchEndX, setTouchEndX] = useState(0);
           onTouchEnd={handleTouchEnd}
         > 
           <Routes>  
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <HomePage />
-              </PrivateRoute>
-            }
-          />
-          <Route 
-            path="/week/:weekNumber" 
-            element={
-              <PrivateRoute>
-                <WeekPage 
-                  games={sortedGames} 
-                  moneyLineSelections={moneyLineSelections}
-                  propBetSelections={propBetSelections}
-                  handleMoneyLineClick={handleMoneyLineClick}
-                  handlePropBetClick={handlePropBetClick}
-                  gameResults={gameResults}
-                  onRefresh={refreshAllData}
-                  isRefreshing={isRefreshing}
-                />
-              </PrivateRoute>
-            } 
-          />
-          <Route
-            path="/login"
-            element={
-              userInfo ? <Navigate to="/" replace /> : <LoginPage userInfo={userInfo} />
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              userInfo ? <Navigate to="/" replace /> : <SignUpPage userInfo={userInfo} />
-            }
-          />
-          <Route
-            path="/standings"
-            element={
-              <PrivateRoute>
-                <Standings />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/weeks"
-            element={
-              <PrivateRoute>
-                <WeekSelector 
-                  games={sortedGames}
-                  gameResults={gameResults}
-                  moneyLineSelections={moneyLineSelections}
-                  propBetSelections={propBetSelections}
-                />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
-      </div>
-    </Router>
-  </ThemeProvider>
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <HomePage />
+                </PrivateRoute>
+              }
+            />
+            <Route 
+              path="/week/:weekNumber" 
+              element={
+                <PrivateRoute>
+                  <WeekPage 
+                    games={sortedGames} 
+                    moneyLineSelections={moneyLineSelections}
+                    propBetSelections={propBetSelections}
+                    handleMoneyLineClick={handleMoneyLineClick}
+                    handlePropBetClick={handlePropBetClick}
+                    gameResults={gameResults}
+                    onRefresh={refreshAllData}
+                    isRefreshing={isRefreshing}
+                  />
+                </PrivateRoute>
+              } 
+            />
+            <Route
+              path="/login"
+              element={
+                userInfo ? <Navigate to="/" replace /> : <LoginPage userInfo={userInfo} />
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                userInfo ? <Navigate to="/" replace /> : <SignUpPage userInfo={userInfo} />
+              }
+            />
+            <Route
+              path="/standings"
+              element={
+                <PrivateRoute>
+                  <Standings />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/weeks"
+              element={
+                <PrivateRoute>
+                  <WeekSelector 
+                    games={sortedGames}
+                    gameResults={gameResults}
+                    moneyLineSelections={moneyLineSelections}
+                    propBetSelections={propBetSelections}
+                  />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
