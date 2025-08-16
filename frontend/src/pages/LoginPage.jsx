@@ -1,12 +1,17 @@
+/*
+ * Updated Login Page Component
+ * Uses useAuthWithNavigation for cleaner auth + navigation
+ * No need to manually call navigate after login
+ */
+
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { useAuth } from "../context/AuthContext";
+import { useAuthWithNavigation } from "../hooks/useAuthWithNavigation";
 import { getCookie } from "../utils/cookies";
 
 export default function LoginPage() {
-  const { setUserInfo } = useAuth();
-  const navigate = useNavigate();
+  const { loginAndRedirect } = useAuthWithNavigation();
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState({
     identifier: "",
@@ -22,9 +27,9 @@ export default function LoginPage() {
         const res = await fetch(`${API_BASE}/accounts/api/csrf/`, {
           credentials: "include",
         });
-        console.log("✅ CSRF prefetched on login:", res.status);
+        console.log("CSRF prefetched on login:", res.status);
       } catch (err) {
-        console.error("❌ Failed to prefetch CSRF on login:", err);
+        console.error("Failed to prefetch CSRF on login:", err);
       }
     };
 
@@ -46,26 +51,15 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${API_BASE}/accounts/api/login/`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
-        },
-        body: JSON.stringify({
-          identifier: formData.identifier,
-          password: formData.password,
-        }),
-      });
+      // Use the combined auth + navigation function
+      const result = await loginAndRedirect({
+        identifier: formData.identifier,
+        password: formData.password,
+      }, '/'); // Redirect to home page on success
 
-      const data = await res.json();
-
-      if (res.ok) {
-        setUserInfo(data);
-        navigate("/");
-      } else {
-        alert(data.detail || "Login failed");
+      // Only show error if login failed (success is handled automatically)
+      if (!result.success) {
+        alert(result.error);
       }
     } catch (err) {
       alert("Network error. Please try again.");

@@ -1,12 +1,11 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import Typewriter, { TypewriterClass } from 'typewriter-effect';
+import { Link } from 'react-router-dom';
+import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
+import Typewriter from 'typewriter-effect';  
 import confetti from 'canvas-confetti';
 
 function HomePage() {
-  const { userInfo, logout } = useAuth();
-  const navigate = useNavigate();
+  const { userInfo, logoutAndRedirect, navigate } = useAuthWithNavigation();
   const weeks = [1, 2, 3, 4];
 
   const handleConfetti = () => {
