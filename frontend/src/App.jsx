@@ -1,8 +1,9 @@
 /*
- * Main App Component - PERFORMANCE OPTIMIZED
+ * Main App Component - PERFORMANCE OPTIMIZED + ERROR BOUNDARIES
  * Uses useMemo and useCallback to prevent unnecessary re-renders
  * Memoizes expensive operations like sorting and date calculations
  * FIXED: Prevents recreating objects/functions on every render
+ * ADDED: Error boundaries around all routes for crash protection
  */
 
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
@@ -16,6 +17,7 @@ import SignUpPage from './pages/SignUpPage';
 import Standings from './pages/Standings';
 import WeekSelector from "./pages/WeekSelector"; 
 import PrivateRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { getCookie } from './utils/cookies';
@@ -267,59 +269,71 @@ export default function App() {
             <Route
               path="/"
               element={
-                <PrivateRoute>
-                  <HomePage />
-                </PrivateRoute>
+                <ErrorBoundary level="page" customMessage="Home page failed to load">
+                  <PrivateRoute>
+                    <HomePage />
+                  </PrivateRoute>
+                </ErrorBoundary>
               }
             />
             <Route 
               path="/week/:weekNumber" 
               element={
-                <PrivateRoute>
-                  <WeekPage 
-                    games={sortedGames} 
-                    moneyLineSelections={moneyLineSelections}
-                    propBetSelections={propBetSelections}
-                    handleMoneyLineClick={handleMoneyLineClick}
-                    handlePropBetClick={handlePropBetClick}
-                    gameResults={gameResults}
-                    onRefresh={refreshAllData}
-                    isRefreshing={isRefreshing}
-                  />
-                </PrivateRoute>
+                <ErrorBoundary level="page" customMessage="Week page failed to load">
+                  <PrivateRoute>
+                    <WeekPage 
+                      games={sortedGames} 
+                      moneyLineSelections={moneyLineSelections}
+                      propBetSelections={propBetSelections}
+                      handleMoneyLineClick={handleMoneyLineClick}
+                      handlePropBetClick={handlePropBetClick}
+                      gameResults={gameResults}
+                      onRefresh={refreshAllData}
+                      isRefreshing={isRefreshing}
+                    />
+                  </PrivateRoute>
+                </ErrorBoundary>
               } 
             />
             <Route
               path="/login"
               element={
-                userInfo ? <Navigate to="/" replace /> : <LoginPage userInfo={userInfo} />
+                <ErrorBoundary level="page" customMessage="Login page failed to load">
+                  {userInfo ? <Navigate to="/" replace /> : <LoginPage userInfo={userInfo} />}
+                </ErrorBoundary>
               }
             />
             <Route
               path="/signup"
               element={
-                userInfo ? <Navigate to="/" replace /> : <SignUpPage userInfo={userInfo} />
+                <ErrorBoundary level="page" customMessage="Sign up page failed to load">
+                  {userInfo ? <Navigate to="/" replace /> : <SignUpPage userInfo={userInfo} />}
+                </ErrorBoundary>
               }
             />
             <Route
               path="/standings"
               element={
-                <PrivateRoute>
-                  <Standings />
-                </PrivateRoute>
+                <ErrorBoundary level="page" customMessage="Standings page failed to load">
+                  <PrivateRoute>
+                    <Standings />
+                  </PrivateRoute>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/weeks"
               element={
-                <PrivateRoute>
-                  <WeekSelector 
-                    games={sortedGames}
-                    gameResults={gameResults}
-                    moneyLineSelections={moneyLineSelections}
-                    propBetSelections={propBetSelections}
-                  />
-                </PrivateRoute>
+                <ErrorBoundary level="page" customMessage="Week selector failed to load">
+                  <PrivateRoute>
+                    <WeekSelector 
+                      games={sortedGames}
+                      gameResults={gameResults}
+                      moneyLineSelections={moneyLineSelections}
+                      propBetSelections={propBetSelections}
+                    />
+                  </PrivateRoute>
+                </ErrorBoundary>
               }
             />
           </Routes>
