@@ -57,6 +57,16 @@ export default function App() {
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
+  useEffect(() => {
+    if (/android/i.test(navigator.userAgent)) {
+      document.body.classList.add('is-android');
+      document.body.classList.remove('is-ios');
+    } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+      document.body.classList.add('is-ios');
+      document.body.classList.remove('is-android');
+    }
+  }, []);
+
   // 🆕 BASIC BROWSER PROTECTION: Warn on page refresh/close
   useEffect(() => {
     const handleBeforeUnload = (event) => {
