@@ -27,11 +27,11 @@ export default function WeekPage({
   handleMoneyLineClick,
   handlePropBetClick,
   gameResults = {},
-  onRefresh,
-  isRefreshing = false,
   draftCount = 0,
   hasUnsavedChanges = false,
-  onSubmitPicks
+  onSubmitPicks,
+  originalSubmittedPicks = {},
+  originalSubmittedPropBets = {}
 }) {
   const { weekNumber } = useParams();
   const navigate = useNavigate();
@@ -92,8 +92,8 @@ export default function WeekPage({
           <ErrorBoundary level="component" customMessage="Results banner failed to load">
             <ResultBanner 
               games={weekGames}
-              moneyLineSelections={moneyLineSelections}
-              propBetSelections={propBetSelections}
+              originalSubmittedPicks={originalSubmittedPicks}
+              originalSubmittedPropBets={originalSubmittedPropBets}
               gameResults={gameResults}
             />
           </ErrorBoundary>

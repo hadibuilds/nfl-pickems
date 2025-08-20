@@ -3,6 +3,7 @@ WeekCardProgress.jsx
 Compact progress indicator for week selector cards
 Reuses ProgressIndicator calculation logic in a card-appropriate design
 Shows green when all picks are completed
+UPDATED: Uses database saved picks instead of current UI state
 */
 
 import React from 'react';
@@ -10,30 +11,30 @@ import React from 'react';
 export default function WeekCardProgress({ 
   weekNumber,
   games, 
-  moneyLineSelections, 
-  propBetSelections 
+  originalSubmittedPicks,     // Database saved picks
+  originalSubmittedPropBets   // Database saved picks
 }) {
   // Filter games for this specific week
   const weekGames = games.filter(game => game.week === weekNumber);
   
-  // Reuse the same calculation logic from ProgressIndicator
+  // Calculate progress using SAVED database picks only
   const calculateOverallProgress = () => {
-    // Calculate moneyline progress
+    // Calculate saved moneyline picks
     const totalMoneyLineGames = weekGames.length;
     const madeMoneyLineSelections = weekGames.filter(game => 
-      moneyLineSelections[game.id]
+      originalSubmittedPicks[game.id]
     ).length;
     
-    // Calculate prop bet progress  
+    // Calculate saved prop bet picks  
     const gamesWithProps = weekGames.filter(game => 
       game.prop_bets && game.prop_bets.length > 0
     );
     const totalPropBets = gamesWithProps.length;
     const madePropBetSelections = gamesWithProps.filter(game => 
-      propBetSelections[game.prop_bets[0]?.id]
+      originalSubmittedPropBets[game.prop_bets[0]?.id]
     ).length;
     
-    // Combine totals
+    // Combine totals - only saved picks count
     const totalPossiblePicks = totalMoneyLineGames + totalPropBets;
     const totalMadePicks = madeMoneyLineSelections + madePropBetSelections;
     

@@ -402,6 +402,8 @@ export default function App() {
                       draftCount={draftCount}
                       hasUnsavedChanges={hasUnsavedChanges}
                       onSubmitPicks={submitPicks}
+                      originalSubmittedPicks={originalSubmittedPicks}
+                      originalSubmittedPropBets={originalSubmittedPropBets}
                     />
                   </PrivateRoute>
                 </ErrorBoundary>
@@ -443,6 +445,8 @@ export default function App() {
                       gameResults={gameResults}
                       moneyLineSelections={moneyLineSelections}
                       propBetSelections={propBetSelections}
+                      originalSubmittedPicks={originalSubmittedPicks}
+                      originalSubmittedPropBets={originalSubmittedPropBets}
                     />
                   </PrivateRoute>
                 </ErrorBoundary>

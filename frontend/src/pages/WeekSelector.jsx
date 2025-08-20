@@ -11,7 +11,9 @@ export default function WeekSelector({
   games = [], 
   gameResults = {}, 
   moneyLineSelections = {}, 
-  propBetSelections = {} 
+  propBetSelections = {} ,
+  originalSubmittedPicks = {},
+  originalSubmittedPropBets = {}
 }) {
   const totalWeeks = 18;
   const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
@@ -234,8 +236,8 @@ export default function WeekSelector({
                       <WeekCardProgress 
                         weekNumber={week}
                         games={games}
-                        moneyLineSelections={moneyLineSelections}
-                        propBetSelections={propBetSelections}
+                        originalSubmittedPicks={originalSubmittedPicks}
+                        originalSubmittedPropBets={originalSubmittedPropBets}
                       />
                     )}
                   </div>
