@@ -1597,3 +1597,306 @@
     gap: 10px;
   }
 }
+
+/* ==========================================================================
+   PROFILE DROPDOWN STYLES - Add to App.css (Conflict-Free Version)
+   HeroUI-inspired avatar dropdown component
+   ========================================================================== */
+
+/* Profile Dropdown Container */
+.profile-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profile-dropdown-container {
+  display: flex;
+  align-items: center;
+}
+
+/* User Avatar Styles */
+.user-avatar {
+  border: 2px solid #6B7280; /* Default grey ring */
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  outline: none;
+  /* Force perfect circle on all devices */
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  border-color: #7C3AED; /* Purple ring on hover */
+}
+
+.user-avatar:active {
+  transform: scale(0.95);
+}
+
+/* Active state when dropdown is open - purple ring */
+.user-avatar.active {
+  transform: scale(1.05);
+  border-color: #7C3AED; /* Purple ring when open */
+}
+
+/* Remove focus outline - we'll use the border color change instead */
+.user-avatar:focus {
+  outline: none;
+}
+
+/* Avatar Sizes - with mobile-specific overrides (renamed to avoid conflicts) */
+.user-avatar.avatar-sm {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 14px;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+}
+
+.user-avatar.avatar-md {
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 16px;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+}
+
+.user-avatar.avatar-lg {
+  width: 48px !important;
+  height: 48px !important;
+  font-size: 18px;
+  min-width: 48px !important;
+  min-height: 48px !important;
+  max-width: 48px !important;
+  max-height: 48px !important;
+}
+
+.user-avatar .avatar-initials {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Mobile-specific avatar fixes */
+@media (max-width: 639px) {
+  .user-avatar {
+    /* Extra enforcement for mobile */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .user-avatar.avatar-sm {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+  }
+}
+
+/* Profile Dropdown Container - prevent flex interference */
+.profile-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* Prevent container from squishing */
+}
+
+.profile-dropdown-container {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* Prevent container from squishing */
+}
+
+/* Dropdown Menu */
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  background: #2D2D2F;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  z-index: 1000;
+  overflow: hidden;
+  animation: profileDropdownSlideIn 0.2s ease-out forwards;
+}
+
+@keyframes profileDropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Profile Section */
+.dropdown-profile {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 56px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.dropdown-profile .profile-text {
+  font-weight: 600;
+  color: #E5E7EB;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.dropdown-profile .profile-username {
+  font-weight: 600;
+  color: #8B5CF6;
+  font-size: 14px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Stats Section */
+.dropdown-stats {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.dropdown-stats .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  text-align: center;
+}
+
+.dropdown-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown-stats .stat-value {
+  font-weight: 700;
+  color: #8B5CF6;
+  font-size: 16px;
+}
+
+.dropdown-stats .stat-value.loading {
+  color: #6B7280;
+  opacity: 0.6;
+}
+
+.dropdown-stats .stat-label {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+/* Navigation and Dropdown Items */
+.dropdown-navigation {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-logout {
+  /* No border-bottom for last section */
+}
+
+.profile-dropdown .dropdown-item {
+  padding: 12px 16px;
+  color: #E5E7EB;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.profile-dropdown .dropdown-item:hover {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8B5CF6;
+}
+
+.profile-dropdown .dropdown-item:focus {
+  outline: none;
+  background: rgba(139, 92, 246, 0.1);
+  color: #8B5CF6;
+}
+
+.profile-dropdown .dropdown-icon {
+  font-size: 16px;
+  width: 16px;
+  text-align: center;
+}
+
+/* Danger styling for logout */
+.profile-dropdown .dropdown-item.danger {
+  color: #EF4444;
+}
+
+.profile-dropdown .dropdown-item.danger:hover,
+.profile-dropdown .dropdown-item.danger:focus {
+  background: rgba(239, 68, 68, 0.1);
+  color: #DC2626;
+}
+
+/* Mobile Responsive */
+@media (max-width: 639px) {
+  .profile-dropdown-menu {
+    min-width: 220px;
+    right: -8px;
+  }
+  
+  /* Hide desktop navigation on mobile when user is authenticated */
+  .desktop-nav {
+    display: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .profile-dropdown-menu {
+    min-width: 260px;
+  }
+}
+
+/* Ensure dropdown appears above other content */
+.profile-dropdown-menu {
+  z-index: 9999;
+}
+
+/* ==========================================================================
+   END PROFILE DROPDOWN STYLES
+   ========================================================================== */

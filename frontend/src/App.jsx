@@ -452,6 +452,14 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
+            <Route path="/settings" element={
+              <PrivateRoute>
+                <div style={{padding: '80px 20px 20px', color: 'white', textAlign: 'center'}}>
+                  <h1>Settings Page Coming Soon!</h1>
+                  <p>Profile settings will be implemented here.</p>
+                </div>
+              </PrivateRoute>
+            } />
           </Routes>
         </div>
         
