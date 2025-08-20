@@ -1618,23 +1618,39 @@
 /* User Avatar Styles */
 .user-avatar {
   border: 2px solid #6B7280; /* Default grey ring */
-  border-radius: 50%;
+  border-radius: 50% !important;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
   outline: none;
-  /* Force perfect circle on all devices */
-  aspect-ratio: 1 / 1;
-  flex-shrink: 0;
-  box-sizing: border-box;
+  /* AGGRESSIVE: Force perfect circle on all devices */
+  aspect-ratio: 1 / 1 !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  /* CRITICAL: Remove all padding/margin that's distorting the circle */
+  padding: 0 !important;
+  margin: 0 !important;
+  /* FORCE exact dimensions - responsive to navbar height (10% smaller) */
+  width: 43px !important;
+  height: 43px !important;
+  min-width: 43px !important;
+  min-height: 43px !important;
+  max-width: 43px !important;
+  max-height: 43px !important;
+  /* Override any button/flex container interference */
+  flex-basis: 43px !important;
+  flex-grow: 0 !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  line-height: 1 !important;
 }
 
 .user-avatar:hover {
@@ -1659,38 +1675,37 @@
 
 /* Avatar Sizes - with mobile-specific overrides (renamed to avoid conflicts) */
 .user-avatar.avatar-sm {
-  width: 32px !important;
-  height: 32px !important;
-  font-size: 14px;
-  min-width: 32px !important;
-  min-height: 32px !important;
-  max-width: 32px !important;
-  max-height: 32px !important;
+  /* Mobile: 43px (10% smaller than 48px) */
+  width: 43px !important;
+  height: 43px !important;
+  font-size: 16px;
+  min-width: 43px !important;
+  min-height: 43px !important;
+  max-width: 43px !important;
+  max-height: 43px !important;
+  flex-basis: 43px !important;
 }
 
 .user-avatar.avatar-md {
-  width: 40px !important;
-  height: 40px !important;
-  font-size: 16px;
-  min-width: 40px !important;
-  min-height: 40px !important;
-  max-width: 40px !important;
-  max-height: 40px !important;
+  width: 50px !important;
+  height: 50px !important;
+  font-size: 20px;
+  min-width: 50px !important;
+  min-height: 50px !important;
+  max-width: 50px !important;
+  max-height: 50px !important;
+  flex-basis: 50px !important;
 }
 
 .user-avatar.avatar-lg {
-  width: 48px !important;
-  height: 48px !important;
-  font-size: 18px;
-  min-width: 48px !important;
-  min-height: 48px !important;
-  max-width: 48px !important;
-  max-height: 48px !important;
-}
-
-.user-avatar .avatar-initials {
-  user-select: none;
-  pointer-events: none;
+  width: 58px !important;
+  height: 58px !important;
+  font-size: 23px;
+  min-width: 58px !important;
+  min-height: 58px !important;
+  max-width: 58px !important;
+  max-height: 58px !important;
+  flex-basis: 58px !important;
 }
 
 /* Mobile-specific avatar fixes */
@@ -1706,12 +1721,30 @@
   }
   
   .user-avatar.avatar-sm {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    min-height: 32px !important;
-    max-width: 32px !important;
-    max-height: 32px !important;
+    /* Mobile: 43px (10% smaller) */
+    width: 43px !important;
+    height: 43px !important;
+    min-width: 43px !important;
+    min-height: 43px !important;
+    max-width: 43px !important;
+    max-height: 43px !important;
+    flex-basis: 43px !important;
+    font-size: 16px;
+  }
+}
+
+/* Desktop sizing - larger avatar for desktop navbar */
+@media (min-width: 640px) {
+  .user-avatar.avatar-sm {
+    /* Desktop: 50px (10% smaller than 56px) */
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    max-width: 50px !important;
+    max-height: 50px !important;
+    flex-basis: 50px !important;
+    font-size: 20px;
   }
 }
 
