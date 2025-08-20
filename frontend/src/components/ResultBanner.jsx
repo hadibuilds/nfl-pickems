@@ -3,21 +3,22 @@ ResultBanner.jsx
 Enhanced progress indicator for WeekPage showing live results tracking
 Displays picks made, points scored, and accuracy breakdowns
 CSS styles are in App.css
+UPDATED: Uses database saved picks instead of current UI state
 */
 
 import React from 'react';
 
 export default function ResultBanner({ 
   games, 
-  moneyLineSelections, 
-  propBetSelections,
+  originalSubmittedPicks,     // Database saved picks
+  originalSubmittedPropBets,  // Database saved picks
   gameResults = {}
 }) {
-  // Calculate moneyline progress and results
+  // Calculate moneyline progress and results using SAVED picks
   const calculateMoneyLineResults = () => {
     const totalMoneyLineGames = games.length;
     const madeMoneyLineSelections = games.filter(game => 
-      moneyLineSelections[game.id]
+      originalSubmittedPicks[game.id]
     ).length;
     
     // Games with results (winner field populated)
@@ -25,9 +26,9 @@ export default function ResultBanner({
       gameResults[game.id]?.winner
     );
     
-    // Correct moneyline picks
+    // Correct moneyline picks - only count saved picks
     const correctMoneyLinePicks = gamesWithResults.filter(game => {
-      const userPick = moneyLineSelections[game.id];
+      const userPick = originalSubmittedPicks[game.id];
       const actualWinner = gameResults[game.id]?.winner;
       return userPick && actualWinner && userPick === actualWinner;
     }).length;
@@ -41,14 +42,14 @@ export default function ResultBanner({
     };
   };
 
-  // Calculate prop bet progress and results
+  // Calculate prop bet progress and results using SAVED picks
   const calculatePropBetResults = () => {
     const gamesWithProps = games.filter(game => 
       game.prop_bets && game.prop_bets.length > 0
     );
     const totalPropBets = gamesWithProps.length;
     const madePropBetSelections = gamesWithProps.filter(game => 
-      propBetSelections[game.prop_bets[0]?.id]
+      originalSubmittedPropBets[game.prop_bets[0]?.id]
     ).length;
     
     // Prop bets with results
@@ -56,9 +57,9 @@ export default function ResultBanner({
       gameResults[game.id]?.prop_result !== undefined
     );
     
-    // Correct prop picks
+    // Correct prop picks - only count saved picks
     const correctPropPicks = propBetsWithResults.filter(game => {
-      const userPick = propBetSelections[game.prop_bets[0]?.id];
+      const userPick = originalSubmittedPropBets[game.prop_bets[0]?.id];
       const actualResult = gameResults[game.id]?.prop_result;
       return userPick && actualResult !== undefined && userPick === actualResult;
     }).length;
@@ -72,7 +73,7 @@ export default function ResultBanner({
     };
   };
 
-  // Calculate overall progress
+  // Calculate overall progress using SAVED picks
   const calculateOverallProgress = () => {
     const moneyLineResults = calculateMoneyLineResults();
     const propBetResults = calculatePropBetResults();
