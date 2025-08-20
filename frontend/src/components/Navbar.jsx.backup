@@ -1,13 +1,12 @@
 /*
  * Updated Navbar Component 
- * Replaced hamburger menu with ProfileDropdown
- * Maintains all existing functionality and styling
+ * Uses useAuthWithNavigation instead of separate hooks
+ * Clean logout with proper navigation
  */
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuthWithNavigation } from "../hooks/useAuthWithNavigation";
-import ProfileDropdown from "./ProfileDropdown";
 import whiteLogo from "../assets/pickem2_white.png";
 
 export default function Navbar({ isOpen, setIsOpen }) {
@@ -15,7 +14,7 @@ export default function Navbar({ isOpen, setIsOpen }) {
   const { userInfo, logoutAndRedirect } = useAuthWithNavigation();
 
   const handleLogout = async () => {
-    await logoutAndRedirect('/login');
+    await logoutAndRedirect('/login'); // This now works properly!
     setIsOpen(false);
   };
 
@@ -57,7 +56,7 @@ export default function Navbar({ isOpen, setIsOpen }) {
             </Link>
           )}
 
-          {/* Desktop Links - Keep existing functionality */}
+          {/* Desktop Links */}
           {userInfo && (
             <div className="desktop-nav">
               <Link to="/weeks" className="nav-link">Games</Link>
@@ -71,19 +70,42 @@ export default function Navbar({ isOpen, setIsOpen }) {
             </div>
           )}
 
-          {/* NEW: Profile Dropdown - Replaces hamburger menu completely */}
+          {/* Hamburger menu for mobile */}
           {userInfo && (
-            <div className="profile-dropdown-container">
-              <ProfileDropdown />
+            <div className="mobile-menu-toggle">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="hamburger-button"
+              >
+                <span className={`hamburger-line ${isOpen ? "hamburger-line-1-open" : "hamburger-line-1"}`} />
+                <span className={`hamburger-line ${isOpen ? "hamburger-line-2-open" : "hamburger-line-2"}`} />
+                <span className={`hamburger-line ${isOpen ? "hamburger-line-3-open" : "hamburger-line-3"}`} />
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* 
-        REMOVED: Mobile sidebar/hamburger menu 
-        ProfileDropdown now handles all mobile navigation
-      */}
+      {/* Push Sidebar */}
+      <div className={`mobile-sidebar ${isOpen ? "mobile-sidebar-open" : "mobile-sidebar-closed"}`}>
+        <div className="mobile-sidebar-content">
+          {userInfo && (
+            <Link to="/weeks" onClick={() => setIsOpen(false)} className="mobile-nav-link">Games</Link>
+          )}
+          {userInfo && (
+            <Link to="/standings" onClick={() => setIsOpen(false)} className="mobile-nav-link">Standings</Link>
+          )}
+          {!userInfo && location.pathname !== "/login" && (
+            <Link to="/login" onClick={() => setIsOpen(false)} className="mobile-nav-link">Login</Link>
+          )}
+          {!userInfo && location.pathname !== "/signup" && (
+            <Link to="/signup" onClick={() => setIsOpen(false)} className="mobile-nav-link">Sign Up</Link>
+          )}
+          {userInfo && (
+            <button onClick={handleLogout} className="mobile-logout-button">Logout</button>
+          )}
+        </div>
+      </div>
     </nav>
   );
 }
