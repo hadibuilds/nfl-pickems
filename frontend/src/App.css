@@ -934,6 +934,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  padding-bottom: 4px;
 }
 
 /* Week header with number and status */
@@ -965,7 +966,7 @@
 .week-dates {
   font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   opacity: 0.9;
 }
 
@@ -975,6 +976,7 @@
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
+  min-height: 0px;
 }
 
 .points-earned {
@@ -1374,9 +1376,70 @@
   
   .week-dates {
     font-size: 0.85rem;
+    margin-bottom: 14px;
   }
   
   .points-value {
     font-size: 1.1rem;
+  }
+}
+
+/* =================================================================
+   WEEK CARD PROGRESS BAR STYLES
+   Compact progress indicator for week selector cards
+   ================================================================= */
+
+.week-card-progress {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 3px;
+  margin-top: 2px; /* Reduced from 8px */
+  align-items: center;
+}
+
+.week-progress-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.week-progress-bar {
+  width: calc(100% - 32px);
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.week-progress-fill {
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .week-card-progress {
+    gap: 3px;
+    margin-top: 2px;
+  }
+  
+  .week-progress-text {
+    font-size: 0.8rem;
+  }
+  
+  .week-progress-bar {
+    width: calc(100% - 24px);
+    height: 5px;
+    border-radius: 2.5px;
+  }
+
+  .week-progress-fill {
+    border-radius: 2.5px;
   }
 }

@@ -1,5 +1,11 @@
+/*
+Updated WeekSelector.jsx
+Includes progress bars in current week cards instead of "Play Now"
+*/
+
 import React from "react";
 import { Link } from "react-router-dom";
+import WeekCardProgress from "../components/WeekCardProgress.jsx";
 
 export default function WeekSelector({ 
   games = [], 
@@ -221,12 +227,17 @@ export default function WeekSelector({
                           <span className="points-value">{weekStatus.points}</span>
                         </div>
                       )}
-                      {weekStatus.status === 'current' && (
-                        <div className="current-indicator">
-                          <span>▶ Play Now</span>
-                        </div>
-                      )}
                     </div>
+                    
+                    {/* Progress bar outside footer for full-width span */}
+                    {weekStatus.status === 'current' && (
+                      <WeekCardProgress 
+                        weekNumber={week}
+                        games={games}
+                        moneyLineSelections={moneyLineSelections}
+                        propBetSelections={propBetSelections}
+                      />
+                    )}
                   </div>
                 </Link>
               </div>

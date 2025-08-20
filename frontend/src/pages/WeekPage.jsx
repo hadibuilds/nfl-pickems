@@ -1,11 +1,12 @@
 /*
  * PROTECTED: WeekPage Component with Error Boundaries - CLEANED
  * Wraps individual GameCards so one broken game doesn't kill the whole week
- * Protects key components like header and progress indicator
+ * Protects key components like header
  * ENHANCED: Added warning banner for draft picks + Portal-based floating submit button
  * TOAST: Clean react-hot-toast implementation
  * 🆕 ERROR-RESILIENT: Submit button with loading state and proper error handling
  * 🧹 CLEANED: Removed save state manager - simple draft system
+ * 🗑️ REMOVED: ProgressIndicator (now in WeekSelector cards)
  */
 
 import React, { useState } from 'react';
@@ -14,7 +15,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import WeekHeader from '../components/WeekHeader/WeekHeader.jsx';
 import GameCard from '../components/GameCard/GameCard.jsx';
-import ProgressIndicator from '../components/ProgressIndicator.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 
 export default function WeekPage({
@@ -95,18 +95,6 @@ export default function WeekPage({
 
         {/* Scaled content wrapper */}
         <div className="week-page-wrapper">
-          {/* Progress indicator - Protected */}
-          {weekGames.length > 0 && (
-            <ErrorBoundary level="component" customMessage="Progress indicator failed to load">
-              <ProgressIndicator 
-                games={weekGames}
-                moneyLineSelections={moneyLineSelections}
-                propBetSelections={propBetSelections}
-                gameResults={gameResults}
-              />
-            </ErrorBoundary>
-          )}
-
           {/* Games grid - Each game card individually protected */}
           {weekGames.length === 0 ? (
             <p className="text-center" style={{ color: '#9ca3af' }}>
