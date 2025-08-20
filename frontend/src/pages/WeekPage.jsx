@@ -5,9 +5,10 @@
  * FIXED: Pass navigate function to avoid hook issues in nested components
  * ENHANCED: Added warning banner for draft picks + Portal-based floating submit button
  * TOAST: Clean react-hot-toast implementation
+ * 🆕 ERROR-RESILIENT: Submit button with loading state and proper error handling
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -34,6 +35,9 @@ export default function WeekPage({
   const navigate = useNavigate();
   const weekGames = games.filter(game => game.week === parseInt(weekNumber));
   
+  // 🆕 SUBMIT STATE: Track submission loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   // FIXED: Proper save state management with cleanup
   const saveStateManager = useSaveStateManager();
 
@@ -41,8 +45,12 @@ export default function WeekPage({
     navigate(-1);
   };
 
-  // Clean toast-enabled submit handler
+  // 🆕 ENHANCED: Error-resilient submit handler with loading state
   const handleSubmitWithToast = async () => {
+    if (isSubmitting || draftCount === 0) return; // Prevent double-clicks
+    
+    setIsSubmitting(true);
+    
     try {
       const result = await onSubmitPicks();
       
@@ -50,15 +58,21 @@ export default function WeekPage({
         toast.success(`Success! ${draftCount} pick${draftCount !== 1 ? 's' : ''} submitted.`, {
           duration: 4000,
         });
+        // onSubmitPicks handles clearing drafts on success
       } else {
+        // Show error but keep button available for retry
         toast.error(result.error || "Unable to submit your picks. Please try again.", {
           duration: 5000,
         });
       }
     } catch (error) {
+      console.error('Submit error:', error);
       toast.error("Something went wrong. Please check your connection and try again.", {
         duration: 5000,
       });
+    } finally {
+      // Always reset loading state to re-enable button
+      setIsSubmitting(false);
     }
   };
 
@@ -129,13 +143,21 @@ export default function WeekPage({
         </div>
       </div>
 
-      {/* 🌟 PORTAL MAGIC: Floating Submit Button with Toast - rendered at document.body */}
+      {/* 🌟 ENHANCED: Error-resilient floating submit button with loading state */}
       {hasUnsavedChanges && createPortal(
         <button 
-          className="floating-submit-button"
+          className={`floating-submit-button ${isSubmitting ? 'submitting' : ''}`}
           onClick={handleSubmitWithToast}
+          disabled={isSubmitting}
         >
-          Submit ({draftCount})
+          {isSubmitting ? (
+            <>
+              <span className="submit-spinner"></span>
+              Submitting...
+            </>
+          ) : (
+            `Submit (${draftCount})`
+          )}
         </button>,
         document.body  // "Teleport" the button to document.body
       )}
