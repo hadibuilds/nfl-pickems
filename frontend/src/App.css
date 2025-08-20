@@ -1016,39 +1016,55 @@
    FLOATING SUBMIT BUTTON STYLES
    ================================================================= */
 
+/* Default desktop/tablet styling (unchanged) */
 .floating-submit-button {
   position: fixed;
-  bottom: 3vh; /* dynamic relative to screen height */
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
-  
+
   background-color: #F59E0B;
   color: white;
-  
-  /* Dynamic padding based on viewport width */
-  padding: clamp(8px, 1.8vw, 24px) clamp(16px, 5vw, 40px);
-  
-  border-radius: clamp(16px, 5vw, 40px);
+  padding: 14px 20px;
+  border-radius: 25px;
   border: none;
   font-weight: 600;
-  
-  /* Dynamic font size */
-  font-size: clamp(14px, 4vw, 28px);
-  
+  font-size: 15px;
   cursor: pointer;
-  box-shadow: 0 0.8vw 2vw rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
   white-space: nowrap;
   font-family: inherit;
   outline: none;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Android override → bottom-right so it doesn't clash with scroll-to-top pill */
-body.is-android .floating-submit-button {
-  left: auto;
-  right: 4vw;
-  transform: none;
+/* Mobile adjustments only */
+@media (max-width: 768px) {
+  /* iOS = centered */
+  body.is-ios .floating-submit-button {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: 3vh;
+
+    /* slightly dynamic sizing for mobile */
+    padding: clamp(10px, 2vw, 16px) clamp(16px, 4vw, 28px);
+    font-size: clamp(14px, 3.5vw, 18px);
+    border-radius: clamp(18px, 5vw, 30px);
+  }
+
+  /* Android = bottom-right */
+  body.is-android .floating-submit-button {
+    left: auto;
+    right: 4vw;
+    transform: none;
+    bottom: 3vh;
+
+    padding: clamp(10px, 2vw, 16px) clamp(16px, 4vw, 28px);
+    font-size: clamp(14px, 3.5vw, 18px);
+    border-radius: clamp(18px, 5vw, 30px);
+  }
 }
   
 .floating-submit-button .submit-spinner {
