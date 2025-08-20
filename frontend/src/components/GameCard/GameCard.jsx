@@ -1,7 +1,8 @@
 /*
- * Game Card Component
+ * Game Card Component - CLEANED
  * Main wrapper for individual game cards
  * Combines all sections: info, money line, and prop bets
+ * 🧹 REMOVED: Save state manager dependency
  */
 
 import React from 'react';
@@ -17,8 +18,7 @@ export default function GameCard({
   propBetSelections,
   gameResults,
   onMoneyLineClick,
-  onPropBetClick,
-  saveStateManager
+  onPropBetClick
 }) {
   const locked = isGameLocked(game.start_time, game.locked);
   const hasResults = gameHasResults(game, gameResults);
@@ -40,7 +40,6 @@ export default function GameCard({
         propBetSelections={propBetSelections}
         gameResults={gameResults}
         onTeamClick={onMoneyLineClick}
-        saveStateManager={saveStateManager}
       />
 
       {/* Bottom section - Prop bets (conditional) */}
@@ -50,7 +49,6 @@ export default function GameCard({
         propBetSelections={propBetSelections}
         gameResults={gameResults}
         onPropBetClick={onPropBetClick}
-        saveStateManager={saveStateManager}
       />
     </div>
   );

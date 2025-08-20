@@ -1084,6 +1084,163 @@
 }
 
 /* =================================================================
+   NAVIGATION WARNING MODAL STYLES
+   ================================================================= */
+
+.navigation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease-out;
+}
+  
+.navigation-modal {
+  background-color: #2d2d2d;
+  border-radius: 16px;
+  padding: 0;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  animation: slideIn 0.3s ease-out;
+  overflow: hidden;
+}
+  
+.navigation-modal-header {
+  background-color: #1f1f1f;
+  padding: 20px 24px;
+  border-bottom: 1px solid #404040;
+}
+  
+.navigation-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #F59E0B;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+  
+.navigation-modal-body {
+  padding: 24px;
+  color: #ffffff;
+}
+  
+.navigation-modal-body p {
+  margin: 0 0 16px 0;
+  line-height: 1.6;
+}
+  
+.navigation-modal-body p:last-child {
+  margin-bottom: 0;
+}
+  
+.navigation-modal-body strong {
+  color: #F59E0B;
+  font-weight: 600;
+}
+  
+.navigation-modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 24px;
+  background-color: #1f1f1f;
+  border-top: 1px solid #404040;
+}
+  
+.navigation-modal-button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+  
+.navigation-modal-button.review {
+  background-color: #8B5CF6;
+  color: white;
+}
+  
+.navigation-modal-button.review:hover {
+  background-color: #7C3AED;
+  transform: translateY(-1px);
+}
+  
+.navigation-modal-button.discard {
+  background-color: #6B7280;
+  color: white;
+}
+  
+.navigation-modal-button.discard:hover {
+  background-color: #EF4444;
+  transform: translateY(-1px);
+}
+  
+.navigation-modal-button:active {
+  transform: translateY(0);
+}
+  
+/* Modal animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+  
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+  
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .navigation-modal {
+    width: 95%;
+    margin: 20px;
+  }
+    
+  .navigation-modal-header {
+    padding: 16px 20px;
+  }
+    
+  .navigation-modal-header h3 {
+    font-size: 1.1rem;
+  }
+    
+  .navigation-modal-body {
+    padding: 20px;
+  }
+    
+  .navigation-modal-footer {
+    padding: 20px;
+    flex-direction: column;
+  }
+    
+  .navigation-modal-button {
+    padding: 14px 20px;
+  }
+}
+/* =================================================================
    CLEANED TOAST STYLES - Moved from inline JSX
    ================================================================= */
 

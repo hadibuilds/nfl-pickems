@@ -1,51 +1,34 @@
 /*
- * Money Line Section Component
+ * Money Line Section Component - CLEANED
  * Middle section of game card with team selection buttons
+ * 🧹 REMOVED: Save state indicators (spinners/checkmarks)
+ * ✅ ENHANCED: Simple click handler with immediate visual feedback
  */
 
 import React from 'react';
 import { getTeamLogo } from '../../utils/teamLogos.js';
 import { getButtonClass, getCorrectPredictionBadge } from '../../utils/gameHelpers.jsx';
 import { isGameLocked } from '../../utils/dateFormatters.js';
-import SaveStateIndicator from './SaveStateIndicator.jsx';
 
 export default function MoneyLineSection({ 
   game, 
   moneyLineSelections, 
   propBetSelections,
   gameResults,
-  onTeamClick,
-  saveStateManager
+  onTeamClick
 }) {
   const locked = isGameLocked(game.start_time, game.locked);
-  const stateKey = saveStateManager.generateStateKey(game.id, 'moneyline');
-  const saveState = saveStateManager.getSaveState(stateKey);
 
   const handleTeamClick = async (team) => {
     if (locked) return;
     
-    try {
-      saveStateManager.setSaving(stateKey);
-      
-      // Ensure spinner shows for at least 500ms
-      await Promise.all([
-        onTeamClick(game, team),
-        new Promise(resolve => setTimeout(resolve, 500))
-      ]);
-      
-      saveStateManager.setSaved(stateKey);
-    } catch (error) {
-      saveStateManager.setError(stateKey);
-      console.error('Failed to save money line selection:', error);
-    }
+    // Simple call - immediate visual feedback via state update
+    await onTeamClick(game, team);
   };
 
   return (
     <div className="game-section money-line">
-      {/* Save state indicator */}
-      <SaveStateIndicator saveState={saveState} />
-      
-      {/* Correct prediction badge */}
+      {/* Correct prediction badge (keep for results display) */}
       {getCorrectPredictionBadge(game, true, moneyLineSelections, propBetSelections, gameResults)}
       
       {/* Team buttons with logos */}
@@ -78,9 +61,11 @@ export default function MoneyLineSection({
             }}
             onError={(e) => e.target.style.display = 'none'}
           />
-          <span style={{fontSize: '0.8rem', fontWeight: '600'}}>{game.away_team}</span>
+          <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>
+            {game.away_team}
+          </span>
         </button>
-        
+
         <button
           className={getButtonClass(
             'team-button',
@@ -109,7 +94,9 @@ export default function MoneyLineSection({
             }}
             onError={(e) => e.target.style.display = 'none'}
           />
-          <span style={{fontSize: '0.8rem', fontWeight: '600'}}>{game.home_team}</span>
+          <span style={{ fontSize: '0.8rem', fontWeight: '600' }}>
+            {game.home_team}
+          </span>
         </button>
       </div>
     </div>

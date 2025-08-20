@@ -7,6 +7,7 @@
  * ENHANCED: Added minimal draft system for picks
  * CLEANED: Removed floating button logic - now handled by WeekPage via Portal
  * TOAST: Clean react-hot-toast implementation - styles moved to CSS
+ * 🆕 BASIC NAVIGATION PROTECTION: Browser refresh/close warning only
  */
 
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
@@ -55,6 +56,20 @@ export default function App() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_URL;
+
+  // 🆕 BASIC BROWSER PROTECTION: Warn on page refresh/close
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (hasUnsavedChanges) {
+        event.preventDefault();
+        event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return event.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Calculate ACTUAL changes (not just drafts) for UI
   const actualChanges = useMemo(() => {
