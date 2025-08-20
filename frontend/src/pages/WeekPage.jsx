@@ -1,11 +1,11 @@
 /*
- * PROTECTED: WeekPage Component with Error Boundaries
+ * PROTECTED: WeekPage Component with Error Boundaries - CLEANED
  * Wraps individual GameCards so one broken game doesn't kill the whole week
  * Protects key components like header and progress indicator
- * FIXED: Pass navigate function to avoid hook issues in nested components
  * ENHANCED: Added warning banner for draft picks + Portal-based floating submit button
  * TOAST: Clean react-hot-toast implementation
  * 🆕 ERROR-RESILIENT: Submit button with loading state and proper error handling
+ * 🧹 CLEANED: Removed save state manager - simple draft system
  */
 
 import React, { useState } from 'react';
@@ -16,7 +16,6 @@ import WeekHeader from '../components/WeekHeader/WeekHeader.jsx';
 import GameCard from '../components/GameCard/GameCard.jsx';
 import ProgressIndicator from '../components/ProgressIndicator.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
-import { useSaveStateManager } from '../utils/saveStateManager.js';
 
 export default function WeekPage({
   games,
@@ -37,9 +36,6 @@ export default function WeekPage({
   
   // 🆕 SUBMIT STATE: Track submission loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // FIXED: Proper save state management with cleanup
-  const saveStateManager = useSaveStateManager();
 
   const handleBack = () => {
     navigate(-1);
@@ -93,7 +89,7 @@ export default function WeekPage({
         {/* 🆕 DRAFT WARNING: Show when user has unsaved picks */}
         {hasUnsavedChanges && (
           <div className="draft-warning-banner">
-            ⚠️ You have {draftCount} unsaved pick{draftCount !== 1 ? 's' : ''} - Submit button is at the bottom of your screen
+            ⚠️ You have {draftCount} unsaved pick{draftCount !== 1 ? 's' : ''} - Refresh page to reset, or submit to save
           </div>
         )}
 
@@ -131,7 +127,6 @@ export default function WeekPage({
                     gameResults={gameResults}
                     onMoneyLineClick={handleMoneyLineClick}
                     onPropBetClick={handlePropBetClick}
-                    saveStateManager={saveStateManager}
                   />
                 </ErrorBoundary>
               ))}
@@ -153,7 +148,7 @@ export default function WeekPage({
           {isSubmitting ? (
             <>
               <span className="submit-spinner"></span>
-              Submitting...
+              {" "}Submitting...
             </>
           ) : (
             `Submit (${draftCount})`
