@@ -1023,7 +1023,7 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
-  
+
   background-color: #8B5CF6;
   color: white;
   padding: 14px 28px;
@@ -1053,7 +1053,7 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .floating-submit-button {
-    bottom: 15px;
+    bottom: 35px;
     padding: 12px 24px;
     font-size: 14px;
     min-width: 160px;
