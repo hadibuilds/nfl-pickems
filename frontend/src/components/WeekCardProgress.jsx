@@ -2,6 +2,7 @@
 WeekCardProgress.jsx
 Compact progress indicator for week selector cards
 Reuses ProgressIndicator calculation logic in a card-appropriate design
+Shows green when all picks are completed
 */
 
 import React from 'react';
@@ -49,6 +50,9 @@ export default function WeekCardProgress({
     ? (progress.made / progress.total) * 100 
     : 0;
 
+  // Check if all picks are completed
+  const isCompleted = progress.total > 0 && progress.made === progress.total;
+
   // Don't render if no games available for this week
   if (weekGames.length === 0) {
     return null;
@@ -57,9 +61,9 @@ export default function WeekCardProgress({
   return (
     <div className="week-card-progress">
       {/* Progress bar first */}
-      <div className="week-progress-bar">
+      <div className={`week-progress-bar ${isCompleted ? 'completed' : ''}`}>
         <div 
-          className="week-progress-fill" 
+          className={`week-progress-fill ${isCompleted ? 'completed' : ''}`}
           style={{ width: `${progressPercentage}%` }}
         />
       </div>
