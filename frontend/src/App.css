@@ -1053,7 +1053,10 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .floating-submit-button {
-    bottom: 35px;
+    left: auto;        /* Remove center positioning */
+    right: 20px;       /* Position from right */
+    bottom: 20px;      /* Standard bottom position */
+    transform: none;   /* Remove center transform */
     padding: 12px 24px;
     font-size: 14px;
     min-width: 160px;

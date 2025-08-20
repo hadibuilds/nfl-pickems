@@ -423,7 +423,7 @@ export default function App() {
             onClick={submitPicks}
             className="floating-submit-button"
           >
-            Submit {draftCount} Pick{draftCount !== 1 ? 's' : ''}
+            Submit ({draftCount})
           </button>
         )}
       </Router>
