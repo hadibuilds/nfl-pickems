@@ -8,13 +8,14 @@
  * 🧹 CLEANED: Removed save state manager - simple draft system
  * 🗑️ REMOVED: ProgressIndicator (now in WeekSelector cards)
  * 🆕 ADDED: ResultBanner with live scoring and results tracking
+ * 🔄 UPDATED: Using new single-line WeekHeader component
  */
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import WeekHeader from '../components/WeekHeader/WeekHeader.jsx';
+import WeekHeader from '../components/WeekHeader.jsx'; // Updated import path
 import GameCard from '../components/GameCard/GameCard.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
@@ -82,8 +83,6 @@ export default function WeekPage({
         <ErrorBoundary level="component" customMessage="Header controls failed to load">
           <WeekHeader 
             weekNumber={weekNumber} 
-            onRefresh={onRefresh} 
-            isRefreshing={isRefreshing}
             onBack={handleBack}
           />
         </ErrorBoundary>
