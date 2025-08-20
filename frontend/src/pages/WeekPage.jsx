@@ -3,6 +3,7 @@
  * Wraps individual GameCards so one broken game doesn't kill the whole week
  * Protects key components like header and progress indicator
  * FIXED: Pass navigate function to avoid hook issues in nested components
+ * ENHANCED: Added warning banner for draft picks (button is now in App.jsx)
  */
 
 import React from 'react';
@@ -21,7 +22,10 @@ export default function WeekPage({
   handlePropBetClick,
   gameResults = {},
   onRefresh,
-  isRefreshing = false
+  isRefreshing = false,
+  draftCount = 0,
+  hasUnsavedChanges = false,
+  onSubmitPicks
 }) {
   const { weekNumber } = useParams();
   const navigate = useNavigate();
@@ -45,6 +49,13 @@ export default function WeekPage({
           onBack={handleBack}
         />
       </ErrorBoundary>
+
+      {/* 🆕 DRAFT WARNING: Show when user has unsaved picks */}
+      {hasUnsavedChanges && (
+        <div className="draft-warning-banner">
+          ⚠ You have {draftCount} unsaved pick{draftCount !== 1 ? 's' : ''} - Submit button is at the bottom of your screen
+        </div>
+      )}
 
       {/* Scaled content wrapper */}
       <div className="week-page-wrapper">
@@ -86,6 +97,9 @@ export default function WeekPage({
             ))}
           </div>
         )}
+
+        {/* Add some bottom padding so floating button doesn't cover content */}
+        <div className="week-page-bottom-padding"></div>
       </div>
     </div>
   );

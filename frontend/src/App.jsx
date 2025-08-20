@@ -4,6 +4,7 @@
  * Memoizes expensive operations like sorting and date calculations
  * FIXED: Prevents recreating objects/functions on every render
  * ADDED: Error boundaries around all routes for crash protection
+ * ENHANCED: Added minimal draft system for picks
  */
 
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
@@ -44,7 +45,38 @@ export default function App() {
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchEndX, setTouchEndX] = useState(0);
 
+  // 🆕 DRAFT SYSTEM: Local draft state + original submitted state
+  const [draftPicks, setDraftPicks] = useState({});
+  const [draftPropBets, setDraftPropBets] = useState({});
+  const [originalSubmittedPicks, setOriginalSubmittedPicks] = useState({});
+  const [originalSubmittedPropBets, setOriginalSubmittedPropBets] = useState({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   const API_BASE = import.meta.env.VITE_API_URL;
+
+  // Calculate ACTUAL changes (not just drafts) for UI
+  const actualChanges = useMemo(() => {
+    const changedPicks = {};
+    const changedPropBets = {};
+
+    // Check moneyline picks - only count if different from original
+    Object.entries(draftPicks).forEach(([gameId, team]) => {
+      if (originalSubmittedPicks[gameId] !== team) {
+        changedPicks[gameId] = team;
+      }
+    });
+
+    // Check prop bet picks - only count if different from original  
+    Object.entries(draftPropBets).forEach(([propBetId, answer]) => {
+      if (originalSubmittedPropBets[propBetId] !== answer) {
+        changedPropBets[propBetId] = answer;
+      }
+    });
+
+    return { changedPicks, changedPropBets };
+  }, [draftPicks, draftPropBets, originalSubmittedPicks, originalSubmittedPropBets]);
+
+  const draftCount = Object.keys(actualChanges.changedPicks).length + Object.keys(actualChanges.changedPropBets).length;
 
   // ✅ OPTIMIZED: Memoize data fetching functions to prevent recreation
   const fetchGameData = useCallback(async () => {
@@ -84,12 +116,17 @@ export default function App() {
         return acc;
       }, {});
 
+      // Store current predictions as both UI state and original submitted state
       setMoneyLineSelections(moneyLine);
       setPropBetSelections(propBets);
+      setOriginalSubmittedPicks(moneyLine);
+      setOriginalSubmittedPropBets(propBets);
     } catch (err) {
       console.error('Error fetching predictions:', err);
       setMoneyLineSelections({});
       setPropBetSelections({});
+      setOriginalSubmittedPicks({});
+      setOriginalSubmittedPropBets({});
     }
   }, [API_BASE]);
 
@@ -138,74 +175,111 @@ export default function App() {
     }
   }, [fetchGameData, fetchUserPredictions, fetchGameResults]);
 
-  // ✅ OPTIMIZED: Memoize handlers to prevent recreation on every render
+  // 🆕 ENHANCED: Submit only actual changes to database
+  const submitPicks = useCallback(async () => {
+    if (draftCount === 0) return;
+
+    try {
+      console.log('🚀 Submitting actual changes:', actualChanges);
+
+      // Submit only changed moneyline picks
+      for (const [gameId, team] of Object.entries(actualChanges.changedPicks)) {
+        await fetch(`${API_BASE}/predictions/api/save-selection/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+          },
+          body: JSON.stringify({ game_id: parseInt(gameId), predicted_winner: team }),
+          credentials: 'include',
+        });
+      }
+
+      // Submit only changed prop bet picks
+      for (const [propBetId, answer] of Object.entries(actualChanges.changedPropBets)) {
+        await fetch(`${API_BASE}/predictions/api/save-selection/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+          },
+          body: JSON.stringify({ prop_bet_id: parseInt(propBetId), answer }),
+          credentials: 'include',
+        });
+      }
+
+      // Update original submitted state to current state
+      const newOriginalPicks = { ...originalSubmittedPicks, ...actualChanges.changedPicks };
+      const newOriginalPropBets = { ...originalSubmittedPropBets, ...actualChanges.changedPropBets };
+      
+      setOriginalSubmittedPicks(newOriginalPicks);
+      setOriginalSubmittedPropBets(newOriginalPropBets);
+
+      // Clear drafts and update state
+      setDraftPicks({});
+      setDraftPropBets({});
+      setHasUnsavedChanges(false);
+      
+      console.log('✅ All changes submitted successfully!');
+      alert(`Successfully submitted ${draftCount} pick${draftCount !== 1 ? 's' : ''}!`);
+
+    } catch (err) {
+      console.error("Failed to submit picks:", err);
+      alert("Failed to submit picks. Please try again.");
+    }
+  }, [draftCount, actualChanges, API_BASE, originalSubmittedPicks, originalSubmittedPropBets]);
+
+  // 🆕 ENHANCED: Check if pick is actually different from original before setting unsaved changes
   const handleMoneyLineClick = useCallback(async (game, team) => {
     if (game.locked) return;
 
-    try {
-      const res = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken'),
-        },
-        body: JSON.stringify({ game_id: game.id, predicted_winner: team }),
-        credentials: 'include',
-      });
-    
-      const data = await res.json();
-    
-      if (!res.ok) {
-        throw new Error(data.message || `HTTP error! status: ${res.status}`);
-      }
-    
-      if (data.success) {
-        // Use functional state update to prevent race conditions
-        setMoneyLineSelections(prev => ({ ...prev, [game.id]: team }));
-        return data;
-      } else {
-        throw new Error(data.message || 'Save failed');
-      }
-    } catch (err) {
-      console.error("Failed to save moneyline selection:", err);
-      throw err;
-    }
-  }, [API_BASE]);
+    console.log('💾 Storing draft pick:', { gameId: game.id, team });
 
+    // Store as draft locally
+    setDraftPicks(prev => ({ ...prev, [game.id]: team }));
+    
+    // Check if we have any actual changes from original submitted picks
+    const updatedDrafts = { ...draftPicks, [game.id]: team };
+    const hasChanges = Object.entries(updatedDrafts).some(([gameId, draftTeam]) => 
+      originalSubmittedPicks[gameId] !== draftTeam
+    ) || Object.entries(draftPropBets).some(([propBetId, draftAnswer]) => 
+      originalSubmittedPropBets[propBetId] !== draftAnswer
+    );
+    
+    setHasUnsavedChanges(hasChanges);
+
+    // Update UI immediately (same visual experience as before)
+    setMoneyLineSelections(prev => ({ ...prev, [game.id]: team }));
+
+    return { success: true };
+  }, [draftPicks, draftPropBets, originalSubmittedPicks, originalSubmittedPropBets]);
+
+  // 🆕 ENHANCED: Check if prop bet is actually different from original before setting unsaved changes
   const handlePropBetClick = useCallback(async (game, answer) => {
     if (game.locked) return;
     const propBetId = game.prop_bets?.[0]?.id;
     if (!propBetId) return;
 
-    try {
-      const res = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken'),
-        },
-        body: JSON.stringify({ prop_bet_id: propBetId, answer }),
-        credentials: 'include',
-      });
+    console.log('💾 Storing draft prop bet:', { propBetId, answer });
+
+    // Store as draft locally
+    setDraftPropBets(prev => ({ ...prev, [propBetId]: answer }));
     
-      const data = await res.json();
+    // Check if we have any actual changes from original submitted picks
+    const updatedDraftPropBets = { ...draftPropBets, [propBetId]: answer };
+    const hasChanges = Object.entries(draftPicks).some(([gameId, draftTeam]) => 
+      originalSubmittedPicks[gameId] !== draftTeam
+    ) || Object.entries(updatedDraftPropBets).some(([propId, draftAnswer]) => 
+      originalSubmittedPropBets[propId] !== draftAnswer
+    );
     
-      if (!res.ok) {
-        throw new Error(data.message || `HTTP error! status: ${res.status}`);
-      }
-    
-      if (data.success) {
-        // Use functional state update to prevent race conditions
-        setPropBetSelections(prev => ({ ...prev, [propBetId]: answer }));
-        return data;
-      } else {
-        throw new Error(data.message || 'Save failed');
-      }
-    } catch (err) {
-      console.error("Failed to save prop bet selection:", err);
-      throw err;
-    } 
-  }, [API_BASE]);
+    setHasUnsavedChanges(hasChanges);
+
+    // Update UI immediately (same visual experience as before)
+    setPropBetSelections(prev => ({ ...prev, [propBetId]: answer }));
+
+    return { success: true };
+  }, [draftPicks, draftPropBets, originalSubmittedPicks, originalSubmittedPropBets]);
 
   // ✅ HUGE OPTIMIZATION: Memoize sortedGames to prevent recreation on every render
   const sortedGames = useMemo(() => {
@@ -290,6 +364,9 @@ export default function App() {
                       gameResults={gameResults}
                       onRefresh={refreshAllData}
                       isRefreshing={isRefreshing}
+                      draftCount={draftCount}
+                      hasUnsavedChanges={hasUnsavedChanges}
+                      onSubmitPicks={submitPicks}
                     />
                   </PrivateRoute>
                 </ErrorBoundary>
@@ -337,7 +414,18 @@ export default function App() {
               }
             />
           </Routes>
+
         </div>
+
+        {/* 🆕 FLOATING SUBMIT BUTTON: Clean CSS class implementation */}
+        {hasUnsavedChanges && (
+          <button 
+            onClick={submitPicks}
+            className="floating-submit-button"
+          >
+            Submit {draftCount} Pick{draftCount !== 1 ? 's' : ''}
+          </button>
+        )}
       </Router>
     </ThemeProvider>
   );
