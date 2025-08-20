@@ -97,15 +97,6 @@ export default function ProfileDropdown() {
           {/* Navigation Items */}
           <div className="dropdown-navigation">
             <Link 
-              to="/settings" 
-              className="dropdown-item"
-              onClick={handleNavigationClick}
-            >
-              <span className="dropdown-icon">⚙️</span>
-              Settings
-            </Link>
-            
-            <Link 
               to="/weeks" 
               className="dropdown-item"
               onClick={handleNavigationClick}
@@ -121,6 +112,15 @@ export default function ProfileDropdown() {
             >
               <span className="dropdown-icon">🏆</span>
               Standings
+            </Link>
+
+            <Link 
+              to="/settings" 
+              className="dropdown-item"
+              onClick={handleNavigationClick}
+            >
+              <span className="dropdown-icon">⚙️</span>
+              Settings
             </Link>
           </div>
 
