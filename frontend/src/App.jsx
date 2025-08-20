@@ -5,10 +5,13 @@
  * FIXED: Prevents recreating objects/functions on every render
  * ADDED: Error boundaries around all routes for crash protection
  * ENHANCED: Added minimal draft system for picks
+ * CLEANED: Removed floating button logic - now handled by WeekPage via Portal
+ * TOAST: Clean react-hot-toast implementation - styles moved to CSS
  */
 
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Toaster } from 'react-hot-toast';
 import './App.css';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -22,7 +25,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { getCookie } from './utils/cookies';
-import { useLocation } from 'react-router-dom';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -177,14 +179,14 @@ export default function App() {
 
   // 🆕 ENHANCED: Submit only actual changes to database
   const submitPicks = useCallback(async () => {
-    if (draftCount === 0) return;
+    if (draftCount === 0) return { success: false, error: "No changes to submit" };
 
     try {
       console.log('🚀 Submitting actual changes:', actualChanges);
 
       // Submit only changed moneyline picks
       for (const [gameId, team] of Object.entries(actualChanges.changedPicks)) {
-        await fetch(`${API_BASE}/predictions/api/save-selection/`, {
+        const response = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -193,11 +195,15 @@ export default function App() {
           body: JSON.stringify({ game_id: parseInt(gameId), predicted_winner: team }),
           credentials: 'include',
         });
+
+        if (!response.ok) {
+          throw new Error(`Failed to submit pick for game ${gameId}`);
+        }
       }
 
       // Submit only changed prop bet picks
       for (const [propBetId, answer] of Object.entries(actualChanges.changedPropBets)) {
-        await fetch(`${API_BASE}/predictions/api/save-selection/`, {
+        const response = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -206,6 +212,10 @@ export default function App() {
           body: JSON.stringify({ prop_bet_id: parseInt(propBetId), answer }),
           credentials: 'include',
         });
+
+        if (!response.ok) {
+          throw new Error(`Failed to submit prop bet ${propBetId}`);
+        }
       }
 
       // Update original submitted state to current state
@@ -221,11 +231,11 @@ export default function App() {
       setHasUnsavedChanges(false);
       
       console.log('✅ All changes submitted successfully!');
-      alert(`Successfully submitted ${draftCount} pick${draftCount !== 1 ? 's' : ''}!`);
+      return { success: true };
 
     } catch (err) {
       console.error("Failed to submit picks:", err);
-      alert("Failed to submit picks. Please try again.");
+      return { success: false, error: err.message };
     }
   }, [draftCount, actualChanges, API_BASE, originalSubmittedPicks, originalSubmittedPropBets]);
 
@@ -414,18 +424,23 @@ export default function App() {
               }
             />
           </Routes>
-
         </div>
-
-        {/* 🆕 FLOATING SUBMIT BUTTON: Clean CSS class implementation */}
-        {hasUnsavedChanges && (
-          <button 
-            onClick={submitPicks}
-            className="floating-submit-button"
-          >
-            Submit ({draftCount})
-          </button>
-        )}
+        
+        {/* Simple Toaster with minimal config - styles moved to CSS */}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 4000,
+            className: 'custom-toast',
+            success: {
+              className: 'custom-toast-success',
+            },
+            error: {
+              className: 'custom-toast-error',
+            },
+          }}
+          containerClassName="toast-container"
+        />
       </Router>
     </ThemeProvider>
   );

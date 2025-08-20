@@ -3,11 +3,14 @@
  * Wraps individual GameCards so one broken game doesn't kill the whole week
  * Protects key components like header and progress indicator
  * FIXED: Pass navigate function to avoid hook issues in nested components
- * ENHANCED: Added warning banner for draft picks (button is now in App.jsx)
+ * ENHANCED: Added warning banner for draft picks + Portal-based floating submit button
+ * TOAST: Clean react-hot-toast implementation
  */
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import WeekHeader from '../components/WeekHeader/WeekHeader.jsx';
 import GameCard from '../components/GameCard/GameCard.jsx';
 import ProgressIndicator from '../components/ProgressIndicator.jsx';
@@ -38,69 +41,104 @@ export default function WeekPage({
     navigate(-1);
   };
 
+  // Clean toast-enabled submit handler
+  const handleSubmitWithToast = async () => {
+    try {
+      const result = await onSubmitPicks();
+      
+      if (result.success) {
+        toast.success(`Success! ${draftCount} pick${draftCount !== 1 ? 's' : ''} submitted.`, {
+          duration: 4000,
+        });
+      } else {
+        toast.error(result.error || "Unable to submit your picks. Please try again.", {
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please check your connection and try again.", {
+        duration: 5000,
+      });
+    }
+  };
+
   return (
-    <div className="pt-16 px-4">
-      {/* Header with controls and title - Protected */}
-      <ErrorBoundary level="component" customMessage="Header controls failed to load">
-        <WeekHeader 
-          weekNumber={weekNumber} 
-          onRefresh={onRefresh} 
-          isRefreshing={isRefreshing}
-          onBack={handleBack}
-        />
-      </ErrorBoundary>
+    <>
+      {/* Main WeekPage Content */}
+      <div className="pt-16 px-4">
+        {/* Header with controls and title - Protected */}
+        <ErrorBoundary level="component" customMessage="Header controls failed to load">
+          <WeekHeader 
+            weekNumber={weekNumber} 
+            onRefresh={onRefresh} 
+            isRefreshing={isRefreshing}
+            onBack={handleBack}
+          />
+        </ErrorBoundary>
 
-      {/* 🆕 DRAFT WARNING: Show when user has unsaved picks */}
-      {hasUnsavedChanges && (
-        <div className="draft-warning-banner">
-          ⚠ You have {draftCount} unsaved pick{draftCount !== 1 ? 's' : ''} - Submit button is at the bottom of your screen
-        </div>
-      )}
-
-      {/* Scaled content wrapper */}
-      <div className="week-page-wrapper">
-        {/* Progress indicator - Protected */}
-        {weekGames.length > 0 && (
-          <ErrorBoundary level="component" customMessage="Progress indicator failed to load">
-            <ProgressIndicator 
-              games={weekGames}
-              moneyLineSelections={moneyLineSelections}
-              propBetSelections={propBetSelections}
-              gameResults={gameResults}
-            />
-          </ErrorBoundary>
-        )}
-
-        {/* Games grid - Each game card individually protected */}
-        {weekGames.length === 0 ? (
-          <p className="text-center" style={{ color: '#9ca3af' }}>
-            No games available for this week.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {weekGames.map(game => (
-              <ErrorBoundary 
-                key={game.id} 
-                level="game" 
-                customMessage={`Game ${game.away_team} vs ${game.home_team} failed to load`}
-              >
-                <GameCard
-                  game={game}
-                  moneyLineSelections={moneyLineSelections}
-                  propBetSelections={propBetSelections}
-                  gameResults={gameResults}
-                  onMoneyLineClick={handleMoneyLineClick}
-                  onPropBetClick={handlePropBetClick}
-                  saveStateManager={saveStateManager}
-                />
-              </ErrorBoundary>
-            ))}
+        {/* 🆕 DRAFT WARNING: Show when user has unsaved picks */}
+        {hasUnsavedChanges && (
+          <div className="draft-warning-banner">
+            ⚠️ You have {draftCount} unsaved pick{draftCount !== 1 ? 's' : ''} - Submit button is at the bottom of your screen
           </div>
         )}
 
-        {/* Add some bottom padding so floating button doesn't cover content */}
-        <div className="week-page-bottom-padding"></div>
+        {/* Scaled content wrapper */}
+        <div className="week-page-wrapper">
+          {/* Progress indicator - Protected */}
+          {weekGames.length > 0 && (
+            <ErrorBoundary level="component" customMessage="Progress indicator failed to load">
+              <ProgressIndicator 
+                games={weekGames}
+                moneyLineSelections={moneyLineSelections}
+                propBetSelections={propBetSelections}
+                gameResults={gameResults}
+              />
+            </ErrorBoundary>
+          )}
+
+          {/* Games grid - Each game card individually protected */}
+          {weekGames.length === 0 ? (
+            <p className="text-center" style={{ color: '#9ca3af' }}>
+              No games available for this week.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {weekGames.map(game => (
+                <ErrorBoundary 
+                  key={game.id} 
+                  level="game" 
+                  customMessage={`Game ${game.away_team} vs ${game.home_team} failed to load`}
+                >
+                  <GameCard
+                    game={game}
+                    moneyLineSelections={moneyLineSelections}
+                    propBetSelections={propBetSelections}
+                    gameResults={gameResults}
+                    onMoneyLineClick={handleMoneyLineClick}
+                    onPropBetClick={handlePropBetClick}
+                    saveStateManager={saveStateManager}
+                  />
+                </ErrorBoundary>
+              ))}
+            </div>
+          )}
+
+          {/* Add some bottom padding so floating button doesn't cover content */}
+          <div className="week-page-bottom-padding"></div>
+        </div>
       </div>
-    </div>
+
+      {/* 🌟 PORTAL MAGIC: Floating Submit Button with Toast - rendered at document.body */}
+      {hasUnsavedChanges && createPortal(
+        <button 
+          className="floating-submit-button"
+          onClick={handleSubmitWithToast}
+        >
+          Submit ({draftCount})
+        </button>,
+        document.body  // "Teleport" the button to document.body
+      )}
+    </>
   );
 }

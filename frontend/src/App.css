@@ -2,6 +2,7 @@
  * Enhanced styles for NFL Pick'ems application
  * Includes improved date/time positioning, locked game states, and better spacing
  * UPDATED: New three-section card design with proper spacing
+ * ADDED: Clean toast styling moved from inline JSX
  */
 
  #root {
@@ -1011,8 +1012,6 @@
   transform-origin: top center; /* Keeps it centered when scaling */
 }
 
-/* Add these styles to the bottom of your existing App.css file */
-
 /* =================================================================
    FLOATING SUBMIT BUTTON STYLES
    ================================================================= */
@@ -1065,7 +1064,65 @@
   text-align: center;
   font-weight: 600;
 }
+
+/* =================================================================
+   CLEANED TOAST STYLES - Moved from inline JSX
+   ================================================================= */
+
+/* Toast container positioning - Exactly under navbar */
+.toast-container {
+  top: 70px !important; /* Mobile navbar height */
+}
   
+@media (min-width: 640px) {
+  .toast-container {
+    top: 80px !important; /* Desktop navbar height */
+  }
+}
+
+/* Base toast styling */
+.custom-toast {
+  background: #2d2d2d !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Success toast styling */
+.custom-toast-success {
+  background: #10B981 !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* Error toast styling */
+.custom-toast-error {
+  background: #EF4444 !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+}
+
+/* Toast icon styling */
+.custom-toast .toast-icon,
+.custom-toast-success .toast-icon,
+.custom-toast-error .toast-icon {
+  color: #fff !important;
+}
+
 /* =================================================================
    WEEK PAGE BOTTOM PADDING (for floating button space)
    ================================================================= */
