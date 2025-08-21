@@ -1,4 +1,3 @@
-
 /*
  * Enhanced styles for NFL Pick'ems application
  * Includes improved date/time positioning, locked game states, and better spacing
@@ -413,6 +412,16 @@
   /* iOS tap optimization */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  /* Improved touch interaction */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Active state for touch feedback */
+.team-button:active, .propbet-button:active {
+  transform: scale(0.97);
+  background-color: #8B5CF6;
 }
 
 /* CRITICAL: Only apply hover effects on non-touch devices */
@@ -706,6 +715,10 @@
   /* iOS tap optimization */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  /* Improved touch interaction */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
 }
 
 .login-button {
@@ -716,6 +729,11 @@
 .signup-button {
   background-color: #8B5CF6;
   color: white;
+}
+
+/* Active state for touch feedback */
+.auth-button:active {
+  transform: scale(0.95);
 }
 
 /* Only apply hover effects on non-touch devices */
@@ -951,6 +969,10 @@
   /* iOS tap optimization */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  /* Improved touch interaction */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
 }
 
 /* DISABLE pointer events on ALL child elements - only card should be hoverable */
@@ -1111,6 +1133,17 @@
   font-family: inherit;
   outline: none;
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  /* Improved touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Active state for touch feedback */
+.floating-submit-button:active {
+  transform: translateX(-50%) scale(0.97);
 }
 
 /* Mobile adjustments only */
@@ -1255,6 +1288,17 @@
   cursor: pointer;
   transition: all 0.2s ease;
   outline: none;
+  /* Improved touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Active state for touch feedback */
+.navigation-modal-button:active {
+  transform: scale(0.97);
 }
   
 .navigation-modal-button.review {
@@ -1723,11 +1767,12 @@
   white-space: nowrap !important;
   text-align: center !important;
   line-height: 1 !important;
-}
-
-.user-avatar:hover {
-  transform: scale(1.05);
-  border-color: #7C3AED; /* Purple ring on hover */
+  /* Improved touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
 }
 
 .user-avatar:active {
@@ -1973,11 +2018,25 @@
   cursor: pointer;
   font-size: 14px;
   font-family: inherit;
+  /* Improved touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
 }
 
-.profile-dropdown .dropdown-item:hover {
+.profile-dropdown .dropdown-item:active {
   background: rgba(139, 92, 246, 0.1);
-  color: white;
+  transform: scale(0.98);
+}
+
+/* Only apply hover effects on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  .profile-dropdown .dropdown-item:hover {
+    background: rgba(139, 92, 246, 0.1);
+    color: white;
+  }
 }
 
 .profile-dropdown .dropdown-item:focus {
