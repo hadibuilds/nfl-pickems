@@ -8,6 +8,7 @@
  * CLEANED: Removed floating button logic - now handled by WeekPage via Portal
  * TOAST: Clean react-hot-toast implementation - styles moved to CSS
  * 🆕 FULL NAVIGATION PROTECTION: NavigationManager prevents navigation with unsaved picks
+ * FIXED: iOS double tap issue by removing global touch handlers
  */
 
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
@@ -46,8 +47,6 @@ export default function App() {
   const [gameResults, setGameResults] = useState({});
   const [isOpen, setIsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
 
   // 🆕 DRAFT SYSTEM: Local draft state + original submitted state
   const [draftPicks, setDraftPicks] = useState({});
@@ -346,32 +345,6 @@ export default function App() {
     return gamesWithDates.sort((a, b) => a._sortDate - b._sortDate);
   }, [games]); // Only recalculate when games array actually changes
 
-  // ✅ OPTIMIZED: Memoize touch handlers
-  const handleTouchStart = useCallback((e) => {
-    setTouchStartX(e.targetTouches[0].clientX);
-  }, []);
-    
-  const handleTouchEnd = useCallback((e) => {
-    setTouchEndX(e.changedTouches[0].clientX);
-    handleSwipe();
-  }, []);
-    
-  const handleSwipe = useCallback(() => {
-    if (!touchStartX || !touchEndX) return;
-    
-    const swipeDistance = touchEndX - touchStartX;
-    const minSwipeDistance = 10;
-    
-    // Right swipe and menu is open
-    if (swipeDistance > minSwipeDistance && isOpen) {
-      setIsOpen(false);
-    }
-    
-    // Reset touch positions
-    setTouchStartX(0);
-    setTouchEndX(0);
-  }, [touchStartX, touchEndX, isOpen]);
-
   // Initial data loading - only when user info is available
   useEffect(() => {
     if (userInfo && !isLoading) {
@@ -406,9 +379,7 @@ export default function App() {
         
         <ScrollToTop />
         <Navbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div 
-          className={`transition-transform duration-300 ${isOpen ? "-translate-x-[40vw]" : "translate-x-0"}`} 
-        > 
+        <div className={`transition-transform duration-300 ${isOpen ? "-translate-x-[40vw]" : "translate-x-0"}`}>
           <Routes>  
             <Route
               path="/"
