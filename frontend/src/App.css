@@ -1972,16 +1972,6 @@
   position: relative;
 }
 
-@keyframes draft-button-pulse {
-  0%, 100% {
-    border-color: #F59E0B;
-    box-shadow: 0 0 0 1px #F59E0B;
-  }
-  50% {
-    border-color: #FCD34D;
-    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
-  }
-}
 
 .team-button.selected.draft::after,
 .propbet-button.selected.draft::after {
@@ -1994,6 +1984,12 @@
   background-color: #F59E0B;
   border-radius: 50%;
   z-index: 1;
+}
+
+.team-button.selected:not(.draft):hover,
+.propbet-button.selected:not(.draft):hover {
+  background-color: #7C3AED !important; /* Keep the same purple */
+  transform: none !important; /* No movement either */
 }
 
 .team-button.selected.draft:hover,
