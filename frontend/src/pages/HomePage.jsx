@@ -229,18 +229,18 @@ function HomePage() {
   }
 
   return (
-    <div className="fixed inset-0 text-white pt-16 overflow-y-auto" style={{ backgroundColor: '#1E1E20' }}>
-      <div className="w-full px-4 sm:px-6 pb-8">
+    <div className="w-full" style={{ backgroundColor: '#1E1E20', color: 'white', marginTop: '64px' }}>
+      <div className="w-full px-2 pb-8">
         {/* Welcome Header */}
         <div className="mb-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
             Welcome back, <span style={{ color: '#8B5CF6' }}>{userInfo.username}</span>!
           </h2>
-          <p style={{ color: '#9ca3af' }}>Week {mockUserData.currentWeek} • Ready to make your picks?</p>
+          <p style={{ color: '#9ca3af', fontSize: '14px' }}>Week {mockUserData.currentWeek} • Ready to make your picks?</p>
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <StatCard
             title="Current Rank"
             value={`#${mockUserData.rank}`}
@@ -272,53 +272,53 @@ function HomePage() {
           />
         </div>
 
-        {/* Season Performance - Full Width */}
-        <div className="rounded-2xl p-6 flex flex-col items-center justify-center mb-6 max-w-4xl mx-auto" style={{ backgroundColor: '#2d2d2d' }}>
-          <h3 className="text-xl font-semibold mb-6">Season Performance</h3>
+        {/* Season Performance */}
+        <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+          <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
           
           {/* All Three Progress Rings Side by Side */}
-          <div className="flex space-x-8 items-center">
+          <div className="flex space-x-4 items-center">
             <div className="flex flex-col items-center">
-              <ProgressRing percentage={mockUserData.overallAccuracy} size={90} strokeWidth={6} fontSize="text-lg" />
+              <ProgressRing percentage={mockUserData.overallAccuracy} size={80} strokeWidth={6} fontSize="text-base" />
               <div className="mt-2 text-center">
-                <div className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Overall</div>
+                <div className="text-xs font-bold" style={{ color: '#8B5CF6' }}>Overall</div>
               </div>
             </div>
             
             <div className="flex flex-col items-center">
-              <ProgressRing percentage={mockUserData.moneylineAccuracy} size={90} strokeWidth={6} showPercentage={true} fontSize="text-lg" />
+              <ProgressRing percentage={mockUserData.moneylineAccuracy} size={80} strokeWidth={6} showPercentage={true} fontSize="text-base" />
               <div className="mt-2 text-center">
-                <div className="text-sm font-bold text-green-400">Moneyline</div>
+                <div className="text-xs font-bold text-green-400">Moneyline</div>
               </div>
             </div>
             
             <div className="flex flex-col items-center">
-              <ProgressRing percentage={mockUserData.propBetAccuracy} size={90} strokeWidth={6} showPercentage={true} fontSize="text-lg" />
+              <ProgressRing percentage={mockUserData.propBetAccuracy} size={80} strokeWidth={6} showPercentage={true} fontSize="text-base" />
               <div className="mt-2 text-center">
-                <div className="text-sm font-bold text-purple-400">Prop Bets</div>
+                <div className="text-xs font-bold text-purple-400">Prop Bets</div>
               </div>
             </div>
           </div>
           
-          <div className="mt-6 text-center">
-            <div className="text-2xl font-bold" style={{ color: '#8B5CF6' }}>{mockUserData.totalPoints}</div>
-            <div className="text-sm" style={{ color: '#9ca3af' }}>Total Points</div>
+          <div className="mt-4 text-center">
+            <div className="text-xl font-bold" style={{ color: '#8B5CF6' }}>{mockUserData.totalPoints}</div>
+            <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
           </div>
         </div>
 
-        {/* Leaderboard - Full Width */}
-        <div className="rounded-2xl p-6 mb-6 max-w-4xl mx-auto" style={{ backgroundColor: '#2d2d2d' }}>
+        {/* Leaderboard */}
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold">Leaderboard</h3>
-            <Users className="w-5 h-5" style={{ color: '#9ca3af' }} />
+            <h3 className="text-lg font-semibold">Leaderboard</h3>
+            <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
           <div className="space-y-2">
-            {mockLeaderboard.map((user, index) => (
+            {mockLeaderboard.slice(0, 3).map((user, index) => (
               <LeaderboardRow key={user.rank} user={user} index={index} />
             ))}
           </div>
           <button 
-            className="w-full mt-4 text-sm font-medium transition-colors"
+            className="w-full mt-3 text-xs font-medium transition-colors"
             style={{ color: '#8B5CF6' }}
             onClick={() => navigate('/standings')}
           >
@@ -326,27 +326,27 @@ function HomePage() {
           </button>
         </div>
 
-        {/* Recent Activity - Full Width */}
-        <div className="rounded-2xl p-6 mb-6 max-w-4xl mx-auto" style={{ backgroundColor: '#2d2d2d' }}>
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold">Recent Games</h3>
-            <Clock className="w-5 h-5" style={{ color: '#9ca3af' }} />
+        {/* Recent Activity */}
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Recent Games</h3>
+            <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
-          <div className="grid grid-cols-1 gap-4">
-            {mockUserData.recentGames.map(game => (
+          <div className="space-y-3">
+            {mockUserData.recentGames.slice(0, 2).map(game => (
               <RecentGameCard key={game.id} game={game} />
             ))}
           </div>
         </div>
 
         {/* Action Button */}
-        <div className="flex justify-center max-w-4xl mx-auto">
+        <div className="flex justify-center">
           <button 
-            className="px-8 py-4 rounded-2xl text-white font-semibold text-lg transition-all duration-200 hover:scale-105 shadow-lg inline-flex items-center space-x-3"
+            className="px-6 py-3 rounded-2xl text-white font-semibold text-base transition-all duration-200 hover:scale-105 shadow-lg inline-flex items-center space-x-2"
             style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }}
             onClick={handleConfetti}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
             </svg>
             <span>View All Games</span>
