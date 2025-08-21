@@ -6,9 +6,9 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuthWithNavigation } from "../hooks/useAuthWithNavigation";
-import ProfileDropdown from "./ProfileDropdown";
-import whiteLogo from "../assets/pickem2_white.png";
+import { useAuthWithNavigation } from "../../hooks/useAuthWithNavigation";
+import ProfileDropdown from "../navigation/ProfileDropdown";
+import whiteLogo from "../../assets/pickem2_white.png";
 
 export default function Navbar({ isOpen, setIsOpen }) {
   const location = useLocation();

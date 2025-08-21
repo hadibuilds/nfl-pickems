@@ -1,7 +1,7 @@
 /*
- * Updated Login Page Component
- * Uses useAuthWithNavigation for cleaner auth + navigation
- * No need to manually call navigate after login
+ * Enhanced Login Page Component
+ * Prevents double-click with disabled button during login
+ * Uses enhanced AuthContext for additional protection
  */
 
 import React, { useState, useEffect } from "react";
@@ -11,7 +11,7 @@ import { useAuthWithNavigation } from "../hooks/useAuthWithNavigation";
 import { getCookie } from "../utils/cookies";
 
 export default function LoginPage() {
-  const { loginAndRedirect } = useAuthWithNavigation();
+  const { loginAndRedirect, isLoggingIn } = useAuthWithNavigation(); // ← Use isLoggingIn from context
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState({
     identifier: "",
@@ -49,6 +49,12 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ PROTECTION: Don't submit if already logging in
+    if (isLoggingIn) {
+      console.log('Login already in progress, ignoring form submission');
+      return;
+    }
 
     try {
       // Use the combined auth + navigation function
@@ -91,7 +97,10 @@ export default function LoginPage() {
               required
               value={formData.identifier}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
+              disabled={isLoggingIn} // ✅ Disable input during login
+              className={`w-full px-4 py-3 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white transition ${
+                isLoggingIn ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
               style={{ 
                 backgroundColor: '#1f1f1f',
                 border: '1px solid #4b5563'
@@ -111,15 +120,20 @@ export default function LoginPage() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 pr-10 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
+                disabled={isLoggingIn} // ✅ Disable input during login
+                className={`w-full px-4 py-3 pr-10 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white transition ${
+                  isLoggingIn ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
                 style={{ 
                   backgroundColor: '#1f1f1f',
                   border: '1px solid #4b5563'
                 }}
               />
               <div
-                onClick={toggleVisibility}
-                className="absolute inset-y-0 right-3 flex items-center cursor-pointer hover:text-gray-300"
+                onClick={isLoggingIn ? undefined : toggleVisibility} // ✅ Disable eye toggle during login
+                className={`absolute inset-y-0 right-3 flex items-center ${
+                  isLoggingIn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:text-gray-300'
+                }`}
                 style={{ color: '#9ca3af' }}
               >
                 {isVisible ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
@@ -128,21 +142,23 @@ export default function LoginPage() {
           </div>
 
           <div className="flex items-center justify-between">
-            <label htmlFor="remember" className="flex items-center text-sm" style={{ color: '#9ca3af' }}>
+            <label htmlFor="remember" className={`flex items-center text-sm ${isLoggingIn ? 'opacity-50' : ''}`} style={{ color: '#9ca3af' }}>
               <input
                 id="remember"
                 name="remember"
                 type="checkbox"
                 checked={formData.remember}
                 onChange={handleChange}
+                disabled={isLoggingIn} // ✅ Disable checkbox during login
                 className="mr-2"
               />
               Remember me
             </label>
             <a
               href={`${API_BASE}/accounts/api/password-reset/`}
-              className="text-sm hover:underline ml-4"
+              className={`text-sm hover:underline ml-4 ${isLoggingIn ? 'opacity-50 cursor-not-allowed' : ''}`}
               style={{ color: '#8B5CF6' }}
+              onClick={isLoggingIn ? (e) => e.preventDefault() : undefined} // ✅ Disable link during login
             >
               Forgot password?
             </a>
@@ -150,16 +166,36 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full font-semibold py-3 rounded-md text-base text-white hover:bg-violet-700 transition"
-            style={{ backgroundColor: '#8B5CF6' }}
+            disabled={isLoggingIn} // ✅ MAIN PROTECTION: Disable button during login
+            className={`w-full font-semibold py-3 rounded-md text-base text-white transition ${
+              isLoggingIn 
+                ? 'opacity-50 cursor-not-allowed bg-violet-500' 
+                : 'hover:bg-violet-700 bg-violet-600'
+            }`}
+            style={{ backgroundColor: isLoggingIn ? '#8B5CF6' : '#8B5CF6' }}
           >
-            Log In
+            {isLoggingIn ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Logging in...
+              </span>
+            ) : (
+              'Log In'
+            )}
           </button>
         </form>
 
-        <p className="text-center text-sm mt-4" style={{ color: '#9ca3af' }}>
+        <p className={`text-center text-sm mt-4 ${isLoggingIn ? 'opacity-50' : ''}`} style={{ color: '#9ca3af' }}>
           Don't have an account?{" "}
-          <Link to="/signup" className="hover:underline" style={{ color: '#8B5CF6' }}>
+          <Link 
+            to="/signup" 
+            className={`hover:underline ${isLoggingIn ? 'cursor-not-allowed' : ''}`} 
+            style={{ color: '#8B5CF6' }}
+            onClick={isLoggingIn ? (e) => e.preventDefault() : undefined} // ✅ Disable signup link during login
+          >
             Sign up
           </Link>
         </p>

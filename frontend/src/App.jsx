@@ -14,15 +14,15 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'r
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
-import Navbar from './components/Navbar';
+import Navbar from './components/common/Navbar';
 import HomePage from './pages/HomePage';
 import WeekPage from './pages/WeekPage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import Standings from './pages/Standings';
 import WeekSelector from "./pages/WeekSelector"; 
-import PrivateRoute from './components/PrivateRoute';
-import ErrorBoundary from './components/ErrorBoundary';
+import PrivateRoute from './components/common/PrivateRoute';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { getCookie } from './utils/cookies';

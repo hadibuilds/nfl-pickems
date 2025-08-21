@@ -4,7 +4,7 @@ Main status indicator for individual picks showing draft/submitted/edited states
 */
 
 import React from 'react';
-import SaveStateIndicator from './SaveStateIndicator';
+import SaveStateIndicator from '../picks/SaveStateIndicator';
 
 function PickStatusIndicator({ 
   gameId, 

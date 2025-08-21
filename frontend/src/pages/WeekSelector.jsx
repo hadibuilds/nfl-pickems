@@ -5,7 +5,7 @@ Includes progress bars in current week cards instead of "Play Now"
 
 import React from "react";
 import { Link } from "react-router-dom";
-import WeekCardProgress from "../components/WeekCardProgress.jsx";
+import WeekCardProgress from "../components/weeks/WeekCardProgress.jsx";
 
 export default function WeekSelector({ 
   games = [], 
