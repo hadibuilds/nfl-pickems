@@ -1186,12 +1186,12 @@
 }
   
 .navigation-modal-button.review {
-  background-color: #8B5CF6;
+  background-color: #e6a029;
   color: white;
 }
   
 .navigation-modal-button.review:hover {
-  background-color: #7C3AED;
+  background-color: #F59E0B;
   transform: translateY(-1px);
 }
   
@@ -1962,6 +1962,83 @@
   z-index: 9999;
 }
 
-/* ==========================================================================
-   END PROFILE DROPDOWN STYLES
-   ========================================================================== */
+/* =================================================================
+   DRAFT PICK BUTTON STYLING - Yellow Border for Unsubmitted Picks
+   ================================================================= */
+
+/* Draft pick button styling - Yellow border for selected draft buttons */
+.team-button.selected.draft,
+.propbet-button.selected.draft {
+  border: 2px solid #F59E0B !important; /* Yellow border */
+  box-shadow: 0 0 0 1px #F59E0B !important; /* Extra yellow glow */
+  background-color: #7C3AED !important; /* Keep purple background */
+  position: relative;
+}
+
+/* Subtle pulse animation for draft buttons */
+.team-button.selected.draft,
+.propbet-button.selected.draft {
+  animation: draft-button-pulse 2s ease-in-out infinite;
+}
+
+@keyframes draft-button-pulse {
+  0%, 100% {
+    border-color: #F59E0B;
+    box-shadow: 0 0 0 1px #F59E0B;
+  }
+  50% {
+    border-color: #FCD34D;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
+  }
+}
+
+/* Draft indicator - small yellow dot in top-right corner of button */
+.team-button.selected.draft::after,
+.propbet-button.selected.draft::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background-color: #F59E0B;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* Hover states for draft buttons - maintain yellow border */
+.team-button.selected.draft:hover,
+.propbet-button.selected.draft:hover {
+  background-color: #7C3AED !important; /* Keep purple, don't change to default hover */
+  border-color: #F59E0B !important; /* Maintain yellow border */
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.6) !important;
+}
+
+/* Make sure draft styling doesn't interfere with disabled states */
+.team-button.selected.draft:disabled,
+.propbet-button.selected.draft:disabled {
+  border-color: rgba(245, 158, 11, 0.6) !important;
+  animation: none; /* No pulse animation for locked games */
+}
+
+.team-button.selected.draft:disabled::after,
+.propbet-button.selected.draft:disabled::after {
+  background-color: rgba(245, 158, 11, 0.6);
+}
+
+/* Remove draft styling completely when button shows correct/incorrect results */
+.team-button.selected.correct,
+.team-button.selected.incorrect,
+.propbet-button.selected.correct,
+.propbet-button.selected.incorrect {
+  border: 2px solid transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+.team-button.selected.correct::after,
+.team-button.selected.incorrect::after,
+.propbet-button.selected.correct::after,
+.propbet-button.selected.incorrect::after {
+  display: none !important;
+}

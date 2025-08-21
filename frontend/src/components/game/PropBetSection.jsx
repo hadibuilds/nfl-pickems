@@ -3,6 +3,7 @@
  * Bottom section of game card with prop bet options
  * 🧹 REMOVED: Save state indicators (spinners/checkmarks)
  * ✅ ENHANCED: Simple click handler with immediate visual feedback
+ * 🆕 DRAFT STYLING: Yellow border for unsubmitted picks
  */
 
 import React from 'react';
@@ -14,7 +15,8 @@ export default function PropBetSection({
   moneyLineSelections,
   propBetSelections, 
   gameResults,
-  onPropBetClick
+  onPropBetClick,
+  isDraft = false // 🆕 DRAFT STATE: Whether this section has draft picks
 }) {
   // Early return if no prop bets
   if (!game.prop_bets || game.prop_bets.length === 0) {
@@ -49,14 +51,14 @@ export default function PropBetSection({
           {propBet.options.map((option, index) => (
             <button
               key={index}
-              className={getButtonClass(
+              className={`${getButtonClass(
                 'propbet-button',
                 propBetSelections[propBet.id] === option,
                 game,
                 option,
                 gameResults,
                 false
-              )}
+              )} ${isDraft && propBetSelections[propBet.id] === option ? 'draft' : ''}`}
               onClick={() => handlePropBetClick(option)}
               disabled={locked}
             >

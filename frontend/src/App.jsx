@@ -8,7 +8,6 @@
  * CLEANED: Removed floating button logic - now handled by WeekPage via Portal
  * TOAST: Clean react-hot-toast implementation - styles moved to CSS
  * 🆕 FULL NAVIGATION PROTECTION: NavigationManager prevents navigation with unsaved picks
- * 🆕 DRAFT CLEANUP: Drafts cleared on logout
  */
 
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
@@ -40,7 +39,7 @@ function ScrollToTop() {
 }
 
 export default function App() {
-  const { userInfo, isLoading, logout } = useAuth();
+  const { userInfo, isLoading } = useAuth();
   const [games, setGames] = useState([]);
   const [moneyLineSelections, setMoneyLineSelections] = useState({});
   const [propBetSelections, setPropBetSelections] = useState({});
@@ -69,23 +68,6 @@ export default function App() {
     }
   }, []);
 
-  // 🆕 LOGOUT WITH DRAFT CLEARING
-  const handleLogout = useCallback(async () => {
-    console.log('🗑️ Clearing drafts before logout');
-    
-    // Clear all draft state before logging out
-    setDraftPicks({});
-    setDraftPropBets({});
-    setHasUnsavedChanges(false);
-    
-    // Reset UI to original state
-    setMoneyLineSelections(originalSubmittedPicks);
-    setPropBetSelections(originalSubmittedPropBets);
-    
-    // Then logout
-    await logout();
-  }, [logout, originalSubmittedPicks, originalSubmittedPropBets]);
-
   // 🆕 NAVIGATION PROTECTION: Clear drafts function for NavigationManager
   const clearDrafts = useCallback(() => {
     console.log('🗑️ Clearing all draft picks (preventing memory leaks)');
@@ -113,22 +95,6 @@ export default function App() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
-
-  
-  useEffect(() => {
-    // Clear drafts when user becomes unauthenticated (auto-logout, session expiry, etc.)
-    if (!userInfo && !isLoading) {
-      console.log('🗑️ User logged out (auto or manual) - clearing drafts');
-      setDraftPicks({});
-      setDraftPropBets({});
-      setHasUnsavedChanges(false);
-      setMoneyLineSelections({});
-      setPropBetSelections({});
-      setOriginalSubmittedPicks({});
-      setOriginalSubmittedPropBets({});
-    }
-  }, [userInfo, isLoading]);
-
 
   // Calculate ACTUAL changes (not just drafts) for UI
   const actualChanges = useMemo(() => {
@@ -439,12 +405,7 @@ export default function App() {
         />
         
         <ScrollToTop />
-        <Navbar 
-          userInfo={userInfo} 
-          isOpen={isOpen} 
-          setIsOpen={setIsOpen}
-          onLogout={handleLogout}
-        />
+        <Navbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
         <div 
           className={`transition-transform duration-300 ${isOpen ? "-translate-x-[40vw]" : "translate-x-0"}`} 
           onTouchStart={handleTouchStart}
@@ -480,6 +441,8 @@ export default function App() {
                       onSubmitPicks={submitPicks}
                       originalSubmittedPicks={originalSubmittedPicks}
                       originalSubmittedPropBets={originalSubmittedPropBets}
+                      draftPicks={draftPicks}
+                      draftPropBets={draftPropBets}
                     />
                   </PrivateRoute>
                 </ErrorBoundary>

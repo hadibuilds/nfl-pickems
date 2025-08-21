@@ -10,6 +10,7 @@
  * 🆕 ADDED: ResultBanner with live scoring and results tracking
  * 🔄 UPDATED: Using new single-line WeekHeader component
  * 🔒 NAVIGATION PROTECTED: Back button uses navigateWithConfirmation
+ * 🎨 DRAFT STYLING: Passes draft state to GameCard for yellow borders
  */
 
 import React, { useState } from 'react';
@@ -32,7 +33,10 @@ export default function WeekPage({
   hasUnsavedChanges = false,
   onSubmitPicks,
   originalSubmittedPicks = {},
-  originalSubmittedPropBets = {}
+  originalSubmittedPropBets = {},
+  // 🆕 DRAFT PROPS: For yellow border styling
+  draftPicks = {},
+  draftPropBets = {}
 }) {
   const { weekNumber } = useParams();
   const weekGames = games.filter(game => game.week === parseInt(weekNumber));
@@ -107,11 +111,11 @@ export default function WeekPage({
         )}
 
         {/* 🆕 DRAFT WARNING: Show when user has unsaved picks */}
-        {hasUnsavedChanges && (
+ {/*        {hasUnsavedChanges && (
           <div className="draft-warning-banner">
             ⚠️ You have {draftCount} unsaved pick{draftCount !== 1 ? 's' : ''} - Refresh page to reset, or submit to save
           </div>
-        )}
+        )} */}
 
         {/* Scaled content wrapper */}
         <div className="week-page-wrapper">
@@ -135,6 +139,10 @@ export default function WeekPage({
                     gameResults={gameResults}
                     onMoneyLineClick={handleMoneyLineClick}
                     onPropBetClick={handlePropBetClick}
+                    originalSubmittedPicks={originalSubmittedPicks}
+                    originalSubmittedPropBets={originalSubmittedPropBets}
+                    draftPicks={draftPicks}
+                    draftPropBets={draftPropBets}
                   />
                 </ErrorBoundary>
               ))}
