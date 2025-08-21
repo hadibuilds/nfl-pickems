@@ -1,6 +1,7 @@
 /*
- * WeekSelector with Root-Level Proportional Scaling
- * Applies scaling to the entire page container to maintain S10e proportions
+ * Updated WeekSelector.jsx with Proportional Mobile Scaling
+ * Replaces week-selector-wrapper with proportional scaling that uses Samsung S10e as baseline
+ * Maintains desktop scaling unchanged
  */
 
 import React from "react";
@@ -179,11 +180,10 @@ export default function WeekSelector({
   };
 
   return (
-    /* Apply root-level scaling to the entire page */
-    <div className="min-h-screen pt-16 pb-12 px-6 week-selector-root-scale" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
+    <div className="min-h-screen pt-16 pb-12" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="week-selector-container">
-        <div className="max-w-6xl mx-auto">
-          <div className="week-selector-wrapper">
+        {/* UPDATED: Apply scaling to the entire content area including padding */}
+        <div className="max-w-6xl mx-auto week-selector-mobile-scale week-selector-wrapper px-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {weeks.map((week) => {
                 const weekStatus = getWeekStatus(week);
@@ -252,6 +252,5 @@ export default function WeekSelector({
           </div>
         </div>
       </div>
-    </div>
   );
 }
