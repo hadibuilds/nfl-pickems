@@ -15,10 +15,10 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import WeekHeader from '../components/WeekHeader.jsx'; // Updated import path
-import GameCard from '../components/GameCard/GameCard.jsx';
-import ResultBanner from '../components/ResultBanner.jsx';
-import ErrorBoundary from '../components/ErrorBoundary.jsx';
+import WeekHeader from '../components/weeks/WeekHeader.jsx'; 
+import GameCard from '../components/game/GameCard.jsx';
+import ResultBanner from '../components/weeks/ResultBanner.jsx';
+import ErrorBoundary from '../components/common/ErrorBoundary.jsx';
 
 export default function WeekPage({
   games,

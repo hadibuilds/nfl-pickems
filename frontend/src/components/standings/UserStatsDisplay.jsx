@@ -34,7 +34,7 @@ export default function UserStatsDisplay({ userInfo }) {
         if (!standingsResponse.ok) throw new Error('Failed to fetch standings');
         
         const standingsData = await standingsResponse.json();
-        const userStats = calculateUserStats(standingsData.standings, userInfo.username);
+        const userStats = await calculateUserStats(standingsData.standings, userInfo.username);
         
         setStats({
           ...userStats,
@@ -56,7 +56,7 @@ export default function UserStatsDisplay({ userInfo }) {
   }, [userInfo?.username, API_BASE]);
 
   // Calculate user statistics from standings data
-  const calculateUserStats = (standings, username) => {
+  const calculateUserStats = async (standings, username) => {
     // Find user in standings
     const userStanding = standings.find(standing => 
       standing.username.toLowerCase() === username.toLowerCase()
@@ -70,15 +70,12 @@ export default function UserStatsDisplay({ userInfo }) {
       };
     }
 
-    // Calculate rank (position in sorted standings)
+    // Calculate rank with proper tie handling
     const sortedStandings = [...standings].sort((a, b) => b.total_points - a.total_points);
-    const userRank = sortedStandings.findIndex(standing => 
-      standing.username.toLowerCase() === username.toLowerCase()
-    ) + 1;
+    const userRank = calculateRankWithTies(sortedStandings, username);
 
-    // Calculate accuracy (this would need prediction data - placeholder for now)
-    // TODO: Implement actual accuracy calculation from predictions API
-    const accuracy = calculateAccuracy(userStanding);
+    // Calculate accuracy from actual predictions data (await the async function)
+    const accuracy = await calculateAccuracy(username);
 
     return {
       rank: userRank,
@@ -87,14 +84,84 @@ export default function UserStatsDisplay({ userInfo }) {
     };
   };
 
-  // Placeholder accuracy calculation - implement with actual prediction data
-  const calculateAccuracy = (userStanding) => {
-    // TODO: Fetch user's predictions and calculate win percentage
-    // For now, simulate based on total points (rough estimate)
-    const points = userStanding.total_points || 0;
-    const estimatedGames = Math.max(points / 1.5, 1); // Rough estimate
-    const accuracy = Math.min((points / estimatedGames) * 100, 100);
-    return Math.round(accuracy);
+  // Calculate rank with tie handling (T1, T2, etc.)
+  const calculateRankWithTies = (sortedStandings, username) => {
+    const userStanding = sortedStandings.find(standing => 
+      standing.username.toLowerCase() === username.toLowerCase()
+    );
+    
+    if (!userStanding) return '—';
+
+    const userPoints = userStanding.total_points || 0;
+    let rank = 1;
+    let currentRank = 1;
+    
+    for (let i = 0; i < sortedStandings.length; i++) {
+      const standing = sortedStandings[i];
+      const points = standing.total_points || 0;
+      
+      // If this is not the first person and points are different, update rank
+      if (i > 0 && points !== (sortedStandings[i-1].total_points || 0)) {
+        currentRank = i + 1;
+      }
+      
+      if (standing.username.toLowerCase() === username.toLowerCase()) {
+        // Check if there are ties
+        const playersWithSamePoints = sortedStandings.filter(s => 
+          (s.total_points || 0) === userPoints
+        );
+        
+        if (playersWithSamePoints.length > 1) {
+          return `T${currentRank}`;
+        } else {
+          return currentRank;
+        }
+      }
+    }
+    
+    return '—';
+  };
+
+  // Calculate accuracy from actual prediction data
+  const calculateAccuracy = async (username) => {
+    try {
+      console.log('🎯 Calculating accuracy for:', username);
+      
+      // Use the user_accuracy endpoint directly
+      const accuracyResponse = await fetch(`${API_BASE}/predictions/api/user-accuracy/`, {
+        credentials: 'include',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      });
+
+      console.log('📊 User accuracy API response:', accuracyResponse.status, accuracyResponse.statusText);
+
+      if (!accuracyResponse.ok) {
+        console.warn('❌ User accuracy endpoint failed:', accuracyResponse.status);
+        return 0;
+      }
+
+      const accuracyData = await accuracyResponse.json();
+      console.log('✅ User accuracy data:', accuracyData);
+      
+      const { correct_predictions, total_predictions_with_results } = accuracyData;
+
+      if (total_predictions_with_results === 0) {
+        console.log('📝 No predictions with results yet');
+        return 0;
+      }
+
+      // Calculate accuracy percentage
+      const accuracy = (correct_predictions / total_predictions_with_results) * 100;
+      console.log(`🎯 Calculated accuracy: ${correct_predictions}/${total_predictions_with_results} = ${accuracy}%`);
+      
+      return Math.round(accuracy);
+
+    } catch (error) {
+      console.error('❌ Error calculating accuracy:', error);
+      return 0;
+    }
   };
 
   // Helper function to get CSRF token
@@ -105,10 +172,10 @@ export default function UserStatsDisplay({ userInfo }) {
     return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
   };
 
-  // Format rank display
+  // Format rank display (remove # symbol)
   const formatRank = (rank) => {
     if (rank === '—' || rank === null) return '—';
-    return `#${rank}`;
+    return rank; // Just return the rank as-is (T1, T2, 3, 4, etc.)
   };
 
   // Format accuracy display

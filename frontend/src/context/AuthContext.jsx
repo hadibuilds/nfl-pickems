@@ -1,7 +1,7 @@
 /*
- * Authentication Context - Clean Version
- * Only handles auth state, no navigation logic
- * Components handle their own navigation after auth actions
+ * Authentication Context - Enhanced Version
+ * Prevents multiple simultaneous login attempts
+ * Handles auth state with double-click protection
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -19,6 +19,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false); // ← NEW: Prevent double login
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -31,7 +32,7 @@ export const AuthProvider = ({ children }) => {
           credentials: 'include',
         });
 
-        // Try the whoami endpoint (like your old version)
+        // Try the whoami endpoint
         const res = await fetch(`${API_BASE}/accounts/api/whoami/`, {
           credentials: 'include',
           headers: {
@@ -60,8 +61,16 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, [API_BASE]);
 
-  // Login function - only handles auth, no navigation
+  // Login function - with double-click protection
   const login = async (credentials) => {
+    // ✅ PROTECTION: Don't allow multiple simultaneous login attempts
+    if (isLoggingIn) {
+      console.log('Login already in progress, ignoring duplicate request');
+      return { success: false, error: 'Login already in progress' };
+    }
+
+    setIsLoggingIn(true);
+    
     try {
       const res = await fetch(`${API_BASE}/accounts/api/login/`, {
         method: 'POST',
@@ -83,6 +92,9 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       return { success: false, error: 'Network error. Please try again.' };
+    } finally {
+      // ✅ ALWAYS reset the logging in state
+      setIsLoggingIn(false);
     }
   };
 
@@ -109,6 +121,7 @@ export const AuthProvider = ({ children }) => {
     userInfo,
     setUserInfo,
     isLoading,
+    isLoggingIn, // ← NEW: Expose login state
     login,
     logout,
   };
