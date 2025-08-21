@@ -1,7 +1,7 @@
 /*
- * Updated WeekSelector.jsx with Proportional Mobile Scaling
- * Replaces week-selector-wrapper with proportional scaling that uses Samsung S10e as baseline
- * Maintains desktop scaling unchanged
+ * Clean WeekSelector.jsx with proper mobile scaling
+ * Uses both classes: week-selector-mobile-scale for mobile proportional scaling
+ * and week-selector-wrapper for desktop 1.15x scaling
  */
 
 import React from "react";
@@ -183,8 +183,8 @@ export default function WeekSelector({
     <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="week-selector-container">
         <div className="max-w-6xl mx-auto">
-          {/* UPDATED: Use proportional scaling wrapper for mobile, keeps desktop scaling */}
-          <div className="week-selector-proportional-scale week-selector-wrapper">
+          {/* BOTH classes: mobile proportional scaling + desktop wrapper scaling */}
+          <div className="week-selector-mobile-scale week-selector-wrapper">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {weeks.map((week) => {
                 const weekStatus = getWeekStatus(week);
