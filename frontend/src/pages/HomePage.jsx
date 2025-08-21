@@ -229,8 +229,8 @@ function HomePage() {
   }
 
   return (
-    <div className="w-full" style={{ backgroundColor: '#1E1E20', color: 'white', marginTop: '64px' }}>
-      <div className="w-full px-2 pb-8">
+    <div className="min-h-screen" style={{ backgroundColor: '#1E1E20', color: 'white', marginTop: '64px' }}>
+      <div className="max-w-md mx-auto px-4 pb-8">
         {/* Welcome Header */}
         <div className="mb-6 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold mb-2">
