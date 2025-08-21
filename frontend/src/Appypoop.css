@@ -1,0 +1,1978 @@
+#root {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+}
+  
+:root {
+    /* Dynamic scale factor - the magic sauce */
+    --navbar-scale: clamp(0.875, 1vw + 0.5rem, 1.125);
+    
+    /* Base sizing units */
+    --navbar-height-base: 4rem;        /* 64px baseline */
+    --navbar-logo-base: 2rem;          /* 32px baseline */
+    --navbar-avatar-base: 2.75rem;     /* 44px baseline */
+    --navbar-padding-base: 1rem;       /* 16px baseline */
+    
+    /* Computed dynamic values */
+    --navbar-height: calc(var(--navbar-height-base) * var(--navbar-scale));
+    --navbar-logo-size: calc(var(--navbar-logo-base) * var(--navbar-scale));
+    --navbar-avatar-size: calc(var(--navbar-avatar-base) * var(--navbar-scale));
+    --navbar-padding: calc(var(--navbar-padding-base) * var(--navbar-scale));
+}
+  
+@media (max-width: 639px) {
+    :root {
+      /* Smaller scale on mobile */
+      --navbar-scale: clamp(0.8, 2vw + 0.6rem, 1);
+    }
+}
+  
+@media (min-width: 640px) and (max-width: 1023px) {
+    :root {
+      /* Standard scale on tablets */
+      --navbar-scale: 1;
+    }
+}
+  
+@media (min-width: 1024px) {
+    :root {
+      /* Slightly larger scale on desktop */
+      --navbar-scale: clamp(1, 0.5vw + 0.8rem, 1.1);
+    }
+}
+  
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+.app-container {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* UPDATED: Enhanced game box styling */
+.game-box {
+  background-color: #2d2d2d;
+  border-radius: 16px;
+  margin: 20px 0;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: white;
+  overflow: hidden;
+  padding: 0;
+  margin-bottom: 20px;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Desktop only: Wider cards for better spacing */
+@media (min-width: 769px) {
+  .game-box {
+    min-width: 320px;
+    max-width: 400px;
+  }
+}
+
+/* Locked game styling - only gray out if NO results yet */
+.game-box.locked:not(.has-results) {
+  opacity: 0.8;
+  background-color: #3a3a3a;
+}
+
+/* Cards with results look normal */
+.game-box.has-results {
+  opacity: 1;
+  filter: none;
+  background-color: #2d2d2d;
+}
+
+/* =================================================================
+   NEW: TOP SECTION - GAME INFO (Dark Gray)
+   ================================================================= */
+
+.game-box .game-info-section {
+  background-color: #1f1f1f;
+  padding: 16px 20px;
+  text-align: center;
+  position: relative;
+}
+
+.game-box.locked:not(.has-results) .game-info-section {
+  background-color: #2a2a2a;
+}
+
+/* Team matchup styling */
+.game-box .team-matchup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.game-box .team-matchup-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.game-box .vs-separator {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Game time styling */
+.game-box .game-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.game-box .game-time {
+  font-weight: 500;
+}
+
+/* =================================================================
+   UPDATED: MIDDLE SECTION - MONEY LINE (Light Gray) - No top padding
+   ================================================================= */
+
+.game-section {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Special padding for take-the-bait prop bets only */
+.game-section.prop-bet.take-the-bait {
+  padding: 40px 16px 16px 16px;
+}
+
+.money-line {
+  position: relative;
+  background-color: #2d2d2d;
+}
+
+.game-box.locked:not(.has-results) .money-line {
+  background-color: #3a3a3a;
+}
+
+.game-box.has-results .money-line {
+  background-color: #2d2d2d;
+}
+
+/* =================================================================
+   UPDATED: BOTTOM SECTION - PROP BET (Dark Gray) - Conditional padding
+   ================================================================= */
+
+.prop-bet {
+  background-color: #1f1f1f;
+  padding: 16px;
+  position: relative;
+}
+
+.game-box.locked:not(.has-results) .prop-bet {
+  background-color: #2a2a2a;
+}
+
+.game-box.has-results .prop-bet {
+  background-color: #1f1f1f;
+}
+
+/* =================================================================
+   SAVE STATE INDICATORS - Real-time Save Feedback
+   ================================================================= */
+
+/* Spinner container with HeroUI component */
+.save-spinner {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  z-index: 5;
+}
+
+.simple-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid #8B5CF6;
+  border-right: 2px solid #7C3AED;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Success and error states (same styling as before) */
+.save-success,
+.save-error {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  z-index: 5;
+}
+
+/* Saved success indicator */
+.save-success {
+  background-color: #10B981; /* Green for success */
+  color: white;
+  animation: saveSuccess 0.3s ease-in-out;
+}
+
+.saved-icon {
+  font-size: 12px;
+  animation: checkmarkPop 0.4s ease-out;
+}
+
+@keyframes saveSuccess {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Error state indicator */
+.save-error {
+  background-color: #EF4444; /* Red for error */
+  color: white;
+  animation: errorPulse 0.5s ease-in-out;
+}
+
+.error-icon {
+  font-size: 12px;
+  animation: errorShake 0.5s ease-in-out;
+}
+
+@keyframes errorPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes errorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* Fade out animations for auto-clearing states */
+.save-success.fade-out,
+.save-error.fade-out {
+  animation: fadeOut 0.5s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* =================================================================
+   PRESERVED: POINTS BADGES - For Future Correct Prediction Display
+   ================================================================= */
+
+.game-box .points-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: #1d4ed8;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  z-index: 5;
+}
+
+/* Future use: Points badges only on correct predictions */
+.game-box .points-badge.correct-prediction {
+  background-color: #10B981; /* Green for correct predictions */
+}
+
+/* =================================================================
+   DIVIDERS
+   ================================================================= */
+
+.divider-line {
+  height: 1px;
+  background-color: #4b5563;
+  width: 100%;
+}
+
+/* =================================================================
+   PRESERVED: All your existing text and spacing styles
+   ================================================================= */
+
+.matchup, .prop-question {
+  font-size: 1.1rem;
+  font-weight: none;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.prop-question {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Desktop adjustments for matchup text only */
+@media (min-width: 769px) {
+  .matchup {
+    margin-top: 12px;
+    padding-left: 110px;
+    padding-right: 110px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .prop-question {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+.button-row {
+  display: flex;
+  gap: 12px;
+}
+
+/* =================================================================
+   FIXED: iOS DOUBLE TAP PREVENTION - Touch Device Hover States
+   ================================================================= */
+
+/* Base button styling - NO hover states initially */
+.team-button, .propbet-button {
+  padding: 12px 24px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-color: #383850;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+  min-width: 80px;
+  /* iOS tap optimization */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  /* Improved touch interaction */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Active state for touch feedback */
+.team-button:active, .propbet-button:active {
+  transform: scale(0.97);
+  background-color: #8B5CF6;
+}
+
+/* CRITICAL: Only apply hover effects on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  .team-button:hover,
+  .propbet-button:hover {
+    background-color: #8B5CF6;
+    transform: translateY(-1px);
+  }
+
+  /* Base button hover - ONLY for enabled buttons on non-touch devices */
+  .team-button:not(:disabled):hover,
+  .propbet-button:not(:disabled):hover {
+    background-color: #8B5CF6 !important;
+    transform: translateY(-1px) !important;
+  }
+
+  /* Hover states for selected buttons on non-touch devices */
+  .team-button.selected:hover, 
+  .propbet-button.selected:hover {
+    background-color: #7C3AED;
+  }
+
+  /* Hover states for disabled buttons on non-touch devices */
+  .team-button:disabled:hover, 
+  .propbet-button:disabled:hover {
+    background-color: #555555 !important;
+    transform: none !important;
+  }
+
+  .team-button.selected:disabled:hover, 
+  .propbet-button.selected:disabled:hover {
+    background-color: #7C3AED !important;
+    transform: none !important;
+  }
+
+  /* Keep selected styling even when disabled on non-touch devices */
+  .team-button.selected:not(.draft):hover,
+  .propbet-button.selected:not(.draft):hover {
+    background-color: #7C3AED !important; /* Keep the same purple */
+    transform: none !important; /* No movement either */
+  }
+
+  .team-button.selected.draft:hover,
+  .propbet-button.selected.draft:hover {
+    background-color: #7C3AED !important; /* Keep purple, normal selected hover */
+  }
+}
+
+/* Selected button styling - works on all devices */
+.team-button.selected, .propbet-button.selected {
+  background-color: #7C3AED;
+  border-color: #7C3AED;
+  outline: none;
+}
+
+/* Disabled button states - works on all devices */
+.team-button:disabled, .propbet-button:disabled {
+  background-color: #555555 !important;
+  color: #999999 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  border-color: #555555 !important;
+}
+
+/* COMPLETELY disable ALL pointer events on disabled buttons to prevent iOS issues */
+.team-button:disabled,
+.propbet-button:disabled {
+  pointer-events: none !important;
+}
+
+.team-button:disabled:hover,
+.propbet-button:disabled:hover,
+.team-button[disabled]:hover,
+.propbet-button[disabled]:hover {
+  background-color: inherit !important;
+  transform: none !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+/* Keep selected styling even when disabled */
+.team-button.selected:disabled, .propbet-button.selected:disabled {
+  background-color: #7C3AED !important;
+  color: white !important;
+  border-color: #7C3AED !important;
+  opacity: 0.8;
+}
+
+/* Correct prediction styling */
+.team-button.selected.correct:disabled, .propbet-button.selected.correct:disabled {
+  background-color: #10B981 !important;
+  border-color: #10B981 !important;
+  color: white !important;
+  opacity: 1;
+}
+
+/* Incorrect prediction styling */
+.team-button.selected.incorrect:disabled, .propbet-button.selected.incorrect:disabled {
+  background-color: #EF4444 !important;
+  border-color: #EF4444 !important;
+  color: white !important;
+  opacity: 1;
+}
+
+/* UPDATED: Section result indicators - positioned in top corner */
+.section-result-indicator {
+  position: absolute;
+  top: 6px;
+  right: 2px;
+  font-size: 16px;
+  font-weight: 900;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.section-result-indicator.correct {
+  color: #10B981 !important;
+}
+
+.section-result-indicator.incorrect {
+  color: #EF4444 !important;
+}
+
+/* PRESERVED: Date/time positioning (keeping your existing system) */
+.game-datetime {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 12px;
+  color: #bbb;
+  line-height: 1.1;
+  z-index: 1;
+  min-width: 60px;
+}
+
+.date-line {
+  font-weight: 600;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.time-line {
+  font-weight: 400;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+@media (min-width: 769px) {
+  .game-datetime {
+    top: 10px;
+    left: 16px;
+    font-size: 14px;
+    min-width: 90px;
+  }
+  
+  .date-line {
+    margin-bottom: 3px;
+  }
+}
+
+/* Lock icon styling */
+.lock-icon {
+  color: #888;
+  font-size: 14px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+body {
+    padding-top: var(--navbar-height);
+}
+  
+.min-h-screen {
+    padding-top: calc(var(--navbar-height) + 1rem) !important;
+}
+
+/* =================================================================
+   PRESERVED: All your existing progress, navbar, and other styles
+   ================================================================= */
+
+/* Progress indicator styling */
+.progress-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 16px 24px;
+  background-color: #2d2d2d;
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.progress-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  width: 50%;
+  height: 8px;
+  background-color: #444;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #7C3AED;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+/* Focus states */
+.team-button:focus,
+.team-button:focus-visible,
+.propbet-button:focus,
+.propbet-button:focus-visible {
+  outline: 0.5px solid #8B5CF6;
+  outline-offset: 0.5px;
+}
+
+.team-button:disabled:focus,
+.propbet-button:disabled:focus {
+  outline: none;
+}
+
+/* =================================================================
+   WEEK SELECTOR CARD STYLES - iOS Double Tap Prevention
+   ================================================================= */
+
+/* Week card wrapper */
+.week-card-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* Base week card styling - iOS touch optimization */
+.week-card {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  border-radius: 16px;
+  border: 2px solid;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 140px;
+  position: relative;
+  overflow: hidden;
+  /* iOS tap optimization */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  /* Improved touch interaction */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* DISABLE pointer events on ALL child elements - only card should be hoverable */
+.week-card * {
+  pointer-events: none;
+}
+
+/* Week card active state for immediate feedback on touch devices */
+.week-card:active {
+  transform: translateY(-2px);
+}
+
+/* Only apply hover effects on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  .week-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Status-specific hover colors - using CSS custom properties */
+  .week-card[style*="139, 92, 246"]:hover {
+    background-color: #7C3AED !important; /* Purple hover */
+  }
+
+  .week-card[style*="16, 185, 129"]:hover {
+    background-color: #047857 !important; /* Green hover */
+  }
+
+  .week-card[style*="55, 65, 81"]:hover {
+    background-color: #4B5563 !important; /* Gray hover */
+  }
+}
+
+/* Disabled card styling */
+.week-card.disabled {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  border-radius: 16px;
+  border: 2px solid;
+  cursor: not-allowed;
+  min-height: 140px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0.6;
+  /* Disable touch interactions */
+  pointer-events: none;
+}
+
+/* Card content layout */
+.week-card-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-bottom: 4px;
+}
+
+/* Week header with number and status */
+.week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.week-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.week-status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* Week dates */
+.week-dates {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 14px;
+  opacity: 0.9;
+}
+
+/* Week footer with points or status */
+.week-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  min-height: 0px;
+}
+
+.points-earned {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.points-label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.points-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.current-indicator {
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.lock-icon {
+  font-size: 1.2rem;
+  opacity: 0.6;
+}
+
+/* Scale up everything in the week page */
+.week-page-wrapper {
+  transform: scale(1.15);
+  transform-origin: top center; /* Keeps it centered when scaling */
+}
+
+/* ==========================================
+   Mobile overrides (strictly â‰¤768px width)
+   ========================================== */
+@media (max-width: 768px) {
+  .week-card {
+    padding: clamp(12px, 4vw, 20px);
+    min-height: clamp(120px, 30vw, 160px);
+  }
+  
+  .week-number {
+    font-size: clamp(1.2rem, 5vw, 1.8rem);
+  }
+  
+  .week-status-badge {
+    font-size: clamp(0.65rem, 2.5vw, 0.9rem);
+    padding: clamp(2px, 0.7vw, 4px) clamp(6px, 1.5vw, 8px);
+  }
+  
+  .week-dates {
+    font-size: clamp(0.8rem, 3vw, 1rem);
+  }
+  
+  .points-label {
+    font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+  }
+  
+  .points-value {
+    font-size: clamp(1rem, 4vw, 1.4rem);
+  }
+}
+
+/* =================================================================
+   FLOATING SUBMIT BUTTON STYLES
+   ================================================================= */
+
+/* Default desktop/tablet styling (unchanged) */
+.floating-submit-button {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+
+  background-color: #F59E0B;
+  color: white;
+  padding: 14px 20px;
+  border-radius: 25px;
+  border: none;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+  white-space: nowrap;
+  font-family: inherit;
+  outline: none;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  /* Improved touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Active state for touch feedback */
+.floating-submit-button:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+/* Mobile adjustments only */
+@media (max-width: 768px) {
+  /* iOS = centered */
+  body.is-ios .floating-submit-button {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: 3vh;
+
+    /* slightly dynamic sizing for mobile */
+    padding: clamp(10px, 2vw, 16px) clamp(16px, 4vw, 28px);
+    font-size: clamp(14px, 3.5vw, 18px);
+    border-radius: clamp(18px, 5vw, 30px);
+  }
+
+  /* Android = bottom-right */
+  body.is-android .floating-submit-button {
+    left: auto;
+    right: 4vw;
+    transform: none;
+    bottom: 3vh;
+
+    padding: clamp(10px, 2vw, 16px) clamp(16px, 4vw, 28px);
+    font-size: clamp(14px, 3.5vw, 18px);
+    border-radius: clamp(18px, 5vw, 30px);
+  }
+}
+  
+.floating-submit-button .submit-spinner {
+  display: inline-block;
+  width: clamp(12px, 2vw, 18px);
+  height: clamp(12px, 2vw, 18px);
+  border: 0.25em solid transparent;
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5em;
+}
+  
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+  
+
+/* =================================================================
+   DRAFT WARNING BANNER STYLES
+   ================================================================= */
+  
+.draft-warning-banner {
+  background-color: #F59E0B;
+  color: #1F2937;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* =================================================================
+   NAVIGATION WARNING MODAL STYLES
+   ================================================================= */
+
+.navigation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease-out;
+}
+  
+.navigation-modal {
+  background-color: #2d2d2d;
+  border-radius: 16px;
+  padding: 0;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  animation: slideIn 0.3s ease-out;
+  overflow: hidden;
+}
+  
+.navigation-modal-header {
+  background-color: #1f1f1f;
+  padding: 20px 24px;
+  border-bottom: 1px solid #404040;
+}
+  
+.navigation-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #F59E0B;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+  
+.navigation-modal-body {
+  padding: 24px;
+  color: #ffffff;
+}
+  
+.navigation-modal-body p {
+  margin: 0 0 16px 0;
+  line-height: 1.6;
+}
+  
+.navigation-modal-body p:last-child {
+  margin-bottom: 0;
+}
+  
+.navigation-modal-body strong {
+  color: #F59E0B;
+  font-weight: 600;
+}
+  
+.navigation-modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 24px;
+  background-color: #1f1f1f;
+  border-top: 1px solid #404040;
+}
+  
+.navigation-modal-button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  /* Improved touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Active state for touch feedback */
+.navigation-modal-button:active {
+  transform: scale(0.97);
+}
+  
+.navigation-modal-button.review {
+  background-color: #e6a029;
+  color: white;
+}
+  
+.navigation-modal-button.review:hover {
+  background-color: #F59E0B;
+  transform: translateY(-1px);
+}
+  
+.navigation-modal-button.discard {
+  background-color: #EF4444;
+  color: white;
+}
+  
+.navigation-modal-button.discard:hover {
+  background-color: #EF4444;
+  transform: translateY(-1px);
+}
+  
+.navigation-modal-button:active {
+  transform: translateY(0);
+}
+  
+/* Modal animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+  
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+  
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .navigation-modal {
+    width: 95%;
+    margin: 20px;
+  }
+    
+  .navigation-modal-header {
+    padding: 16px 20px;
+  }
+    
+  .navigation-modal-header h3 {
+    font-size: 1.1rem;
+  }
+    
+  .navigation-modal-body {
+    padding: 20px;
+  }
+    
+  .navigation-modal-footer {
+    padding: 20px;
+    flex-direction: column;
+  }
+    
+  .navigation-modal-button {
+    padding: 14px 20px;
+  }
+}
+/* =================================================================
+   CLEANED TOAST STYLES - Moved from inline JSX
+   ================================================================= */
+
+.toast-container {
+  top: calc(var(--navbar-height) + 0.5rem) !important;
+}
+
+/* Base toast styling */
+.custom-toast {
+  background: #2d2d2d !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Success toast styling */
+.custom-toast-success {
+  background: #10B981 !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* Error toast styling */
+.custom-toast-error {
+  background: #EF4444 !important;
+  color: #fff !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+}
+
+/* Toast icon styling */
+.custom-toast .toast-icon,
+.custom-toast-success .toast-icon,
+.custom-toast-error .toast-icon {
+  color: #fff !important;
+}
+
+/* =================================================================
+   WEEK PAGE BOTTOM PADDING (for floating button space)
+   ================================================================= */
+  
+.week-page-bottom-padding {
+  height: 80px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .game-box {
+    margin: 16px 0;
+    width: 75vw;
+    max-width: none;
+  }
+  
+  .game-datetime {
+    top: 8px;
+    left: 12px;
+    font-size: 12px;
+  }
+  
+  .team-button, .propbet-button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    min-width: 70px;
+  }
+  
+  .matchup, .prop-question {
+    font-size: 1rem;
+  }
+  
+  .progress-indicator {
+    margin-bottom: 20px;
+    width: 75vw;
+    max-width: none;
+    padding: 12px 16px;
+  }
+  
+  .progress-bar {
+    width: 50vw;
+  }
+  
+  /* Week card mobile adjustments */
+  .week-card {
+    padding: 16px;
+    min-height: 120px;
+  }
+  
+  .week-number {
+    font-size: 1.3rem;
+  }
+  
+  .week-status-badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+  
+  .week-dates {
+    font-size: 0.85rem;
+    margin-bottom: 14px;
+  }
+  
+  .points-value {
+    font-size: 1.1rem;
+  }
+}
+
+/* =================================================================
+   WEEK CARD PROGRESS BAR STYLES
+   Compact progress indicator for week selector cards
+   ================================================================= */
+
+.week-card-progress {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 3px;
+  margin-top: 2px; /* Reduced from 8px */
+  align-items: center;
+}
+
+.week-progress-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.week-progress-bar {
+  width: calc(100% - 32px);
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Green background when completed */
+.week-progress-bar.completed {
+  background-color: rgba(16, 185, 129, 0.3); /* Green background */
+}
+
+.week-progress-fill {
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+/* Green fill when completed */
+.week-progress-fill.completed {
+  background-color: #10B981; /* Solid green */
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .week-card-progress {
+    gap: 3px;
+    margin-top: 2px;
+  }
+  
+  .week-progress-text {
+    font-size: 0.8rem;
+  }
+  
+  .week-progress-bar {
+    width: calc(100% - 24px);
+    height: 5px;
+    border-radius: 2.5px;
+  }
+
+  .week-progress-fill {
+    border-radius: 2.5px;
+  }
+}
+
+/* =================================================================
+   RESULT BANNER STYLES
+   ================================================================= */
+
+.result-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 20px 24px;
+  background-color: #2d2d2d;
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Top stats row */
+.result-stats-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.stat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #9CA3AF;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: white;
+}
+
+.points-value {
+  color: #10B981;
+  font-size: 1.6rem;
+}
+
+/* Results breakdown container */
+.results-breakdown {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Individual result sections */
+.result-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.result-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.correct-fraction {
+  color: white;
+  font-weight: bold;
+}
+
+/* Progress bar styling */
+.result-progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #444;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.result-progress-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.moneyline-fill {
+  background-color: #8B5CF6;
+}
+
+.propbet-fill {
+  background-color: #F59E0B;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .result-banner {
+    margin-bottom: 20px;
+    padding: 16px 20px;
+  }
+  
+  .result-stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 8px 16px;
+    margin-bottom: 20px;
+  }
+
+  .stat-group {
+    display: contents;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    text-align: center;
+    grid-row: 1;
+  }
+
+  .stat-value {
+    font-size: 1.2rem;
+    text-align: center;
+    grid-row: 2;
+  }
+
+  .points-value {
+    font-size: 1.4rem;
+  }
+  
+  .result-section-header {
+    font-size: 0.85rem;
+  }
+  
+  .results-breakdown {
+    gap: 10px;
+  }
+}
+
+/* ==========================================================================
+   PROFILE DROPDOWN STYLES - Add to App.css (Conflict-Free Version)
+   HeroUI-inspired avatar dropdown component
+   ========================================================================== */
+
+/* Profile Dropdown Container */
+.profile-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profile-dropdown-container {
+  display: flex;
+  align-items: center;
+}
+
+/* Dropdown Menu */
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + calc(var(--navbar-padding) * 0.5));
+  right: 0;
+  min-width: clamp(220px, 40vw, 280px);
+  max-width: calc(100vw - var(--navbar-padding));
+  background: #2D2D2F;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  z-index: 9999;
+  overflow: hidden;
+  /* HeroUI-style spring animation */
+  animation: heroUIDropdownEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top right;
+}
+
+/* HeroUI-inspired spring enter animation */
+@keyframes heroUIDropdownEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* HeroUI-inspired spring exit animation */
+@keyframes heroUIDropdownExit {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+  }
+}
+
+/* Exit animation class (you can add this via JavaScript when closing) */
+.profile-dropdown-menu.exiting {
+  animation: heroUIDropdownExit 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Profile Section */
+.dropdown-profile {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 56px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.dropdown-profile .profile-text {
+  font-weight: 600;
+  color: #E5E7EB;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.dropdown-profile .profile-username {
+  font-weight: 600;
+  color: #8B5CF6;
+  font-size: 14px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Stats Section */
+.dropdown-stats {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.dropdown-stats .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  text-align: center;
+}
+
+.dropdown-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown-stats .stat-value {
+  font-weight: 700;
+  color: white;
+  font-size: 16px;
+}
+
+.dropdown-stats .stat-value.loading {
+  color: #6B7280;
+  opacity: 0.6;
+}
+
+.dropdown-stats .stat-label {
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+/* Navigation and Dropdown Items */
+.dropdown-navigation {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-logout {
+  /* No border-bottom for last section */
+}
+
+.profile-dropdown .dropdown-item {
+  padding: 12px 16px;
+  color: #E5E7EB;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  /* Improved touch interaction */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.profile-dropdown .dropdown-item:active {
+  background: rgba(139, 92, 246, 0.1);
+  transform: scale(0.98);
+}
+
+/* Only apply hover effects on non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  .profile-dropdown .dropdown-item:hover {
+    background: rgba(139, 92, 246, 0.1);
+    color: white;
+  }
+}
+
+.profile-dropdown .dropdown-item:focus {
+  outline: none;
+  background: rgba(139, 92, 246, 0.1);
+  color: #8B5CF6;
+}
+
+.profile-dropdown .dropdown-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-dropdown .dropdown-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Danger styling for logout */
+.profile-dropdown .dropdown-item.danger {
+  color: #EF4444;
+}
+
+.profile-dropdown .dropdown-item.danger:hover,
+.profile-dropdown .dropdown-item.danger:focus {
+  background: rgba(239, 68, 68, 0.1);
+  color: #DC2626;
+}
+
+/* Mobile Responsive */
+@media (max-width: 639px) {
+  .profile-dropdown-menu {
+    min-width: 220px;
+    right: -8px;
+  }
+  
+  /* Hide desktop navigation on mobile when user is authenticated */
+  .desktop-nav {
+    display: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .profile-dropdown-menu {
+    min-width: 260px;
+  }
+}
+
+
+/* =================================================================
+   DRAFT PICK BUTTON STYLING - Yellow Dot for Unsubmitted Picks
+   ================================================================= */
+
+.team-button.selected.draft,
+.propbet-button.selected.draft {
+  background-color: #7C3AED !important; /* Keep purple background */
+  position: relative;
+}
+
+
+.team-button.selected.draft::after,
+.propbet-button.selected.draft::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background-color: #F59E0B;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.team-button.selected:not(.draft):hover,
+.propbet-button.selected:not(.draft):hover {
+  background-color: #7C3AED !important; /* Keep the same purple */
+  transform: none !important; /* No movement either */
+}
+
+.team-button.selected.draft:hover,
+.propbet-button.selected.draft:hover {
+  background-color: #7C3AED !important; /* Keep purple, normal selected hover */
+}
+
+.team-button.selected.draft:disabled::after,
+.propbet-button.selected.draft:disabled::after {
+  background-color: rgba(245, 158, 11, 0.6);
+}
+
+.team-button.selected.correct::after,
+.team-button.selected.incorrect::after,
+.propbet-button.selected.correct::after,
+.propbet-button.selected.incorrect::after {
+  display: none !important;
+}
+
+/* =================================================================
+   WEEK SELECTOR PAGE ZOOM - Scale up cards like WeekPage
+   ================================================================= */
+
+.week-selector-wrapper {
+  transform: scale(1.15);
+  transform-origin: top center; /* Keeps it centered when scaling */
+  padding-top: 20px; /* Add some top padding to prevent cutoff */
+}
+
+/* Ensure the scaled content doesn't overflow */
+.week-selector-container {
+  padding-bottom: 40px; /* Add extra bottom padding for scaled content */
+}
+
+/* =================================================================
+   HEROUI-STYLE DYNAMIC NAVBAR SIZING
+   Integrates with your existing navbar structure
+   ================================================================= */
+
+/* ADD: HeroUI-style CSS custom properties */
+
+/* REPLACE: Your current .navbar-container */
+.navbar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 50;
+  background-color: rgba(30, 30, 32, 0.7);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  
+  /* CHANGE: Dynamic height instead of fixed 64px */
+  height: var(--navbar-height);
+  min-height: 3.5rem; /* Minimum usable height */
+  max-height: 5rem;   /* Maximum reasonable height */
+}
+
+/* REPLACE: Your current .navbar-content */
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  
+  /* CHANGE: Dynamic padding instead of fixed 8px 16px */
+  padding: calc(var(--navbar-padding) * 0.5) var(--navbar-padding);
+  
+  /* ADD: Prevent overflow from scaled content */
+  max-width: 100vw;
+  overflow: hidden;
+  transform-origin: center center;
+}
+
+/* REPLACE: Your current .navbar-logo */
+.navbar-logo {
+  /* CHANGE: Dynamic sizing instead of fixed 2rem */
+  height: var(--navbar-logo-size);
+  width: auto;
+  object-fit: contain;
+  
+  /* ADD: Constraints to prevent extremes */
+  min-height: 1.5rem;  /* 24px minimum */
+  max-height: 2.5rem;  /* 40px maximum */
+  
+  /* REMOVE: All the media query overrides - not needed anymore */
+}
+
+/* REPLACE: Your current .navbar-right */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  
+  /* CHANGE: Dynamic gap instead of fixed 1rem */
+  gap: calc(var(--navbar-padding) * 0.75);
+  
+  flex-shrink: 0;
+  
+  /* ADD: Prevent overflow */
+  max-width: calc(100vw - var(--navbar-logo-size) - var(--navbar-padding) * 2);
+  overflow: hidden;
+}
+
+/* REPLACE: Your entire .user-avatar section */
+.user-avatar {
+  /* CHANGE: Dynamic sizing instead of hard-coded pixels */
+  width: var(--navbar-avatar-size);
+  height: var(--navbar-avatar-size);
+  
+  /* ADD: Constraints */
+  min-width: 2rem;   /* 32px minimum */
+  max-width: 3.5rem; /* 56px maximum */
+  min-height: 2rem;
+  max-height: 3.5rem;
+  
+  /* SIMPLIFY: Remove all the !important overrides */
+  border: 2px solid #6B7280;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  outline: none;
+  
+  /* CHANGE: Dynamic font size */
+  font-size: calc(var(--navbar-avatar-size) * 0.4);
+  
+  /* Keep good UX */
+  flex-shrink: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* SIMPLIFY: Remove size variants - they're now dynamic */
+.user-avatar.avatar-sm,
+.user-avatar.avatar-md,
+.user-avatar.avatar-lg {
+  /* All sizes now use the same dynamic scaling */
+  width: var(--navbar-avatar-size);
+  height: var(--navbar-avatar-size);
+  font-size: calc(var(--navbar-avatar-size) * 0.4);
+}
+
+/* KEEP: Your existing avatar states */
+.user-avatar:active {
+  transform: scale(0.95);
+}
+
+.user-avatar.active {
+  transform: scale(1.05);
+  border-color: #7C3AED;
+}
+
+.user-avatar:focus {
+  outline: none;
+}
+
+/* UPDATE: Your current .profile-dropdown-menu */
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + calc(var(--navbar-padding) * 0.5));
+  right: 0;
+  
+  /* CHANGE: Dynamic width instead of fixed min-width */
+  min-width: clamp(220px, 40vw, 280px);
+  max-width: calc(100vw - var(--navbar-padding));
+  
+  background: #2D2D2F;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: calc(var(--navbar-padding) * 0.75); /* Dynamic border radius */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+  z-index: 1000;
+  overflow: hidden;
+  animation: heroUIDropdownEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top right;
+}
+
+/* UPDATE: Your auth buttons */
+.auth-button {
+  display: inline-flex;
+  align-items: center;
+  
+  /* CHANGE: Dynamic sizing */
+  gap: calc(var(--navbar-padding) * 0.5);
+  padding: calc(var(--navbar-padding) * 0.5) var(--navbar-padding);
+  border-radius: calc(var(--navbar-padding) * 0.75);
+  
+  font-weight: 500;
+  font-size: calc(0.875rem * var(--navbar-scale));
+  text-decoration: none;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* UPDATE: Desktop navigation */
+.desktop-nav {
+  display: none;
+  align-items: center;
+  gap: calc(var(--navbar-padding) * 1.5);
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+/* ADD THIS - Missing media query to show desktop nav */
+@media (min-width: 768px) {
+  .desktop-nav {
+    display: flex !important;
+  }
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  /* ADD: Dynamic sizing */
+  font-size: calc(0.875rem * var(--navbar-scale));
+  padding: calc(var(--navbar-padding) * 0.25) calc(var(--navbar-padding) * 0.5);
+  border-radius: calc(var(--navbar-padding) * 0.5);
+}
