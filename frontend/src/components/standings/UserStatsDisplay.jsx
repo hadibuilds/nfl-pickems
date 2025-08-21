@@ -112,7 +112,7 @@ export default function UserStatsDisplay({ userInfo }) {
         );
         
         if (playersWithSamePoints.length > 1) {
-          return `T${currentRank}`;
+          return `T-${currentRank}`;
         } else {
           return currentRank;
         }
