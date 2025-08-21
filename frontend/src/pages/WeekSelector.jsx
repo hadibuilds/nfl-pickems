@@ -1,6 +1,7 @@
 /*
 Updated WeekSelector.jsx
 Includes progress bars in current week cards instead of "Play Now"
+🆕 ADDED: Scaling wrapper to match WeekPage zoom
 */
 
 import React from "react";
@@ -180,71 +181,75 @@ export default function WeekSelector({
 
   return (
     <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {weeks.map((week) => {
-            const weekStatus = getWeekStatus(week);
-            const weekDates = getWeekDates(week);
-            const styles = getCardStyles(weekStatus.status);
+      <div className="week-selector-container">
+        <div className="max-w-6xl mx-auto">
+          <div className="week-selector-wrapper">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {weeks.map((week) => {
+                const weekStatus = getWeekStatus(week);
+                const weekDates = getWeekDates(week);
+                const styles = getCardStyles(weekStatus.status);
 
-            return (
-              <div key={week} className="week-card-wrapper">
-                <Link
-                  to={`/week/${week}`}
-                  className="week-card"
-                  style={{ 
-                    backgroundColor: styles.backgroundColor,
-                    borderColor: styles.borderColor,
-                    color: styles.textColor
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = styles.hoverColor;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = styles.backgroundColor;
-                  }}
-                >
-                  <div className="week-card-content">
-                    <div className="week-header">
-                      <h3 className="week-number">Week {week}</h3>
-                      <span 
-                        className="week-status-badge" 
-                        style={{ 
-                          backgroundColor: weekStatus.status === 'completed' ? '#065F46' : 
-                                         weekStatus.status === 'current' ? '#5B21B6' : '#374151'
-                        }}
-                      >
-                        {weekStatus.label}
-                      </span>
-                    </div>
-                    
-                    <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                      {weekDates.start} - {weekDates.end}
-                    </div>
-                    
-                    <div className="week-footer">
-                      {weekStatus.status === 'completed' && weekStatus.points !== null && (
-                        <div className="points-earned">
-                          <span className="points-label">Points: </span>
-                          <span className="points-value">{weekStatus.points}</span>
+                return (
+                  <div key={week} className="week-card-wrapper">
+                    <Link
+                      to={`/week/${week}`}
+                      className="week-card"
+                      style={{ 
+                        backgroundColor: styles.backgroundColor,
+                        borderColor: styles.borderColor,
+                        color: styles.textColor
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = styles.hoverColor;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = styles.backgroundColor;
+                      }}
+                    >
+                      <div className="week-card-content">
+                        <div className="week-header">
+                          <h3 className="week-number">Week {week}</h3>
+                          <span 
+                            className="week-status-badge" 
+                            style={{ 
+                              backgroundColor: weekStatus.status === 'completed' ? '#065F46' : 
+                                             weekStatus.status === 'current' ? '#5B21B6' : '#374151'
+                            }}
+                          >
+                            {weekStatus.label}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                    
-                    {/* Progress bar outside footer for full-width span */}
-                    {weekStatus.status === 'current' && (
-                      <WeekCardProgress 
-                        weekNumber={week}
-                        games={games}
-                        originalSubmittedPicks={originalSubmittedPicks}
-                        originalSubmittedPropBets={originalSubmittedPropBets}
-                      />
-                    )}
+                        
+                        <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                          {weekDates.start} - {weekDates.end}
+                        </div>
+                        
+                        <div className="week-footer">
+                          {weekStatus.status === 'completed' && weekStatus.points !== null && (
+                            <div className="points-earned">
+                              <span className="points-label">Points: </span>
+                              <span className="points-value">{weekStatus.points}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Progress bar outside footer for full-width span */}
+                        {weekStatus.status === 'current' && (
+                          <WeekCardProgress 
+                            weekNumber={week}
+                            games={games}
+                            originalSubmittedPicks={originalSubmittedPicks}
+                            originalSubmittedPropBets={originalSubmittedPropBets}
+                          />
+                        )}
+                      </div>
+                    </Link>
                   </div>
-                </Link>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
