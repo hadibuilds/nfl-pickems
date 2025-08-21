@@ -173,3 +173,45 @@ def get_game_results(request):
     
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_accuracy(request):
+    """
+    Calculate user accuracy based on predictions where is_correct is not null
+    (i.e., games with results and prop bets with correct answers)
+    """
+    user = request.user
+    
+    # Count moneyline predictions where is_correct is not null (games with winners)
+    moneyline_with_results = Prediction.objects.filter(
+        user=user,
+        is_correct__isnull=False  # Game has winner set
+    )
+    
+    # Count prop bet predictions where is_correct is not null (prop bets with correct_answer)
+    prop_bet_with_results = PropBetPrediction.objects.filter(
+        user=user,
+        is_correct__isnull=False  # PropBet has correct_answer set
+    )
+    
+    # Count correct predictions
+    correct_moneyline = moneyline_with_results.filter(is_correct=True).count()
+    correct_prop_bets = prop_bet_with_results.filter(is_correct=True).count()
+    
+    # Total predictions with results
+    total_moneyline = moneyline_with_results.count()
+    total_prop_bets = prop_bet_with_results.count()
+    
+    return Response({
+        'correct_predictions': correct_moneyline + correct_prop_bets,
+        'total_predictions_with_results': total_moneyline + total_prop_bets,
+        'moneyline_accuracy': {
+            'correct': correct_moneyline,
+            'total': total_moneyline
+        },
+        'prop_bet_accuracy': {
+            'correct': correct_prop_bets,
+            'total': total_prop_bets
+        }
+    })
