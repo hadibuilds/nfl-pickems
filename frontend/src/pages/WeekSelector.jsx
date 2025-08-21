@@ -1,8 +1,8 @@
 /*
-Updated WeekSelector.jsx
-Includes progress bars in current week cards instead of "Play Now"
-🆕 ADDED: Scaling wrapper to match WeekPage zoom
-*/
+ * Updated WeekSelector.jsx with Proportional Mobile Scaling
+ * Replaces week-selector-wrapper with proportional scaling that uses Samsung S10e as baseline
+ * Maintains desktop scaling unchanged
+ */
 
 import React from "react";
 import { Link } from "react-router-dom";
@@ -183,7 +183,8 @@ export default function WeekSelector({
     <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="week-selector-container">
         <div className="max-w-6xl mx-auto">
-          <div className="week-selector-wrapper">
+          {/* UPDATED: Use proportional scaling wrapper for mobile, keeps desktop scaling */}
+          <div className="week-selector-proportional-scale week-selector-wrapper">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {weeks.map((week) => {
                 const weekStatus = getWeekStatus(week);
