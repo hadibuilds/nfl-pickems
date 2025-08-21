@@ -2186,37 +2186,77 @@
   padding-bottom: 40px; /* Add extra bottom padding for scaled content */
 }
 
-/* Mobile-only proportional scaling */
+/*
+ * FIXED: Complete Proportional Mobile Scaling for WeekSelector
+ * Scales EVERYTHING (cards, spacing, padding) based on Samsung S10e (360px) baseline
+ * Maintains exact visual proportions across all mobile devices
+ */
+
+
+/*
+ * CLEAN MOBILE SCALING FIX
+ * Add this to your App.css - it will override the conflicting rules
+ * This ensures clean proportional scaling on mobile only
+ */
+
+/* DISABLE existing clamp() scaling when proportional scaling is active */
 @media (max-width: 768px) {
-  
-  /* Simple proportional scaling wrapper */
-  .week-selector-proportional-scale {
-    --baseline-width: 360px; /* Samsung S10e baseline */
-    --scale-factor: calc(100vw / var(--baseline-width));
-    
-    /* Apply proportional scaling - this scales everything up/down */
-    transform: scale(var(--scale-factor));
-    transform-origin: top center;
+  .week-selector-mobile-scale .week-card {
+    padding: 16px !important;
+    min-height: 120px !important;
+    /* Override existing clamp() values */
+    font-size: initial !important;
   }
   
-  /* Remove the existing week-selector-wrapper scaling for mobile */
-  .week-selector-wrapper {
-    transform: none !important;
-    padding-top: 0 !important;
+  .week-selector-mobile-scale .week-number {
+    font-size: 1.3rem !important;
+  }
+  
+  .week-selector-mobile-scale .week-status-badge {
+    font-size: 0.7rem !important;
+    padding: 3px 6px !important;
+  }
+  
+  .week-selector-mobile-scale .week-dates {
+    font-size: 0.85rem !important;
+  }
+  
+  .week-selector-mobile-scale .points-label {
+    font-size: 0.75rem !important;
+  }
+  
+  .week-selector-mobile-scale .points-value {
+    font-size: 1.1rem !important;
   }
 }
 
-/* Keep desktop scaling unchanged */
+/* MOBILE PROPORTIONAL SCALING - Samsung S10e baseline */
+@media (max-width: 768px) {
+  .week-selector-mobile-scale {
+    --baseline-width: 360px;
+    --scale-factor: calc(100vw / var(--baseline-width));
+    
+    transform: scale(var(--scale-factor)) !important;
+    transform-origin: top center !important;
+  }
+  
+  /* DISABLE week-selector-wrapper scaling on mobile */
+  .week-selector-mobile-scale.week-selector-wrapper {
+    transform: scale(var(--scale-factor)) !important; /* Override the 1.15 scaling */
+    padding-top: 0 !important; /* Remove extra padding */
+  }
+}
+
+/* DESKTOP KEEPS EXISTING SCALING */
 @media (min-width: 769px) {
-  /* Desktop keeps your existing 1.15x scaling */
   .week-selector-wrapper {
-    transform: scale(1.15);
-    transform-origin: top center;
-    padding-top: 20px;
+    transform: scale(1.15) !important;
+    transform-origin: top center !important;
+    padding-top: 20px !important;
   }
   
   /* Make sure proportional scaling doesn't apply to desktop */
-  .week-selector-proportional-scale {
-    transform: none;
+  .week-selector-mobile-scale {
+    transform: none !important;
   }
 }
