@@ -1969,7 +1969,7 @@
 /* Draft pick button styling - Yellow border for selected draft buttons */
 .team-button.selected.draft,
 .propbet-button.selected.draft {
-  border: 2px solid #F59E0B !important; /* Yellow border */
+  border: 1px solid #F59E0B !important; /* Yellow border */
   box-shadow: 0 0 0 1px #F59E0B !important; /* Extra yellow glow */
   background-color: #7C3AED !important; /* Keep purple background */
   position: relative;
@@ -2011,7 +2011,7 @@
 .propbet-button.selected.draft:hover {
   background-color: #7C3AED !important; /* Keep purple, don't change to default hover */
   border-color: #F59E0B !important; /* Maintain yellow border */
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.6) !important;
+
 }
 
 /* Make sure draft styling doesn't interfere with disabled states */
