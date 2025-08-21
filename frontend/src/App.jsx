@@ -7,7 +7,8 @@
  * ENHANCED: Added minimal draft system for picks
  * CLEANED: Removed floating button logic - now handled by WeekPage via Portal
  * TOAST: Clean react-hot-toast implementation - styles moved to CSS
- * 🆕 BASIC NAVIGATION PROTECTION: Browser refresh/close warning only
+ * 🆕 FULL NAVIGATION PROTECTION: NavigationManager prevents navigation with unsaved picks
+ * 🆕 DRAFT CLEANUP: Drafts cleared on logout
  */
 
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
@@ -23,6 +24,7 @@ import Standings from './pages/Standings';
 import WeekSelector from "./pages/WeekSelector"; 
 import PrivateRoute from './components/common/PrivateRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import NavigationManager from './components/navigation/NavigationManager';
 import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { getCookie } from './utils/cookies';
@@ -38,7 +40,7 @@ function ScrollToTop() {
 }
 
 export default function App() {
-  const { userInfo, isLoading } = useAuth();
+  const { userInfo, isLoading, logout } = useAuth();
   const [games, setGames] = useState([]);
   const [moneyLineSelections, setMoneyLineSelections] = useState({});
   const [propBetSelections, setPropBetSelections] = useState({});
@@ -67,6 +69,37 @@ export default function App() {
     }
   }, []);
 
+  // 🆕 LOGOUT WITH DRAFT CLEARING
+  const handleLogout = useCallback(async () => {
+    console.log('🗑️ Clearing drafts before logout');
+    
+    // Clear all draft state before logging out
+    setDraftPicks({});
+    setDraftPropBets({});
+    setHasUnsavedChanges(false);
+    
+    // Reset UI to original state
+    setMoneyLineSelections(originalSubmittedPicks);
+    setPropBetSelections(originalSubmittedPropBets);
+    
+    // Then logout
+    await logout();
+  }, [logout, originalSubmittedPicks, originalSubmittedPropBets]);
+
+  // 🆕 NAVIGATION PROTECTION: Clear drafts function for NavigationManager
+  const clearDrafts = useCallback(() => {
+    console.log('🗑️ Clearing all draft picks (preventing memory leaks)');
+    
+    // Reset draft state
+    setDraftPicks({});
+    setDraftPropBets({});
+    setHasUnsavedChanges(false);
+    
+    // Reset UI selections to original submitted state
+    setMoneyLineSelections(originalSubmittedPicks);
+    setPropBetSelections(originalSubmittedPropBets);
+  }, [originalSubmittedPicks, originalSubmittedPropBets]);
+
   // 🆕 BASIC BROWSER PROTECTION: Warn on page refresh/close
   useEffect(() => {
     const handleBeforeUnload = (event) => {
@@ -80,6 +113,22 @@ export default function App() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
+
+  
+  useEffect(() => {
+    // Clear drafts when user becomes unauthenticated (auto-logout, session expiry, etc.)
+    if (!userInfo && !isLoading) {
+      console.log('🗑️ User logged out (auto or manual) - clearing drafts');
+      setDraftPicks({});
+      setDraftPropBets({});
+      setHasUnsavedChanges(false);
+      setMoneyLineSelections({});
+      setPropBetSelections({});
+      setOriginalSubmittedPicks({});
+      setOriginalSubmittedPropBets({});
+    }
+  }, [userInfo, isLoading]);
+
 
   // Calculate ACTUAL changes (not just drafts) for UI
   const actualChanges = useMemo(() => {
@@ -364,11 +413,38 @@ export default function App() {
     }
   }, [userInfo, isLoading, refreshAllData]);
 
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#1f1f1f',
+        color: 'white'
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <ThemeProvider>
       <Router>
+        {/* 🆕 NAVIGATION MANAGER: Handles navigation blocking inside Router context */}
+        <NavigationManager
+          hasUnsavedChanges={hasUnsavedChanges}
+          draftCount={draftCount}
+          onClearDrafts={clearDrafts}
+        />
+        
         <ScrollToTop />
-        <Navbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
+        <Navbar 
+          userInfo={userInfo} 
+          isOpen={isOpen} 
+          setIsOpen={setIsOpen}
+          onLogout={handleLogout}
+        />
         <div 
           className={`transition-transform duration-300 ${isOpen ? "-translate-x-[40vw]" : "translate-x-0"}`} 
           onTouchStart={handleTouchStart}

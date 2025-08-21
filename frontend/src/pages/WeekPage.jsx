@@ -9,11 +9,12 @@
  * 🗑️ REMOVED: ProgressIndicator (now in WeekSelector cards)
  * 🆕 ADDED: ResultBanner with live scoring and results tracking
  * 🔄 UPDATED: Using new single-line WeekHeader component
+ * 🔒 NAVIGATION PROTECTED: Back button uses navigateWithConfirmation
  */
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import WeekHeader from '../components/weeks/WeekHeader.jsx'; 
 import GameCard from '../components/game/GameCard.jsx';
@@ -34,14 +35,20 @@ export default function WeekPage({
   originalSubmittedPropBets = {}
 }) {
   const { weekNumber } = useParams();
-  const navigate = useNavigate();
   const weekGames = games.filter(game => game.week === parseInt(weekNumber));
   
   // 🆕 SUBMIT STATE: Track submission loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 🔒 PROTECTED BACK NAVIGATION: Uses navigateWithConfirmation
   const handleBack = () => {
-    navigate(-1);
+    if (window.navigateWithConfirmation) {
+      // Use protected navigation if NavigationManager is active
+      window.navigateWithConfirmation('/weeks');
+    } else {
+      // Fallback for when NavigationManager is not active
+      window.history.back();
+    }
   };
 
   // 🆕 ENHANCED: Error-resilient submit handler with loading state
