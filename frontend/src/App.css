@@ -2185,3 +2185,38 @@
 .week-selector-container {
   padding-bottom: 40px; /* Add extra bottom padding for scaled content */
 }
+
+/* Mobile-only proportional scaling */
+@media (max-width: 768px) {
+  
+  /* Simple proportional scaling wrapper */
+  .week-selector-proportional-scale {
+    --baseline-width: 360px; /* Samsung S10e baseline */
+    --scale-factor: calc(100vw / var(--baseline-width));
+    
+    /* Apply proportional scaling - this scales everything up/down */
+    transform: scale(var(--scale-factor));
+    transform-origin: top center;
+  }
+  
+  /* Remove the existing week-selector-wrapper scaling for mobile */
+  .week-selector-wrapper {
+    transform: none !important;
+    padding-top: 0 !important;
+  }
+}
+
+/* Keep desktop scaling unchanged */
+@media (min-width: 769px) {
+  /* Desktop keeps your existing 1.15x scaling */
+  .week-selector-wrapper {
+    transform: scale(1.15);
+    transform-origin: top center;
+    padding-top: 20px;
+  }
+  
+  /* Make sure proportional scaling doesn't apply to desktop */
+  .week-selector-proportional-scale {
+    transform: none;
+  }
+}
