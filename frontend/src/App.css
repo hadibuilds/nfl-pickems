@@ -1963,22 +1963,13 @@
 }
 
 /* =================================================================
-   DRAFT PICK BUTTON STYLING - Yellow Border for Unsubmitted Picks
+   DRAFT PICK BUTTON STYLING - Yellow Dot for Unsubmitted Picks
    ================================================================= */
 
-/* Draft pick button styling - Yellow border for selected draft buttons */
 .team-button.selected.draft,
 .propbet-button.selected.draft {
-  border: 1px solid #F59E0B !important; /* Yellow border */
-  box-shadow: 0 0 0 1px #F59E0B !important; /* Extra yellow glow */
   background-color: #7C3AED !important; /* Keep purple background */
   position: relative;
-}
-
-/* Subtle pulse animation for draft buttons */
-.team-button.selected.draft,
-.propbet-button.selected.draft {
-  animation: draft-button-pulse 2s ease-in-out infinite;
 }
 
 @keyframes draft-button-pulse {
@@ -1992,7 +1983,6 @@
   }
 }
 
-/* Draft indicator - small yellow dot in top-right corner of button */
 .team-button.selected.draft::after,
 .propbet-button.selected.draft::after {
   content: '';
@@ -2006,34 +1996,14 @@
   z-index: 1;
 }
 
-/* Hover states for draft buttons - maintain yellow border */
 .team-button.selected.draft:hover,
 .propbet-button.selected.draft:hover {
-  background-color: #7C3AED !important; /* Keep purple, don't change to default hover */
-  border-color: #F59E0B !important; /* Maintain yellow border */
-
-}
-
-/* Make sure draft styling doesn't interfere with disabled states */
-.team-button.selected.draft:disabled,
-.propbet-button.selected.draft:disabled {
-  border-color: rgba(245, 158, 11, 0.6) !important;
-  animation: none; /* No pulse animation for locked games */
+  background-color: #7C3AED !important; /* Keep purple, normal selected hover */
 }
 
 .team-button.selected.draft:disabled::after,
 .propbet-button.selected.draft:disabled::after {
   background-color: rgba(245, 158, 11, 0.6);
-}
-
-/* Remove draft styling completely when button shows correct/incorrect results */
-.team-button.selected.correct,
-.team-button.selected.incorrect,
-.propbet-button.selected.correct,
-.propbet-button.selected.incorrect {
-  border: 2px solid transparent !important;
-  box-shadow: none !important;
-  animation: none !important;
 }
 
 .team-button.selected.correct::after,
