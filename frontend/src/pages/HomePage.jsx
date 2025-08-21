@@ -38,11 +38,11 @@ const mockUserData = {
 };
 
 const mockLeaderboard = [
-  { rank: 1, username: "Hadi", points: 172, trend: "up" },
-  { rank: 2, username: "Khaled", points: 165, trend: "same" },
-  { rank: 3, username: "Abdallah", points: 156, trend: "up", isCurrentUser: true },
-  { rank: 4, username: "Majdi", points: 151, trend: "down" },
-  { rank: 5, username: "Zeyad", points: 148, trend: "up" }
+  { rank: 1, username: "GridironGuru", points: 172, trend: "up" },
+  { rank: 2, username: "TouchdownTom", points: 165, trend: "same" },
+  { rank: 3, username: "PickMaster", points: 156, trend: "up", isCurrentUser: true },
+  { rank: 4, username: "NFLNinja", points: 151, trend: "down" },
+  { rank: 5, username: "RedZoneRick", points: 148, trend: "up" }
 ];
 
 const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage = true, fontSize = 'text-2xl' }) => {
@@ -229,18 +229,18 @@ function HomePage() {
   }
 
   return (
-    <div className="min-h-screen text-white pt-16" style={{ backgroundColor: '#1E1E20' }}>
-      <div className="max-w-7xl mx-auto px-6 pb-8">
+    <div className="fixed inset-0 text-white pt-16 overflow-y-auto" style={{ backgroundColor: '#1E1E20' }}>
+      <div className="w-full px-4 sm:px-6 pb-8">
         {/* Welcome Header */}
-        <div className="mb-8">
-          <h2 className="text-4xl font-bold mb-2">
+        <div className="mb-6 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-2">
             Welcome back, <span style={{ color: '#8B5CF6' }}>{userInfo.username}</span>!
           </h2>
           <p style={{ color: '#9ca3af' }}>Week {mockUserData.currentWeek} • Ready to make your picks?</p>
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-4 mb-6 max-w-4xl mx-auto">
           <StatCard
             title="Current Rank"
             value={`#${mockUserData.rank}`}
@@ -272,70 +272,67 @@ function HomePage() {
           />
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Season Performance - Triple Progress Ring */}
-          <div className="rounded-2xl p-6 flex flex-col items-center justify-center" style={{ backgroundColor: '#2d2d2d' }}>
-            <h3 className="text-xl font-semibold mb-6">Season Performance</h3>
-            
-            {/* All Three Progress Rings Side by Side */}
-            <div className="flex space-x-6 items-center">
-              <div className="flex flex-col items-center">
-                <ProgressRing percentage={mockUserData.overallAccuracy} size={90} strokeWidth={6} fontSize="text-lg" />
-                <div className="mt-2 text-center">
-                  <div className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Overall</div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <ProgressRing percentage={mockUserData.moneylineAccuracy} size={90} strokeWidth={6} showPercentage={true} fontSize="text-lg" />
-                <div className="mt-2 text-center">
-                  <div className="text-sm font-bold text-green-400">Moneyline</div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <ProgressRing percentage={mockUserData.propBetAccuracy} size={90} strokeWidth={6} showPercentage={true} fontSize="text-lg" />
-                <div className="mt-2 text-center">
-                  <div className="text-sm font-bold text-purple-400">Prop Bets</div>
-                </div>
+        {/* Season Performance - Full Width */}
+        <div className="rounded-2xl p-6 flex flex-col items-center justify-center mb-6 max-w-4xl mx-auto" style={{ backgroundColor: '#2d2d2d' }}>
+          <h3 className="text-xl font-semibold mb-6">Season Performance</h3>
+          
+          {/* All Three Progress Rings Side by Side */}
+          <div className="flex space-x-8 items-center">
+            <div className="flex flex-col items-center">
+              <ProgressRing percentage={mockUserData.overallAccuracy} size={90} strokeWidth={6} fontSize="text-lg" />
+              <div className="mt-2 text-center">
+                <div className="text-sm font-bold" style={{ color: '#8B5CF6' }}>Overall</div>
               </div>
             </div>
             
-            <div className="mt-6 text-center">
-              <div className="text-2xl font-bold" style={{ color: '#8B5CF6' }}>{mockUserData.totalPoints}</div>
-              <div className="text-sm" style={{ color: '#9ca3af' }}>Total Points</div>
+            <div className="flex flex-col items-center">
+              <ProgressRing percentage={mockUserData.moneylineAccuracy} size={90} strokeWidth={6} showPercentage={true} fontSize="text-lg" />
+              <div className="mt-2 text-center">
+                <div className="text-sm font-bold text-green-400">Moneyline</div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <ProgressRing percentage={mockUserData.propBetAccuracy} size={90} strokeWidth={6} showPercentage={true} fontSize="text-lg" />
+              <div className="mt-2 text-center">
+                <div className="text-sm font-bold text-purple-400">Prop Bets</div>
+              </div>
             </div>
           </div>
-
-          {/* Leaderboard */}
-          <div className="rounded-2xl p-6" style={{ backgroundColor: '#2d2d2d' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold">Leaderboard</h3>
-              <Users className="w-5 h-5" style={{ color: '#9ca3af' }} />
-            </div>
-            <div className="space-y-2">
-              {mockLeaderboard.map((user, index) => (
-                <LeaderboardRow key={user.rank} user={user} index={index} />
-              ))}
-            </div>
-            <button 
-              className="w-full mt-4 text-sm font-medium transition-colors"
-              style={{ color: '#8B5CF6' }}
-              onClick={() => navigate('/standings')}
-            >
-              View Full Standings →
-            </button>
+          
+          <div className="mt-6 text-center">
+            <div className="text-2xl font-bold" style={{ color: '#8B5CF6' }}>{mockUserData.totalPoints}</div>
+            <div className="text-sm" style={{ color: '#9ca3af' }}>Total Points</div>
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="rounded-2xl p-6 mb-8" style={{ backgroundColor: '#2d2d2d' }}>
+        {/* Leaderboard - Full Width */}
+        <div className="rounded-2xl p-6 mb-6 max-w-4xl mx-auto" style={{ backgroundColor: '#2d2d2d' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold">Leaderboard</h3>
+            <Users className="w-5 h-5" style={{ color: '#9ca3af' }} />
+          </div>
+          <div className="space-y-2">
+            {mockLeaderboard.map((user, index) => (
+              <LeaderboardRow key={user.rank} user={user} index={index} />
+            ))}
+          </div>
+          <button 
+            className="w-full mt-4 text-sm font-medium transition-colors"
+            style={{ color: '#8B5CF6' }}
+            onClick={() => navigate('/standings')}
+          >
+            View Full Standings →
+          </button>
+        </div>
+
+        {/* Recent Activity - Full Width */}
+        <div className="rounded-2xl p-6 mb-6 max-w-4xl mx-auto" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold">Recent Games</h3>
             <Clock className="w-5 h-5" style={{ color: '#9ca3af' }} />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {mockUserData.recentGames.map(game => (
               <RecentGameCard key={game.id} game={game} />
             ))}
@@ -343,7 +340,7 @@ function HomePage() {
         </div>
 
         {/* Action Button */}
-        <div className="flex justify-center">
+        <div className="flex justify-center max-w-4xl mx-auto">
           <button 
             className="px-8 py-4 rounded-2xl text-white font-semibold text-lg transition-all duration-200 hover:scale-105 shadow-lg inline-flex items-center space-x-3"
             style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }}
