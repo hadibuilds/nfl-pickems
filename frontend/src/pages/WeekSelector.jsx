@@ -25,9 +25,17 @@ export default function WeekSelector({
   React.useEffect(() => {
     const updateScale = () => {
       const viewportWidth = window.innerWidth;
-      const calculatedScale = (viewportWidth / 360) * 1.15;
-      setScale(calculatedScale);
-      console.log(`Viewport: ${viewportWidth}px, Scale: ${calculatedScale.toFixed(3)}`);
+      
+      // Only apply proportional scaling on mobile (≤768px)
+      if (viewportWidth <= 768) {
+        const calculatedScale = (viewportWidth / 360) * 1.15;
+        setScale(calculatedScale);
+        console.log(`Mobile - Viewport: ${viewportWidth}px, Scale: ${calculatedScale.toFixed(3)}`);
+      } else {
+        // Desktop keeps original 1.15x
+        setScale(1.15);
+        console.log(`Desktop - Viewport: ${viewportWidth}px, Scale: 1.15`);
+      }
     };
 
     updateScale();
