@@ -3,6 +3,7 @@
  * Middle section of game card with team selection buttons
  * 🧹 REMOVED: Save state indicators (spinners/checkmarks)
  * ✅ ENHANCED: Simple click handler with immediate visual feedback
+ * 🆕 DRAFT STYLING: Yellow border for unsubmitted picks
  */
 
 import React from 'react';
@@ -15,7 +16,8 @@ export default function MoneyLineSection({
   moneyLineSelections, 
   propBetSelections,
   gameResults,
-  onTeamClick
+  onTeamClick,
+  isDraft = false // 🆕 DRAFT STATE: Whether this section has draft picks
 }) {
   const locked = isGameLocked(game.start_time, game.locked);
 
@@ -34,14 +36,14 @@ export default function MoneyLineSection({
       {/* Team buttons with logos */}
       <div className="button-row">
         <button
-          className={getButtonClass(
+          className={`${getButtonClass(
             'team-button',
             moneyLineSelections[game.id] === game.away_team,
             game,
             game.away_team,
             gameResults,
             true
-          )}
+          )} ${isDraft && moneyLineSelections[game.id] === game.away_team ? 'draft' : ''}`}
           onClick={() => handleTeamClick(game.away_team)}
           disabled={locked}
           style={{
@@ -67,14 +69,14 @@ export default function MoneyLineSection({
         </button>
 
         <button
-          className={getButtonClass(
+          className={`${getButtonClass(
             'team-button',
             moneyLineSelections[game.id] === game.home_team,
             game,
             game.home_team,
             gameResults,
             true
-          )}
+          )} ${isDraft && moneyLineSelections[game.id] === game.home_team ? 'draft' : ''}`}
           onClick={() => handleTeamClick(game.home_team)}
           disabled={locked}
           style={{
