@@ -408,8 +408,6 @@ export default function App() {
         <Navbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
         <div 
           className={`transition-transform duration-300 ${isOpen ? "-translate-x-[40vw]" : "translate-x-0"}`} 
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
         > 
           <Routes>  
             <Route
