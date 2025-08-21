@@ -1,11 +1,11 @@
 /*
  * ProfileDropdown Component
+ * 🔒 NAVIGATION PROTECTED: All links use navigateWithConfirmation
  * HeroUI-style dropdown with avatar trigger
  * Includes profile info, stats, navigation, and logout
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuthWithNavigation } from '../../hooks/useAuthWithNavigation';
 import UserAvatar from '../common/UserAvatar';
 import UserStatsDisplay from '../standings/UserStatsDisplay';
@@ -61,9 +61,29 @@ export default function ProfileDropdown() {
     await logoutAndRedirect('/login');
   };
 
-  // Handle navigation item clicks
-  const handleNavigationClick = () => {
+  // 🔒 PROTECTED NAVIGATION: Use navigateWithConfirmation if available
+  const handleNavigate = (path) => {
     setIsOpen(false);
+    if (window.navigateWithConfirmation) {
+      window.navigateWithConfirmation(path);
+    } else {
+      // Fallback to normal navigation if NavigationManager not active
+      window.location.href = path;
+    }
+  };
+
+  // 🔒 PROTECTED LINK: Custom Link component that respects navigation blocking
+  const ProtectedDropdownLink = ({ to, children, className }) => {
+    const handleClick = (e) => {
+      e.preventDefault();
+      handleNavigate(to);
+    };
+
+    return (
+      <a href={to} className={className} onClick={handleClick}>
+        {children}
+      </a>
+    );
   };
 
   if (!userInfo) {
@@ -94,12 +114,11 @@ export default function ProfileDropdown() {
           {/* Stats Section */}
           <UserStatsDisplay userInfo={userInfo} />
 
-          {/* Navigation Items */}
+          {/* Navigation Items - Now Protected */}
           <div className="dropdown-navigation">
-            <Link 
+            <ProtectedDropdownLink 
               to="/weeks" 
               className="dropdown-item"
-              onClick={handleNavigationClick}
             >
               <span className="dropdown-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -110,12 +129,11 @@ export default function ProfileDropdown() {
                 </svg>
               </span>
               Games
-            </Link>
+            </ProtectedDropdownLink>
             
-            <Link 
+            <ProtectedDropdownLink 
               to="/standings" 
               className="dropdown-item"
-              onClick={handleNavigationClick}
             >
               <span className="dropdown-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -128,12 +146,11 @@ export default function ProfileDropdown() {
                 </svg>
               </span>
               Standings
-            </Link>
+            </ProtectedDropdownLink>
 
-            <Link 
+            <ProtectedDropdownLink 
               to="/settings" 
               className="dropdown-item"
-              onClick={handleNavigationClick}
             >
               <span className="dropdown-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -143,7 +160,7 @@ export default function ProfileDropdown() {
                 </svg>
               </span>
               Settings
-            </Link>
+            </ProtectedDropdownLink>
             
           </div>
 

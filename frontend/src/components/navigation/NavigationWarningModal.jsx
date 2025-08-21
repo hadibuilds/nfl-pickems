@@ -24,10 +24,10 @@ export default function NavigationWarningModal({
         
         <div className="navigation-modal-body">
           <p>
-            You have <strong>{draftCount}</strong> unsaved pick{draftCount !== 1 ? 's' : ''} to your picks.
+            You have <strong>{draftCount}</strong> unsaved pick{draftCount !== 1 ? 's' : ''}.
           </p>
           <p>
-            Review and submit, or discard changes before continuing.
+            Review and submit, or discard changes and leave?
           </p>
         </div>
         
