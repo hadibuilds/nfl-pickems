@@ -1708,6 +1708,11 @@
   flex-basis: 58px !important;
 }
 
+.user-avatar .avatar-initials {
+  user-select: none;
+  pointer-events: none;
+}
+
 /* Mobile-specific avatar fixes */
 @media (max-width: 639px) {
   .user-avatar {
@@ -1775,18 +1780,38 @@
   backdrop-filter: blur(16px);
   z-index: 1000;
   overflow: hidden;
-  animation: profileDropdownSlideIn 0.2s ease-out forwards;
+  /* HeroUI-style spring animation */
+  animation: heroUIDropdownEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top right;
 }
 
-@keyframes profileDropdownSlideIn {
-  from {
+/* HeroUI-inspired spring enter animation */
+@keyframes heroUIDropdownEnter {
+  0% {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: scale(0.95) translateY(-8px);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1) translateY(0);
   }
+}
+
+/* HeroUI-inspired spring exit animation */
+@keyframes heroUIDropdownExit {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+  }
+}
+
+/* Exit animation class (you can add this via JavaScript when closing) */
+.profile-dropdown-menu.exiting {
+  animation: heroUIDropdownExit 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 /* Profile Section */
@@ -1838,7 +1863,7 @@
 
 .dropdown-stats .stat-value {
   font-weight: 700;
-  color: #8B5CF6;
+  color: white;
   font-size: 16px;
 }
 
@@ -1880,7 +1905,7 @@
 
 .profile-dropdown .dropdown-item:hover {
   background: rgba(139, 92, 246, 0.1);
-  color: #8B5CF6;
+  color: white;
 }
 
 .profile-dropdown .dropdown-item:focus {
@@ -1890,9 +1915,16 @@
 }
 
 .profile-dropdown .dropdown-icon {
-  font-size: 16px;
   width: 16px;
-  text-align: center;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-dropdown .dropdown-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Danger styling for logout */
