@@ -12,8 +12,8 @@ import confetti from 'canvas-confetti';
 
 // Mock data - replace with your actual API calls
 const mockUserData = {
-  username: "PickMaster",
-  currentWeek: 8,
+  username: "Hadi",
+  currentWeek: 1,
   weeklyPoints: 12,
   totalPoints: 156,
   rank: 3,
@@ -38,11 +38,11 @@ const mockUserData = {
 };
 
 const mockLeaderboard = [
-  { rank: 1, username: "GridironGuru", points: 172, trend: "up" },
-  { rank: 2, username: "TouchdownTom", points: 165, trend: "same" },
-  { rank: 3, username: "PickMaster", points: 156, trend: "up", isCurrentUser: true },
-  { rank: 4, username: "NFLNinja", points: 151, trend: "down" },
-  { rank: 5, username: "RedZoneRick", points: 148, trend: "up" }
+  { rank: 1, username: "Hadi", points: 172, trend: "up" },
+  { rank: 2, username: "Abdallah", points: 165, trend: "same" },
+  { rank: 3, username: "Majdi", points: 156, trend: "up", isCurrentUser: true },
+  { rank: 4, username: "Khaled", points: 151, trend: "down" },
+  { rank: 5, username: "Alex", points: 148, trend: "up" }
 ];
 
 const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage = true, fontSize = 'text-2xl' }) => {
@@ -259,7 +259,7 @@ function HomePage() {
           <StatCard
             title="Pending Picks"
             value={mockUserData.pendingPicks}
-            subtitle="games remaining"
+            subtitle="for this week"
             icon={Clock}
             color="blue"
           />
