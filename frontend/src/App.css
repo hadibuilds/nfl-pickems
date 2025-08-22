@@ -1135,7 +1135,7 @@
   }
   
   .week-dates {
-    font-size: clamp(0.2rem, 3.5vw, 1rem); /* More aggressive scaling */
+    font-size: clamp(0.4rem, 3.5vw, 1.2rem); /* More aggressive scaling */
   }
   
   .points-label {
