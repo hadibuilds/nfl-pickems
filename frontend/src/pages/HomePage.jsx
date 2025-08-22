@@ -297,7 +297,7 @@ function HomePage() {
                   fontSize="text-base" 
                 />
                 <div className="mt-2 text-center">
-                  <div className="text-xs font-bold" style={{ color: '#8B5CF6' }}>Overall</div>
+                  <div className="text-xs font-bold" style={{ color: '#F5C45E' }}>Overall</div>
                 </div>
               </div>
               
@@ -323,13 +323,13 @@ function HomePage() {
                   fontSize="text-base"
                 />
                 <div className="mt-2 text-center">
-                  <div className="text-xs font-bold text-purple-400">Prop Bets</div>
+                  <div className="text-xs font-bold text-blue-400">Prop Bets</div>
                 </div>
               </div>
             </div>
             
             <div className="mt-4 text-center">
-              <div className="text-xl font-bold" style={{ color: '#8B5CF6' }}>
+              <div className="text-xl font-bold" style={{ color: "purple-300" }}>
                 {userData.totalPoints || 0}
               </div>
               <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
