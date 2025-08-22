@@ -101,12 +101,14 @@ export default function WeekPage({
         {/* 🆕 RESULT BANNER: Live scoring and results tracking */}
         {weekGames.length > 0 && (
           <ErrorBoundary level="component" customMessage="Results banner failed to load">
-            <ResultBanner 
-              games={weekGames}
-              originalSubmittedPicks={originalSubmittedPicks}
-              originalSubmittedPropBets={originalSubmittedPropBets}
-              gameResults={gameResults}
-            />
+            <div className="max-w-4xl mx-auto">
+              <ResultBanner 
+                games={weekGames}
+                originalSubmittedPicks={originalSubmittedPicks}
+                originalSubmittedPropBets={originalSubmittedPropBets}
+                gameResults={gameResults}
+              />
+            </div>
           </ErrorBoundary>
         )}
 
@@ -125,7 +127,7 @@ export default function WeekPage({
               No games available for this week.
             </p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto justify-items-center">
               {weekGames.map(game => (
                 <ErrorBoundary 
                   key={game.id} 
@@ -174,4 +176,5 @@ export default function WeekPage({
       )}
     </>
   );
+
 }
