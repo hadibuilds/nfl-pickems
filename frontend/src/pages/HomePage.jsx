@@ -275,7 +275,7 @@ function HomePage() {
 
           <StatCard
             title="Best Category"
-            value={userData.bestCategory || 'N/A'}
+            value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'}
             subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`}
             icon={Zap}
             color="green"
