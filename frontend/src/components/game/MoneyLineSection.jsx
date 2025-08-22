@@ -57,8 +57,8 @@ export default function MoneyLineSection({
             src={getTeamLogo(game.away_team)} 
             alt={`${game.away_team} logo`}
             style={{
-              width: '48px',
-              height: '48px',
+              width: '65px',
+              height: '65px',
               objectFit: 'contain'
             }}
             onError={(e) => e.target.style.display = 'none'}
@@ -90,8 +90,8 @@ export default function MoneyLineSection({
             src={getTeamLogo(game.home_team)} 
             alt={`${game.home_team} logo`}
             style={{
-              width: '48px',
-              height: '48px',
+              width: '65px',
+              height: '65px',
               objectFit: 'contain'
             }}
             onError={(e) => e.target.style.display = 'none'}
