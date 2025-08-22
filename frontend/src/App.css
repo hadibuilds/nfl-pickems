@@ -963,7 +963,7 @@
   text-decoration: none;
   transition: all 0.3s ease;
   cursor: pointer;
-  min-height: 140px;
+  aspect-ratio: 1.75 / 1;
   position: relative;
   overflow: hidden;
   /* iOS tap optimization */
@@ -1058,10 +1058,13 @@
 
 /* Week dates */
 .week-dates {
+  display: flex;
   font-size: 0.9rem;
   font-weight: 500;
   margin-bottom: 14px;
   opacity: 0.9;
+  flex: 1;
+  align-items: center;
 }
 
 /* Week footer with points or status */
@@ -1102,42 +1105,116 @@
   opacity: 0.6;
 }
 
-/* Scale up everything in the week page */
-.week-page-wrapper {
-  transform: scale(1.15);
-  transform-origin: top center; /* Keeps it centered when scaling */
-}
-
 /* ==========================================
    Mobile overrides (strictly ≤768px width)
    ========================================== */
 @media (max-width: 768px) {
   .week-card {
     padding: clamp(12px, 4vw, 20px);
-    min-height: clamp(120px, 30vw, 160px);
+  }
+  
+  /* FIXED: Scale margins/spacing with card size */
+  .week-header {
+    margin-bottom: clamp(8px, 3vw, 16px);
   }
   
   .week-number {
-    font-size: clamp(1.2rem, 5vw, 1.8rem);
+    font-size: clamp(1.2rem, 6vw, 2rem); /* More aggressive scaling */
   }
   
   .week-status-badge {
-    font-size: clamp(0.65rem, 2.5vw, 0.9rem);
-    padding: clamp(2px, 0.7vw, 4px) clamp(6px, 1.5vw, 8px);
+    font-size: clamp(0.65rem, 3vw, 1rem); /* More aggressive scaling */
+    padding: clamp(2px, 0.8vw, 5px) clamp(6px, 2vw, 10px);
   }
   
   .week-dates {
-    font-size: clamp(0.8rem, 3vw, 1rem);
+    font-size: clamp(0.2rem, 3.5vw, 1rem); /* More aggressive scaling */
   }
   
   .points-label {
-    font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+    font-size: clamp(0.75rem, 3vw, 1rem);
   }
   
   .points-value {
-    font-size: clamp(1rem, 4vw, 1.4rem);
+    font-size: clamp(1rem, 5vw, 1.6rem); /* More aggressive scaling */
+  }
+  
+  .current-indicator {
+    font-size: clamp(0.8rem, 3.5vw, 1.2rem);
+  }
+  
+}
+
+/* =================================================================
+   WEEK CARD PROGRESS BAR STYLES
+   Compact progress indicator for week selector cards
+   ================================================================= */
+
+.week-card-progress {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 3px;
+  margin-top: 2px; /* Reduced from 8px */
+  align-items: center;
+}
+
+.week-progress-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.week-progress-bar {
+  width: calc(100% - 32px);
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Green background when completed */
+.week-progress-bar.completed {
+  background-color: rgba(16, 185, 129, 0.3); /* Green background */
+}
+
+.week-progress-fill {
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+/* Green fill when completed */
+.week-progress-fill.completed {
+  background-color: #10B981; /* Solid green */
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .week-card-progress {
+    gap: clamp(2px, 1vw, 4px);
+    margin-top: clamp(1px, 0.5vw, 3px);
+  }
+  
+  .week-progress-text {
+    font-size: clamp(0.75rem, 3.3vw, 1.1rem); /* Matches your scaling pattern */
+  }
+  
+  .week-progress-bar {
+    width: calc(100% - clamp(20px, 5vw, 32px));
+    height: clamp(3px, 1.4vw, 7px); /* Matches your scaling pattern */
+    border-radius: clamp(1.5px, 0.7vw, 3.5px);
+  }
+
+  .week-progress-fill {
+    border-radius: clamp(1.5px, 0.7vw, 3.5px);
   }
 }
+
 
 /* =================================================================
    FLOATING SUBMIT BUTTON STYLES
@@ -1493,111 +1570,6 @@
   
   .matchup, .prop-question {
     font-size: 1rem;
-  }
-  
-  .progress-indicator {
-    margin-bottom: 20px;
-    width: 75vw;
-    max-width: none;
-    padding: 12px 16px;
-  }
-  
-  .progress-bar {
-    width: 50vw;
-  }
-  
-  /* Week card mobile adjustments */
-  .week-card {
-    padding: 16px;
-    min-height: 120px;
-  }
-  
-  .week-number {
-    font-size: 1.3rem;
-  }
-  
-  .week-status-badge {
-    font-size: 0.7rem;
-    padding: 3px 6px;
-  }
-  
-  .week-dates {
-    font-size: 0.85rem;
-    margin-bottom: 14px;
-  }
-  
-  .points-value {
-    font-size: 1.1rem;
-  }
-}
-
-/* =================================================================
-   WEEK CARD PROGRESS BAR STYLES
-   Compact progress indicator for week selector cards
-   ================================================================= */
-
-.week-card-progress {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  gap: 3px;
-  margin-top: 2px; /* Reduced from 8px */
-  align-items: center;
-}
-
-.week-progress-text {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.week-progress-bar {
-  width: calc(100% - 32px);
-  height: 6px;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-/* Green background when completed */
-.week-progress-bar.completed {
-  background-color: rgba(16, 185, 129, 0.3); /* Green background */
-}
-
-.week-progress-fill {
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.8);
-  transition: width 0.3s ease;
-  border-radius: 3px;
-}
-
-/* Green fill when completed */
-.week-progress-fill.completed {
-  background-color: #10B981; /* Solid green */
-}
-
-/* Mobile responsive adjustments */
-@media (max-width: 768px) {
-  .week-card-progress {
-    gap: 3px;
-    margin-top: 2px;
-  }
-  
-  .week-progress-text {
-    font-size: 0.8rem;
-  }
-  
-  .week-progress-bar {
-    width: calc(100% - 24px);
-    height: 5px;
-    border-radius: 2.5px;
-  }
-
-  .week-progress-fill {
-    border-radius: 2.5px;
   }
 }
 

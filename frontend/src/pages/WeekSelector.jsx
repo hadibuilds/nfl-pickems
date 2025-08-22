@@ -1,7 +1,8 @@
 /*
- * Updated WeekSelector.jsx with Proportional Mobile Scaling
- * Replaces week-selector-wrapper with proportional scaling that uses Samsung S10e as baseline
- * Maintains desktop scaling unchanged
+ * Updated WeekSelector.jsx - CSS-Based Responsive Scaling
+ * REMOVED: JavaScript viewport scaling calculations
+ * RELIES ON: CSS responsive system with viewport units and clamp()
+ * MAINTAINS: All week logic, status, dates, and styling
  */
 
 import React from "react";
@@ -19,29 +20,7 @@ export default function WeekSelector({
   const totalWeeks = 18;
   const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
 
-  // Get actual viewport width and calculate scale
-  const [scale, setScale] = React.useState(1.15);
-
-  React.useEffect(() => {
-    const updateScale = () => {
-      const viewportWidth = window.innerWidth;
-      
-      // Only apply proportional scaling on mobile (≤768px)
-      if (viewportWidth <= 768) {
-        const calculatedScale = (viewportWidth / 360) * 1.15;
-        setScale(calculatedScale);
-        console.log(`Mobile - Viewport: ${viewportWidth}px, Scale: ${calculatedScale.toFixed(3)}`);
-      } else {
-        // Desktop keeps original 1.15x
-        setScale(1.15);
-        console.log(`Desktop - Viewport: ${viewportWidth}px, Scale: 1.15`);
-      }
-    };
-
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
+  // REMOVED: JavaScript scaling calculations - CSS handles this now
 
   const getCurrentNFLWeek = () => {
     const now = new Date();
@@ -207,14 +186,8 @@ export default function WeekSelector({
     <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="week-selector-container">
         <div className="max-w-6xl mx-auto">
-          <div 
-            className="week-selector-wrapper" 
-            style={{ 
-              transform: `scale(${scale})`,
-              transformOrigin: 'top center',
-              paddingTop: '20px'
-            }}
-          >
+          {/* UPDATED: Removed dynamic scaling - CSS handles responsive scaling */}
+          <div className="week-selector-wrapper">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {weeks.map((week) => {
                 const weekStatus = getWeekStatus(week);
