@@ -315,18 +315,34 @@ def get_weekly_performance_trends(user, weeks=5):
     return sorted(trends, key=lambda x: x['week'])
 
 def calculate_pending_picks(user, current_week):
-    """Calculate pending picks for current week"""
-    current_week_games = Game.objects.filter(week=current_week)
-    user_current_predictions = Prediction.objects.filter(
+    """Calculate pending picks for current week (both games and prop bets)"""
+    current_week_games = Game.objects.filter(week=current_week).prefetch_related('prop_bets')
+    
+    # Count game predictions
+    user_game_predictions = Prediction.objects.filter(
         user=user, 
         game__week=current_week
     )
+    games_with_predictions = set(user_game_predictions.values_list('game_id', flat=True))
+    pending_games = current_week_games.exclude(id__in=games_with_predictions).count()
     
-    pending_games = current_week_games.exclude(
-        id__in=user_current_predictions.values_list('game_id', flat=True)
-    )
+    # Count prop bet predictions
+    pending_props = 0
+    for game in current_week_games:
+        for prop_bet in game.prop_bets.all():
+            # Check if user has made this prop bet prediction
+            user_prop_prediction = PropBetPrediction.objects.filter(
+                user=user,
+                prop_bet=prop_bet
+            ).exists()
+            
+            if not user_prop_prediction:
+                pending_props += 1
     
-    return pending_games.count()
+    # Total pending picks = pending games + pending prop bets
+    total_pending = pending_games + pending_props
+    
+    return total_pending
 
 def get_recent_games_data(user, limit=3):
     """Get recent completed games with user predictions"""
