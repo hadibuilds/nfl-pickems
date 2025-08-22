@@ -2017,10 +2017,6 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.dropdown-logout {
-  /* No border-bottom for last section */
-}
-
 .profile-dropdown .dropdown-item {
   padding: 12px 16px;
   color: #E5E7EB;
