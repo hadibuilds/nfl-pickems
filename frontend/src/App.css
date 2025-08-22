@@ -5,12 +5,17 @@
  * ADDED: Clean toast styling moved from inline JSX
  * FIXED: iOS double tap issue with touch-device hover state prevention
  */
+ @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
  #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+.font-bebas {
+  font-family: 'Bebas Neue', cursive;
 }
 
 .logo {

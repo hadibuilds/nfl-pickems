@@ -1,9 +1,3 @@
-/*
- * Week Header Component
- * Complete header section with back button and centered title for week page
- * UPDATED: Removed sync button, centered title with back button on left
- */
-
 import React from 'react';
 
 export default function WeekHeader({ weekNumber, onBack }) {
@@ -21,7 +15,7 @@ export default function WeekHeader({ weekNumber, onBack }) {
       </button>
       
       {/* Page title - absolutely centered */}
-      <h1 className="absolute left-1/2 transform -translate-x-1/2 text-4xl text-white">
+      <h1 className="absolute left-1/2 transform -translate-x-1/2 text-5xl text-white font-bebas">
         Week {weekNumber}
       </h1>
     </div>
