@@ -381,6 +381,17 @@ def get_best_category_with_history(user):
         moneyline_accuracy = calculate_current_accuracy(user, 'moneyline')
         prop_accuracy = calculate_current_accuracy(user, 'prop')
     
+    # If both are 0 (no results yet), return N/A
+    if moneyline_accuracy == 0 and prop_accuracy == 0:
+        return "N/A", 0
+    
+    # If only one has data, return that one
+    if moneyline_accuracy > 0 and prop_accuracy == 0:
+        return "Moneyline", moneyline_accuracy
+    elif prop_accuracy > 0 and moneyline_accuracy == 0:
+        return "Prop Bets", prop_accuracy
+    
+    # If both have data, return the better one
     if moneyline_accuracy >= prop_accuracy:
         return "Moneyline", moneyline_accuracy
     else:
