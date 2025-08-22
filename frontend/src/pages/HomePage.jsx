@@ -117,7 +117,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", a
       transition-all duration-300 hover:scale-105 cursor-pointer
       ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
     `}>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <Icon className="w-8 h-8 opacity-80" />
         {trend && (
           <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
@@ -240,7 +240,7 @@ function HomePage() {
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <StatCard
             title="Current Rank"
             value={`#${mockUserData.rank}`}
@@ -273,6 +273,7 @@ function HomePage() {
         </div>
 
         {/* Season Performance */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
         <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
           <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
           
@@ -305,6 +306,7 @@ function HomePage() {
             <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
           </div>
         </div>
+        
 
         {/* Leaderboard */}
         <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
@@ -337,6 +339,7 @@ function HomePage() {
               <RecentGameCard key={game.id} game={game} />
             ))}
           </div>
+        </div>
         </div>
 
         {/* Action Button */}
