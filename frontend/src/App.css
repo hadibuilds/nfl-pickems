@@ -1602,6 +1602,11 @@
   border-radius: 16px;
   color: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  
+  max-width: 72rem; /* Same as max-w-6xl */
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 /* Top stats row */
@@ -2179,4 +2184,5 @@
     padding-top: 20px;
   }
 }*/
+
 
