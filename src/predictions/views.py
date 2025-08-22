@@ -1,16 +1,19 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Prediction, PropBet, PropBetPrediction
 from games.models import Game
+from .dashboard_utils import (
+    get_leaderboard_data_with_trends,
+    get_user_insights,
+    calculate_user_dashboard_data,
+)
 from collections import defaultdict
-import json
 
 User = get_user_model()
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -215,3 +218,73 @@ def user_accuracy(request):
             'total': total_prop_bets
         }
     })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_dashboard_data(request):
+    """
+    Enhanced dashboard API endpoint with historical trends and insights
+    Returns all data needed for the homepage dashboard including trends
+    """
+    try:
+        user = request.user
+        
+        # Get comprehensive user dashboard data with trends
+        dashboard_data = calculate_user_dashboard_data(user)
+        
+        # Get leaderboard data with trends
+        leaderboard = get_leaderboard_data_with_trends(limit=5)
+        
+        # Mark current user in leaderboard
+        for user_data in leaderboard:
+            if user_data['username'] == user.username:
+                user_data['isCurrentUser'] = True
+        
+        # Get personalized insights
+        insights = get_user_insights(user)
+        
+        response_data = {
+            'user_data': dashboard_data,
+            'leaderboard': leaderboard,
+            'insights': insights,
+            'trends': {
+                'performance_trend': dashboard_data.get('performanceTrend', 'stable'),
+                'weekly_trends': dashboard_data.get('weeklyTrends', []),
+                'rank_trend': dashboard_data.get('rankTrend', 'same')
+            }
+        }
+        
+        return Response(response_data)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to fetch dashboard data: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def trigger_weekly_snapshot(request):
+    """
+    Manual trigger for weekly snapshot (admin use)
+    """
+    try:
+        from django.core.management import call_command
+        
+        week = request.data.get('week')
+        force = request.data.get('force', False)
+        
+        if week:
+            call_command('capture_weekly_snapshot', week=week, force=force)
+            message = f"Snapshot captured for week {week}"
+        else:
+            call_command('capture_weekly_snapshot', force=force)
+            message = "Snapshot captured for latest completed week"
+        
+        return Response({'success': True, 'message': message})
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to capture snapshot: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
