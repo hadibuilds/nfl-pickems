@@ -83,22 +83,7 @@ export default function Navbar({ isOpen, setIsOpen }) {
               <span>Sign Up</span>
             </ProtectedLink>
           )}
-
-          {/* Desktop Links - Now Protected */}
-          {userInfo && (
-            <div className="desktop-nav">
-              <ProtectedLink to="/weeks" className="nav-link">Games</ProtectedLink>
-              <ProtectedLink to="/standings" className="nav-link">Standings</ProtectedLink>
-              <button
-                onClick={handleLogout}
-                className="logout-button"
-              >
-                Logout
-              </button>
-            </div>
-          )}
-
-          {/* NEW: Profile Dropdown - Replaces hamburger menu completely */}
+          
           {userInfo && (
             <div className="profile-dropdown-container">
               <ProfileDropdown />
@@ -106,11 +91,6 @@ export default function Navbar({ isOpen, setIsOpen }) {
           )}
         </div>
       </div>
-
-      {/* 
-        REMOVED: Mobile sidebar/hamburger menu 
-        ProfileDropdown now handles all mobile navigation
-      */}
     </nav>
   );
 }

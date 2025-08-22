@@ -675,17 +675,20 @@
   }
 }
 
-/* UPDATED: Navbar content wrapper - matches page content padding */
 .navbar-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px; /* CHANGED: from 8px 12px to 8px 16px to match px-4 */
-  /* REMOVED: max-width: 80rem; margin: 0 auto; */
+  padding: 8px 16px;
   height: 100%;
-  width: 100%; /* ADDED: Full width to match page content approach */
-  box-sizing: border-box; /* ADDED: Ensure padding is included in width */
+  width: 100%;
+  box-sizing: border-box;
+  
+  /* Extend 30px beyond body constraints (1280px + 60px total) */
+  max-width: 1500px;
+  margin: 0 auto;
 }
+
 
 /* Logo styling */
 .navbar-logo {
