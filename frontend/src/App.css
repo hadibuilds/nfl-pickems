@@ -1555,11 +1555,13 @@
   height: 80px;
 }
 
-/* Scale up everything in the week page */
+/*
 .week-page-wrapper {
   transform: scale(1.15);
-  transform-origin: top center; /* Keeps it centered when scaling */
+  transform-origin: top center;
 }
+*/
+
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
@@ -2160,25 +2162,24 @@
    WEEK SELECTOR PAGE ZOOM - Scale up cards like WeekPage
    ================================================================= */
 
+/*
 .week-selector-wrapper {
   transform: scale(1.15);
-  transform-origin: top center; /* Keeps it centered when scaling */
-  padding-top: 20px; /* Add some top padding to prevent cutoff */
-}
+  transform-origin: top center;
+  padding-top: 20px;
+}*/
+
 
 /* Ensure the scaled content doesn't overflow */
 .week-selector-container {
   padding-bottom: 40px; /* Add extra bottom padding for scaled content */
 }
 
-/* Mobile - proportional scaling based on Samsung S10e baseline */
+/* Mobile - proportional scaling based on Samsung S10e baseline 
 @media (max-width: 768px) {
   .week-selector-wrapper {
-    /* Samsung S10e: 360/360*1.15 = 1.15x (unchanged) */
-    /* iPhone XS Max: 414/360*1.15 = 1.32x (bigger) */
-    /* iPhone 16 Pro Max: 430/360*1.15 = 1.37x (bigger) */
     transform: scale(100vh / 360 * 1.15) !important;
     transform-origin: top center;
     padding-top: 20px;
   }
-}
+}*/
