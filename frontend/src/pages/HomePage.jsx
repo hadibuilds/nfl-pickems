@@ -329,7 +329,7 @@ function HomePage() {
             </div>
             
             <div className="mt-4 text-center">
-              <div className="text-xl font-bold" style={{ color: "purple-300" }}>
+              <div className="text-xl font-bold" style={{ color: "#7C3AED" }}>
                 {userData.totalPoints || 0}
               </div>
               <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
