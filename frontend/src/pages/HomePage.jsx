@@ -1,50 +1,15 @@
 /*
- * Enhanced HomePage Component with Integrated Dashboard
- * Clean dashboard without typewriter - loads immediately
- * Uses your existing dark theme colors while keeping colorful gradient cards
- * INTEGRATED: Full dashboard analytics with user stats, leaderboard, and recent games
+ * Enhanced HomePage Component with Real Database Integration
+ * Now uses actual database data instead of mock data
  */
 
 import React, { useState, useEffect } from 'react';
 import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
+import useDashboardData from '../hooks/useDashboardData'; // Add this import
 import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Zap } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-// Mock data - replace with your actual API calls
-const mockUserData = {
-  username: "Hadi",
-  currentWeek: 1,
-  weeklyPoints: 12,
-  totalPoints: 156,
-  rank: 3,
-  rankChange: "+2",
-  totalUsers: 24,
-  overallAccuracy: 78.5,
-  moneylineAccuracy: 74.2,
-  propBetAccuracy: 82.8,
-  streak: 4,
-  streakType: "win",
-  weeklyAccuracy: 85.7,
-  bestWeek: { week: 5, points: 18 },
-  pendingPicks: 6,
-  pointsFromLeader: 16,
-  bestCategory: "Prop Bets",
-  bestCategoryAccuracy: 82.8,
-  recentGames: [
-    { id: 1, homeTeam: "KC", awayTeam: "LAC", userPick: "KC", result: "KC", correct: true, points: 1 },
-    { id: 2, homeTeam: "SF", awayTeam: "DAL", userPick: "SF", result: "SF", correct: true, points: 3 },
-    { id: 3, homeTeam: "BUF", awayTeam: "MIA", userPick: "MIA", result: "BUF", correct: false, points: 0 },
-  ]
-};
-
-const mockLeaderboard = [
-  { rank: 1, username: "Hadi", points: 172, trend: "up" },
-  { rank: 2, username: "Abdallah", points: 165, trend: "same" },
-  { rank: 3, username: "Majdi", points: 156, trend: "up", isCurrentUser: true },
-  { rank: 4, username: "Khaled", points: 151, trend: "down" },
-  { rank: 5, username: "Alex", points: 148, trend: "up" }
-];
-
+// Component definitions remain the same
 const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage = true, fontSize = 'text-2xl' }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -190,16 +155,23 @@ const LeaderboardRow = ({ user, index }) => {
   );
 };
 
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-8">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+  </div>
+);
+
 function HomePage() {
   const { userInfo, navigate } = useAuthWithNavigation();
+  const { dashboardData, loading, error } = useDashboardData(userInfo); // Add this hook
   const [animatedStats, setAnimatedStats] = useState(false);
 
   useEffect(() => {
-    if (userInfo) {
+    if (userInfo && dashboardData) {
       const timer = setTimeout(() => setAnimatedStats(true), 300);
       return () => clearTimeout(timer);
     }
-  }, [userInfo]);
+  }, [userInfo, dashboardData]);
 
   const handleConfetti = () => {
     confetti({
@@ -228,6 +200,39 @@ function HomePage() {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="w-full" style={{ backgroundColor: '#1E1E20', color: 'white', marginTop: '64px' }}>
+        <div className="w-full px-2 pb-8">
+          <LoadingSpinner />
+          <p className="text-center" style={{ color: '#9ca3af' }}>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full" style={{ backgroundColor: '#1E1E20', color: 'white', marginTop: '64px' }}>
+        <div className="w-full px-2 pb-8">
+          <div className="text-center py-8">
+            <p className="text-red-400">Error loading dashboard: {error}</p>
+            <button 
+              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Extract data from API response
+  const userData = dashboardData?.user_data || {};
+  const leaderboard = dashboardData?.leaderboard || [];
+
   return (
     <div className="w-full" style={{ backgroundColor: '#1E1E20', color: 'white', marginTop: '64px' }}>
       <div className="w-full px-2 pb-8">
@@ -236,37 +241,42 @@ function HomePage() {
           <h2 className="text-2xl sm:text-3xl font-bold mb-2">
             Welcome back, <span style={{ color: '#8B5CF6' }}>{userInfo.username}</span>!
           </h2>
-          <p style={{ color: '#9ca3af', fontSize: '14px' }}>Week {mockUserData.currentWeek} • Ready to make your picks?</p>
+          <p style={{ color: '#9ca3af', fontSize: '14px' }}>
+            Week {userData.currentWeek} • Ready to make your picks?
+          </p>
         </div>
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <StatCard
             title="Current Rank"
-            value={`#${mockUserData.rank}`}
-            subtitle={`${mockUserData.rankChange} this week`}
+            value={`#${userData.rank || '—'}`}
+            subtitle={`${userData.rankChange || ''} this week`}
             icon={Trophy}
             trend="up"
             color="purple"
           />
-          <StatCard
-            title="Points Behind"
-            value={mockUserData.pointsFromLeader}
-            subtitle="from 1st place"
-            icon={Target}
-            color="orange"
-          />
+
           <StatCard
             title="Pending Picks"
-            value={mockUserData.pendingPicks}
+            value={userData.pendingPicks || 0}
             subtitle="for this week"
             icon={Clock}
             color="blue"
           />
+          
+          <StatCard
+            title="Points Behind"
+            value={userData.pointsFromLeader || 0}
+            subtitle="from 1st place"
+            icon={Target}
+            color="orange"
+          />
+
           <StatCard
             title="Best Category"
-            value={mockUserData.bestCategory}
-            subtitle={`${Math.round(mockUserData.bestCategoryAccuracy)}% accuracy`}
+            value={userData.bestCategory || 'N/A'}
+            subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`}
             icon={Zap}
             color="green"
           />
@@ -274,73 +284,121 @@ function HomePage() {
 
         {/* Season Performance */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-        <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-          <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
-          
-          {/* All Three Progress Rings Side by Side */}
-          <div className="flex space-x-4 items-center">
-            <div className="flex flex-col items-center">
-              <ProgressRing percentage={mockUserData.overallAccuracy} size={80} strokeWidth={6} fontSize="text-base" />
-              <div className="mt-2 text-center">
-                <div className="text-xs font-bold" style={{ color: '#8B5CF6' }}>Overall</div>
+          <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+            <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
+            
+            {/* All Three Progress Rings Side by Side */}
+            <div className="flex space-x-4 items-center">
+              <div className="flex flex-col items-center">
+                <ProgressRing 
+                  percentage={userData.overallAccuracy || 0} 
+                  size={80} 
+                  strokeWidth={6} 
+                  fontSize="text-base" 
+                />
+                <div className="mt-2 text-center">
+                  <div className="text-xs font-bold" style={{ color: '#8B5CF6' }}>Overall</div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col items-center">
+                <ProgressRing 
+                  percentage={userData.moneylineAccuracy || 0} 
+                  size={80} 
+                  strokeWidth={6} 
+                  showPercentage={true} 
+                  fontSize="text-base" 
+                />
+                <div className="mt-2 text-center">
+                  <div className="text-xs font-bold text-green-400">Moneyline</div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col items-center">
+                <ProgressRing 
+                  percentage={userData.propBetAccuracy || 0} 
+                  size={80} 
+                  strokeWidth={6} 
+                  showPercentage={true} 
+                  fontSize="text-base"
+                />
+                <div className="mt-2 text-center">
+                  <div className="text-xs font-bold text-purple-400">Prop Bets</div>
+                </div>
               </div>
             </div>
             
-            <div className="flex flex-col items-center">
-              <ProgressRing percentage={mockUserData.moneylineAccuracy} size={80} strokeWidth={6} showPercentage={true} fontSize="text-base" />
-              <div className="mt-2 text-center">
-                <div className="text-xs font-bold text-green-400">Moneyline</div>
+            <div className="mt-4 text-center">
+              <div className="text-xl font-bold" style={{ color: '#8B5CF6' }}>
+                {userData.totalPoints || 0}
               </div>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              <ProgressRing percentage={mockUserData.propBetAccuracy} size={80} strokeWidth={6} showPercentage={true} fontSize="text-base" />
-              <div className="mt-2 text-center">
-                <div className="text-xs font-bold text-purple-400">Prop Bets</div>
-              </div>
+              <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
             </div>
           </div>
-          
-          <div className="mt-4 text-center">
-            <div className="text-xl font-bold" style={{ color: '#8B5CF6' }}>{mockUserData.totalPoints}</div>
-            <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
-          </div>
-        </div>
-        
 
-        {/* Leaderboard */}
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Leaderboard</h3>
-            <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
+          {/* Leaderboard */}
+          <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Leaderboard</h3>
+              <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
+            </div>
+            <div className="space-y-2">
+              {leaderboard.slice(0, 3).map((user, index) => (
+                <LeaderboardRow key={user.rank || index} user={user} index={index} />
+              ))}
+            </div>
+            <button 
+              className="w-full mt-3 text-xs font-medium transition-colors"
+              style={{ color: '#8B5CF6' }}
+              onClick={() => navigate('/standings')}
+            >
+              View Full Standings →
+            </button>
           </div>
-          <div className="space-y-2">
-            {mockLeaderboard.slice(0, 3).map((user, index) => (
-              <LeaderboardRow key={user.rank} user={user} index={index} />
-            ))}
+
+          {/* Recent Activity */}
+          <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Recent Games</h3>
+              <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
+            </div>
+            <div className="space-y-3">
+              {userData.recentGames && userData.recentGames.length > 0 ? (
+                userData.recentGames.slice(0, 2).map(game => (
+                  <RecentGameCard key={game.id} game={game} />
+                ))
+              ) : (
+                <div className="text-center py-4" style={{ color: '#9ca3af' }}>
+                  <p>No recent completed games</p>
+                </div>
+              )}
+            </div>
           </div>
-          <button 
-            className="w-full mt-3 text-xs font-medium transition-colors"
-            style={{ color: '#8B5CF6' }}
-            onClick={() => navigate('/standings')}
-          >
-            View Full Standings →
-          </button>
         </div>
 
-        {/* Recent Activity */}
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Recent Games</h3>
-            <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
+        {/* Insights Section */}
+        {dashboardData?.insights && dashboardData.insights.length > 0 && (
+          <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Insights</h3>
+              <Zap className="w-4 h-4" style={{ color: '#9ca3af' }} />
+            </div>
+            <div className="space-y-3">
+              {dashboardData.insights.map((insight, index) => (
+                <div 
+                  key={index}
+                  className={`p-3 rounded-lg border-l-4 ${
+                    insight.type === 'positive' ? 'border-green-500 bg-green-500/10' :
+                    insight.type === 'warning' ? 'border-yellow-500 bg-yellow-500/10' :
+                    'border-blue-500 bg-blue-500/10'
+                  }`}
+                >
+                  <p className="text-sm text-white">{insight.message}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="space-y-3">
-            {mockUserData.recentGames.slice(0, 2).map(game => (
-              <RecentGameCard key={game.id} game={game} />
-            ))}
-          </div>
-        </div>
-        </div>
+        )}
 
         {/* Action Button */}
         <div className="flex justify-center">

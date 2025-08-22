@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from games.models import Game
 import inspect
-
+from django.utils import timezone
 
 class Prediction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -102,3 +102,155 @@ class PropBetPrediction(models.Model):
             status = "✅" if self.is_correct else "❌"
             return f"{self.user.username} - {self.prop_bet.question} ({status})"
         return f"{self.user.username} - {self.prop_bet.question}"
+
+class WeeklySnapshot(models.Model):
+    """
+    Captures user statistics at the end of each week
+    This allows us to track trends and changes over time
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    week = models.IntegerField()
+    
+    # Week-specific stats
+    weekly_points = models.IntegerField(default=0)
+    weekly_game_correct = models.IntegerField(default=0)
+    weekly_game_total = models.IntegerField(default=0)
+    weekly_prop_correct = models.IntegerField(default=0)
+    weekly_prop_total = models.IntegerField(default=0)
+    
+    # Cumulative stats (total through this week)
+    total_points = models.IntegerField(default=0)
+    total_game_correct = models.IntegerField(default=0)
+    total_game_total = models.IntegerField(default=0)
+    total_prop_correct = models.IntegerField(default=0)
+    total_prop_total = models.IntegerField(default=0)
+    
+    # Ranking info
+    rank = models.IntegerField()
+    total_users = models.IntegerField()
+    points_from_leader = models.IntegerField(default=0)
+    
+    # Calculated accuracies (stored for performance)
+    weekly_accuracy = models.FloatField(null=True, blank=True)
+    overall_accuracy = models.FloatField(null=True, blank=True)
+    moneyline_accuracy = models.FloatField(null=True, blank=True)
+    prop_accuracy = models.FloatField(null=True, blank=True)
+    
+    # Timestamp
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'week')
+        ordering = ['week', 'rank']
+    
+    def __str__(self):
+        return f"{self.user.username} - Week {self.week} (#{self.rank})"
+
+
+class RankHistory(models.Model):
+    """
+    Tracks rank changes for trend analysis
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    week = models.IntegerField()
+    rank = models.IntegerField()
+    previous_rank = models.IntegerField(null=True, blank=True)
+    rank_change = models.IntegerField(default=0)  # Positive = moved up, Negative = moved down
+    total_points = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'week')
+        ordering = ['week', 'rank']
+    
+    @property
+    def trend_direction(self):
+        """Returns 'up', 'down', or 'same' based on rank change"""
+        if self.rank_change > 0:
+            return 'up'
+        elif self.rank_change < 0:
+            return 'down'
+        else:
+            return 'same'
+    
+    @property 
+    def rank_change_display(self):
+        """Returns formatted rank change for display"""
+        if self.rank_change > 0:
+            return f"+{self.rank_change}"
+        elif self.rank_change < 0:
+            return str(self.rank_change)
+        else:
+            return "—"
+    
+    def __str__(self):
+        return f"{self.user.username} - Week {self.week}: #{self.rank} ({self.rank_change_display})"
+
+
+class UserStreak(models.Model):
+    """
+    Tracks current streaks (wins/losses) for users
+    """
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    current_streak = models.IntegerField(default=0)
+    streak_type = models.CharField(
+        max_length=10, 
+        choices=[('win', 'Win'), ('loss', 'Loss')],
+        default='win'
+    )
+    longest_win_streak = models.IntegerField(default=0)
+    longest_loss_streak = models.IntegerField(default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.current_streak} {self.streak_type} streak"
+
+
+class LeaderboardSnapshot(models.Model):
+    """
+    Weekly leaderboard snapshot for trend analysis
+    """
+    week = models.IntegerField()
+    snapshot_data = models.JSONField()  # Store full leaderboard as JSON
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('week',)
+    
+    def __str__(self):
+        return f"Leaderboard - Week {self.week}"
+
+
+class SeasonStats(models.Model):
+    """
+    Season-long statistics and milestones
+    """
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    
+    # Best performances
+    best_week_points = models.IntegerField(default=0)
+    best_week_number = models.IntegerField(null=True, blank=True)
+    highest_rank = models.IntegerField(null=True, blank=True)  # Lowest number = best rank
+    highest_rank_week = models.IntegerField(null=True, blank=True)
+    
+    # Consistency metrics
+    weeks_in_top_3 = models.IntegerField(default=0)
+    weeks_in_top_5 = models.IntegerField(default=0)
+    weeks_as_leader = models.IntegerField(default=0)
+    
+    # Prediction patterns
+    favorite_team_picked = models.CharField(max_length=50, blank=True)
+    favorite_team_pick_count = models.IntegerField(default=0)
+    most_successful_category = models.CharField(max_length=20, blank=True)
+    
+    # Trends
+    trending_direction = models.CharField(
+        max_length=10,
+        choices=[('up', 'Trending Up'), ('down', 'Trending Down'), ('stable', 'Stable')],
+        default='stable'
+    )
+    
+    last_updated = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - Season Stats"
