@@ -11,9 +11,25 @@ from collections import defaultdict
 User = get_user_model()
 
 def get_current_week():
-    """Get the current week number based on latest games"""
-    latest_game = Game.objects.aggregate(max_week=Max('week'))
-    return latest_game['max_week'] or 1
+    """
+    Get the current week - the lowest week number that doesn't have all games completed
+    """
+    # Get all weeks that have games
+    all_weeks = Game.objects.values_list('week', flat=True).distinct().order_by('week')
+    
+    for week in all_weeks:
+        # Get all games for this week
+        week_games = Game.objects.filter(week=week)
+        
+        # Check if ALL games in this week have winners (results)
+        completed_games = week_games.filter(winner__isnull=False)
+        
+        # If not all games are completed, this is the current week
+        if completed_games.count() < week_games.count():
+            return week
+    
+    # If all weeks are completed, return the last week
+    return all_weeks.last() if all_weeks else 1
 
 def calculate_user_dashboard_data(user):
     """
