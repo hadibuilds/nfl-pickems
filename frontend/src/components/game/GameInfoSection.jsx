@@ -28,7 +28,7 @@ export default function GameInfoSection({ game }) {
       
       <div className="team-matchup">
         <span className="team-matchup-text">{game.away_team}</span>
-        <span className="vs-separator">vs</span>
+        <span className="vs-separator">@</span>
         <span className="team-matchup-text">{game.home_team}</span>
       </div>
       

@@ -118,13 +118,13 @@
 }
 
 .game-box .team-matchup-text {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: white;
 }
 
 .game-box .vs-separator {
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: #9ca3af;
   font-weight: 500;
 }
@@ -394,7 +394,7 @@
 
 .button-row {
   display: flex;
-  gap: 12px;
+  gap: 20px;
 }
 
 /* =================================================================
