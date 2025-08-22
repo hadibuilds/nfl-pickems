@@ -84,7 +84,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", a
     `}>
       <div className="flex items-center justify-between">
         <Icon className="w-8 h-8 opacity-80" />
-        {trend && (
+        {trend && trend !== 'same' && (
           <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
             {trend === 'up' ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
           </div>
@@ -253,7 +253,7 @@ function HomePage() {
             value={`#${userData.rank || '—'}`}
             subtitle={`${userData.rankChange || ''} this week`}
             icon={Trophy}
-            trend="up"
+            trend={userData.rankTrend || null}
             color="purple"
           />
 
