@@ -970,7 +970,7 @@
   text-decoration: none;
   transition: all 0.3s ease;
   cursor: pointer;
-  aspect-ratio: 1.75 / 1;
+  aspect-ratio: 2.5 / 1;
   position: relative;
   overflow: hidden;
   /* iOS tap optimization */
@@ -1150,77 +1150,6 @@
   }
   
 }
-
-/* =================================================================
-   WEEK CARD PROGRESS BAR STYLES
-   Compact progress indicator for week selector cards
-   ================================================================= */
-
-.week-card-progress {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  gap: 3px;
-  margin-top: 2px; /* Reduced from 8px */
-  align-items: center;
-}
-
-.week-progress-text {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.week-progress-bar {
-  width: calc(100% - 32px);
-  height: 6px;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-/* Green background when completed */
-.week-progress-bar.completed {
-  background-color: rgba(16, 185, 129, 0.3); /* Green background */
-}
-
-.week-progress-fill {
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.8);
-  transition: width 0.3s ease;
-  border-radius: 3px;
-}
-
-/* Green fill when completed */
-.week-progress-fill.completed {
-  background-color: #10B981; /* Solid green */
-}
-
-/* Mobile responsive adjustments */
-@media (max-width: 768px) {
-  .week-card-progress {
-    gap: clamp(2px, 1vw, 4px);
-    margin-top: clamp(1px, 0.5vw, 3px);
-  }
-  
-  .week-progress-text {
-    font-size: clamp(0.75rem, 3.3vw, 1.1rem); /* Matches your scaling pattern */
-  }
-  
-  .week-progress-bar {
-    width: calc(100% - clamp(20px, 5vw, 32px));
-    height: clamp(3px, 1.4vw, 7px); /* Matches your scaling pattern */
-    border-radius: clamp(1.5px, 0.7vw, 3.5px);
-  }
-
-  .week-progress-fill {
-    border-radius: clamp(1.5px, 0.7vw, 3.5px);
-  }
-}
-
 
 /* =================================================================
    FLOATING SUBMIT BUTTON STYLES

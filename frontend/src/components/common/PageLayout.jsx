@@ -20,7 +20,7 @@ export default function PageLayout({
       className={`
         ${fullHeight ? 'min-h-screen' : ''} 
         pt-16 pb-12 
-        ${mobileFullWidth ? 'px-0 sm:px-4 md:px-6' : 'px-6'}
+        ${mobileFullWidth ? 'px-1 sm:px-4 md:px-6' : 'px-6'}
         ${className}
       `}
       style={{ backgroundColor, color: 'white' }}
