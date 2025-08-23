@@ -81,7 +81,7 @@ export default function LoginPage() {
             Log In
           </h2>
           <p className="mt-2 text-base" style={{ color: '#9ca3af' }}>
-            Access your Pick 'Em League
+            Access Pickems.fun
           </p>
         </div>
 
