@@ -112,49 +112,39 @@ export default function WeekPage({
           </ErrorBoundary>
         )}
 
-        {/* 🆕 DRAFT WARNING: Show when user has unsaved picks */}
- {/*        {hasUnsavedChanges && (
-          <div className="draft-warning-banner">
-            ⚠️ You have {draftCount} unsaved pick{draftCount !== 1 ? 's' : ''} - Refresh page to reset, or submit to save
-          </div>
-        )} */}
-
-        {/* Scaled content wrapper */}
-        <div className="week-page-wrapper">
-          {/* Games grid - Each game card individually protected */}
-          {weekGames.length === 0 ? (
-            <p className="text-center" style={{ color: '#9ca3af' }}>
-              No games available for this week.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto justify-items-center">
-              {weekGames.map(game => (
-                <ErrorBoundary 
-                  key={game.id} 
-                  level="game" 
-                  customMessage={`Game ${game.away_team} vs ${game.home_team} failed to load`}
-                >
-                  <GameCard
-                    game={game}
-                    moneyLineSelections={moneyLineSelections}
-                    propBetSelections={propBetSelections}
-                    gameResults={gameResults}
-                    onMoneyLineClick={handleMoneyLineClick}
-                    onPropBetClick={handlePropBetClick}
-                    originalSubmittedPicks={originalSubmittedPicks}
-                    originalSubmittedPropBets={originalSubmittedPropBets}
-                    draftPicks={draftPicks}
-                    draftPropBets={draftPropBets}
-                  />
-                </ErrorBoundary>
+        {/* Games grid - Each game card individually protected */}
+        {weekGames.length === 0 ? (
+          <p className="text-center" style={{ color: '#9ca3af' }}>
+            No games available for this week.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto justify-items-center">
+            {weekGames.map(game => (
+              <ErrorBoundary 
+                key={game.id} 
+                level="game" 
+                customMessage={`Game ${game.away_team} vs ${game.home_team} failed to load`}
+              >
+                <GameCard
+                  game={game}
+                  moneyLineSelections={moneyLineSelections}
+                  propBetSelections={propBetSelections}
+                  gameResults={gameResults}
+                  onMoneyLineClick={handleMoneyLineClick}
+                  onPropBetClick={handlePropBetClick}
+                  originalSubmittedPicks={originalSubmittedPicks}
+                  originalSubmittedPropBets={originalSubmittedPropBets}
+                  draftPicks={draftPicks}
+                  draftPropBets={draftPropBets}
+                />
+              </ErrorBoundary>
               ))}
-            </div>
-          )}
+          </div>
+        )}
 
-          {/* Add some bottom padding so floating button doesn't cover content */}
-          <div className="week-page-bottom-padding"></div>
-        </div>
-      </div>
+        {/* Add some bottom padding so floating button doesn't cover content */}
+        <div className="week-page-bottom-padding"></div>
+      </div>  
 
       {/* 🌟 ENHANCED: Error-resilient floating submit button with loading state */}
       {hasUnsavedChanges && createPortal(
