@@ -1066,11 +1066,10 @@
 /* Week dates */
 .week-dates {
   display: flex;
-  font-weight: 500;
+  font-weight: 100;
   margin-bottom: 14px;
   opacity: 0.9;
   align-items: center;
-  justify-items: space-between;
 }
 
 .points-earned {
