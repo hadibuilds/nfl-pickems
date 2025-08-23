@@ -60,7 +60,6 @@
   background-color: #1f1f1f;
   border-radius: 16px;
   margin: 20px 0;
-  max-width: 420px;
   width: 100%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   color: white;
@@ -76,7 +75,7 @@
 @media (min-width: 769px) {
   .game-box {
     min-width: 320px;
-    max-width: 400px;
+    max-width: 500px;
   }
 }
 
@@ -1555,14 +1554,6 @@
   height: 80px;
 }
 
-/*
-.week-page-wrapper {
-  transform: scale(1.15);
-  transform-origin: top center;
-}
-*/
-
-
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .game-box {
@@ -1696,8 +1687,9 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .result-banner {
-    margin-bottom: 20px;
-    padding: 16px 20px;
+    width: 70vw; /* Match the game-box mobile width */
+    margin-left: auto;
+    margin-right: auto;
   }
   
   .result-stats-row {
