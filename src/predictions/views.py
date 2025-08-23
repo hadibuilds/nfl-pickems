@@ -1,4 +1,4 @@
-# predictions/views.py - Cleaned up version with real-time as default
+# predictions/views.py - Complete updated version with granular endpoints
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
@@ -12,6 +12,17 @@ from .utils.dashboard_utils import (
     calculate_user_dashboard_data_realtime,
     get_leaderboard_data_realtime,
     get_user_insights_realtime,
+    
+    # Individual component functions for granular endpoints
+    get_current_week,
+    calculate_live_stats,
+    calculate_current_user_rank_realtime,
+    get_best_category_realtime,
+    calculate_current_accuracy,
+    calculate_pending_picks,
+    get_recent_games_data,
+    get_user_streak_info,
+    get_user_season_stats,
     
     # Snapshot functions (legacy/optional)
     calculate_user_dashboard_data,
@@ -227,51 +238,218 @@ def user_accuracy(request):
         }
     })
 
+# ===== NEW GRANULAR DASHBOARD ENDPOINTS =====
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_stats_only(request):
+    """
+    FAST: Get only current user's basic stats
+    Perfect for header/navbar display
+    """
+    try:
+        user = request.user
+        current_week = get_current_week()
+        
+        # Only calculate what's needed for user stats
+        live_stats = calculate_live_stats(user, current_week)
+        current_rank_info = calculate_current_user_rank_realtime(user, current_week)
+        
+        return Response({
+            'username': user.username,
+            'currentWeek': current_week,
+            'weeklyPoints': live_stats['weekly_points'],
+            'rank': current_rank_info['rank'],
+            'totalUsers': current_rank_info['total_users'],
+            'pointsFromLeader': current_rank_info['points_from_leader'],
+            'pendingPicks': calculate_pending_picks(user, current_week)
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_accuracy_only(request):
+    """
+    FAST: Get only accuracy percentages
+    For progress rings display
+    """
+    try:
+        user = request.user
+        
+        best_category, best_accuracy = get_best_category_realtime(user)
+        
+        return Response({
+            'overallAccuracy': calculate_current_accuracy(user, 'overall'),
+            'moneylineAccuracy': calculate_current_accuracy(user, 'moneyline'),
+            'propBetAccuracy': calculate_current_accuracy(user, 'prop'),
+            'bestCategory': best_category,
+            'bestCategoryAccuracy': best_accuracy,
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_leaderboard_only(request):
+    """
+    MEDIUM SPEED: Get only leaderboard data
+    Most expensive calculation, but isolated
+    """
+    try:
+        limit = int(request.GET.get('limit', 5))
+        user = request.user
+        
+        leaderboard = get_leaderboard_data_realtime(limit=limit)
+        
+        # Mark current user
+        for user_data in leaderboard:
+            if user_data['username'] == user.username:
+                user_data['isCurrentUser'] = True
+        
+        return Response({'leaderboard': leaderboard})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_recent_games_only(request):
+    """
+    FAST: Get only recent games
+    """
+    try:
+        user = request.user
+        limit = int(request.GET.get('limit', 3))
+        
+        recent_games = get_recent_games_data(user, limit=limit)
+        
+        return Response({'recentGames': recent_games})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_insights_only(request):
+    """
+    FAST: Get only insights and streak info
+    """
+    try:
+        user = request.user
+        
+        insights = get_user_insights_realtime(user)
+        streak_info = get_user_streak_info(user)
+        season_stats = get_user_season_stats(user)
+        
+        return Response({
+            'insights': insights,
+            'streak': streak_info['current_streak'],
+            'streakType': streak_info['streak_type'],
+            'longestWinStreak': streak_info['longest_win_streak'],
+            'longestLossStreak': streak_info['longest_loss_streak'],
+            'seasonStats': season_stats
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+# ===== MAIN DASHBOARD ENDPOINTS =====
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_dashboard_data(request):
     """
     Main dashboard API endpoint - REAL-TIME BY DEFAULT
-    Can use snapshots via ?mode=snapshot query parameter
+    Supports ?sections=stats,accuracy,leaderboard to get only specific parts
+    Can use ?mode=snapshot for snapshot-based calculations
     """
     try:
         user = request.user
         
         # Check mode - real-time is default
         mode = request.GET.get('mode', 'realtime').lower()
+        sections = request.GET.get('sections', '').split(',') if request.GET.get('sections') else []
         
-        if mode == 'snapshot':
-            # Use snapshot-based calculations
-            dashboard_data = calculate_user_dashboard_data(user)
-            leaderboard = get_leaderboard_data_with_trends(limit=5)
-            insights = get_user_insights(user)
-            calculation_mode = 'snapshot'
-        else:
-            # Use real-time calculations (DEFAULT)
-            dashboard_data = calculate_user_dashboard_data_realtime(user)
-            leaderboard = get_leaderboard_data_realtime(limit=5)
-            insights = get_user_insights_realtime(user)
-            calculation_mode = 'realtime'
+        response_data = {}
         
-        # Mark current user in leaderboard
-        for user_data in leaderboard:
-            if user_data['username'] == user.username:
-                user_data['isCurrentUser'] = True
-        
-        response_data = {
-            'user_data': dashboard_data,
-            'leaderboard': leaderboard,
-            'insights': insights,
-            'trends': {
-                'performance_trend': dashboard_data.get('performanceTrend', 'stable'),
-                'weekly_trends': dashboard_data.get('weeklyTrends', []),
-                'rank_trend': dashboard_data.get('rankTrend', 'same')
-            },
-            'meta': {
-                'calculation_mode': calculation_mode,
-                'timestamp': dashboard_data.get('currentWeek', 'unknown')
+        # If no sections specified, get everything (default behavior)
+        if not sections:
+            if mode == 'snapshot':
+                # Use snapshot-based calculations
+                dashboard_data = calculate_user_dashboard_data(user)
+                leaderboard = get_leaderboard_data_with_trends(limit=5)
+                insights = get_user_insights(user)
+                calculation_mode = 'snapshot'
+            else:
+                # Use real-time calculations (DEFAULT)
+                dashboard_data = calculate_user_dashboard_data_realtime(user)
+                leaderboard = get_leaderboard_data_realtime(limit=5)
+                insights = get_user_insights_realtime(user)
+                calculation_mode = 'realtime'
+            
+            # Mark current user in leaderboard
+            for user_data in leaderboard:
+                if user_data['username'] == user.username:
+                    user_data['isCurrentUser'] = True
+            
+            response_data = {
+                'user_data': dashboard_data,
+                'leaderboard': leaderboard,
+                'insights': insights,
+                'trends': {
+                    'performance_trend': dashboard_data.get('performanceTrend', 'stable'),
+                    'weekly_trends': dashboard_data.get('weeklyTrends', []),
+                    'rank_trend': dashboard_data.get('rankTrend', 'same')
+                },
+                'meta': {'calculation_mode': calculation_mode, 'sections': 'all'}
             }
-        }
+        else:
+            # Get only requested sections (real-time only for granular)
+            if 'stats' in sections:
+                current_week = get_current_week()
+                live_stats = calculate_live_stats(user, current_week)
+                current_rank_info = calculate_current_user_rank_realtime(user, current_week)
+                
+                response_data['user_data'] = {
+                    'username': user.username,
+                    'currentWeek': current_week,
+                    'weeklyPoints': live_stats['weekly_points'],
+                    'rank': current_rank_info['rank'],
+                    'totalUsers': current_rank_info['total_users'],
+                    'pointsFromLeader': current_rank_info['points_from_leader'],
+                    'pendingPicks': calculate_pending_picks(user, current_week)
+                }
+            
+            if 'accuracy' in sections:
+                if 'user_data' not in response_data:
+                    response_data['user_data'] = {}
+                
+                best_category, best_accuracy = get_best_category_realtime(user)
+                response_data['user_data'].update({
+                    'overallAccuracy': calculate_current_accuracy(user, 'overall'),
+                    'moneylineAccuracy': calculate_current_accuracy(user, 'moneyline'),
+                    'propBetAccuracy': calculate_current_accuracy(user, 'prop'),
+                    'bestCategory': best_category,
+                    'bestCategoryAccuracy': best_accuracy,
+                })
+            
+            if 'leaderboard' in sections:
+                leaderboard = get_leaderboard_data_realtime(limit=5)
+                for user_data in leaderboard:
+                    if user_data['username'] == user.username:
+                        user_data['isCurrentUser'] = True
+                response_data['leaderboard'] = leaderboard
+            
+            if 'recent' in sections:
+                if 'user_data' not in response_data:
+                    response_data['user_data'] = {}
+                response_data['user_data']['recentGames'] = get_recent_games_data(user, limit=3)
+            
+            if 'insights' in sections:
+                response_data['insights'] = get_user_insights_realtime(user)
+            
+            response_data['meta'] = {
+                'calculation_mode': 'realtime',
+                'sections': sections
+            }
         
         return Response(response_data)
         
