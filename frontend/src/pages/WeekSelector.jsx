@@ -184,7 +184,7 @@ export default function WeekSelector({
 
   return (
     <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
-      <div className="week-selector-container">
+      <div className="page-container">
         <div className="max-w-6xl mx-auto">
           {/* UPDATED: Removed dynamic scaling - CSS handles responsive scaling */}
           <div className="week-selector-wrapper">

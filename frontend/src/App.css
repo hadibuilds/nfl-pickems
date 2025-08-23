@@ -684,7 +684,7 @@
   box-sizing: border-box;
   
   /* Extend 30px beyond body constraints (1280px + 60px total) */
-  max-width: 1500px;
+  max-width: 1280px;
   margin: 0 auto;
 }
 
@@ -2164,7 +2164,7 @@
 
 
 /* Ensure the scaled content doesn't overflow */
-.week-selector-container {
+.page-container {
   padding-bottom: 40px; /* Add extra bottom padding for scaled content */
 }
 
