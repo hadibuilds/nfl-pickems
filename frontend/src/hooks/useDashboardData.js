@@ -1,13 +1,28 @@
-// hooks/useDashboardData.js - Updated to use simple /api/dashboard/ endpoint
+// hooks/useDashboardData.js - Optimized version with granular loading
 import { useState, useEffect } from 'react';
 
-const useDashboardData = (userInfo) => {
+const useDashboardData = (userInfo, options = {}) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loadingStates, setLoadingStates] = useState({
+    stats: true,
+    accuracy: true,
+    leaderboard: true,
+    recent: true,
+    insights: true
+  });
 
   // Get API base URL from environment or use default
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  
+  // Options for what to load
+  const {
+    loadFull = false,          // Load everything at once (slower)
+    loadGranular = true,       // Load pieces separately (faster initial load)
+    includeLeaderboard = true, // Skip leaderboard if not needed (big performance boost)
+    sections = null            // Specific sections: ['stats', 'accuracy', 'leaderboard', 'recent', 'insights']
+  } = options;
 
   const getCsrfToken = () => {
     const cookieValue = document.cookie
@@ -16,13 +31,17 @@ const useDashboardData = (userInfo) => {
     return cookieValue ? decodeURIComponent(cookieValue.split('=')[1]) : null;
   };
 
-  const fetchDashboardData = async () => {
+  const fetchFullDashboard = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Use the main dashboard endpoint (real-time by default)
-      const response = await fetch(`${API_BASE}/predictions/api/dashboard/`, {
+      // Option 1: Get everything at once
+      const url = sections 
+        ? `${API_BASE}/predictions/api/dashboard/?sections=${sections.join(',')}`
+        : `${API_BASE}/predictions/api/dashboard/`;
+
+      const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -36,8 +55,6 @@ const useDashboardData = (userInfo) => {
       }
 
       const data = await response.json();
-      
-      // Log calculation mode for debugging (can be removed in production)
       console.log('Dashboard data calculation mode:', data.meta?.calculation_mode);
       
       setDashboardData(data);
@@ -49,17 +66,134 @@ const useDashboardData = (userInfo) => {
     }
   };
 
+  const fetchGranularDashboard = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const results = {};
+      const promises = [];
+
+      // FAST: Load user stats first (shows immediately)
+      const statsPromise = fetch(`${API_BASE}/predictions/api/dashboard/stats/`, {
+        credentials: 'include',
+        headers: { 'X-CSRFToken': getCsrfToken() }
+      }).then(res => res.json()).then(data => {
+        results.user_data = data;
+        setLoadingStates(prev => ({ ...prev, stats: false }));
+        // Update dashboard with partial data immediately
+        setDashboardData(prev => ({ ...prev, user_data: data }));
+      });
+
+      promises.push(statsPromise);
+
+      // FAST: Load accuracy data
+      const accuracyPromise = fetch(`${API_BASE}/predictions/api/dashboard/accuracy/`, {
+        credentials: 'include',
+        headers: { 'X-CSRFToken': getCsrfToken() }
+      }).then(res => res.json()).then(data => {
+        results.user_data = { ...results.user_data, ...data };
+        setLoadingStates(prev => ({ ...prev, accuracy: false }));
+        // Update dashboard with accuracy data
+        setDashboardData(prev => ({
+          ...prev,
+          user_data: { ...prev?.user_data, ...data }
+        }));
+      });
+
+      promises.push(accuracyPromise);
+
+      // MEDIUM: Load leaderboard (only if needed)
+      if (includeLeaderboard) {
+        const leaderboardPromise = fetch(`${API_BASE}/predictions/api/dashboard/leaderboard/?limit=5`, {
+          credentials: 'include',
+          headers: { 'X-CSRFToken': getCsrfToken() }
+        }).then(res => res.json()).then(data => {
+          results.leaderboard = data.leaderboard;
+          setLoadingStates(prev => ({ ...prev, leaderboard: false }));
+          // Update dashboard with leaderboard
+          setDashboardData(prev => ({ ...prev, leaderboard: data.leaderboard }));
+        });
+
+        promises.push(leaderboardPromise);
+      } else {
+        setLoadingStates(prev => ({ ...prev, leaderboard: false }));
+      }
+
+      // FAST: Load recent games
+      const recentPromise = fetch(`${API_BASE}/predictions/api/dashboard/recent/?limit=3`, {
+        credentials: 'include',
+        headers: { 'X-CSRFToken': getCsrfToken() }
+      }).then(res => res.json()).then(data => {
+        results.user_data = { ...results.user_data, ...data };
+        setLoadingStates(prev => ({ ...prev, recent: false }));
+        // Update dashboard with recent games
+        setDashboardData(prev => ({
+          ...prev,
+          user_data: { ...prev?.user_data, ...data }
+        }));
+      });
+
+      promises.push(recentPromise);
+
+      // FAST: Load insights
+      const insightsPromise = fetch(`${API_BASE}/predictions/api/dashboard/insights/`, {
+        credentials: 'include',
+        headers: { 'X-CSRFToken': getCsrfToken() }
+      }).then(res => res.json()).then(data => {
+        results.insights = data.insights;
+        results.user_data = { 
+          ...results.user_data, 
+          streak: data.streak,
+          streakType: data.streakType,
+          longestWinStreak: data.longestWinStreak,
+          longestLossStreak: data.longestLossStreak,
+          seasonStats: data.seasonStats
+        };
+        setLoadingStates(prev => ({ ...prev, insights: false }));
+        // Update dashboard with insights
+        setDashboardData(prev => ({
+          ...prev,
+          insights: data.insights,
+          user_data: {
+            ...prev?.user_data,
+            streak: data.streak,
+            streakType: data.streakType,
+            longestWinStreak: data.longestWinStreak,
+            longestLossStreak: data.longestLossStreak,
+            seasonStats: data.seasonStats
+          }
+        }));
+      });
+
+      promises.push(insightsPromise);
+
+      // Wait for all requests to complete
+      await Promise.all(promises);
+
+      console.log('All granular dashboard data loaded');
+      
+    } catch (err) {
+      console.error('Error fetching granular dashboard data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDashboardData = loadFull ? fetchFullDashboard : fetchGranularDashboard;
+
   useEffect(() => {
     if (!userInfo?.username) return;
     fetchDashboardData();
-  }, [userInfo?.username, API_BASE]);
+  }, [userInfo?.username, API_BASE, loadFull, loadGranular, includeLeaderboard]);
 
   return { 
     dashboardData, 
     loading, 
     error, 
+    loadingStates, // Individual loading states for each section
     refetch: fetchDashboardData,
-    // Expose the calculation mode for debugging/display purposes
     isRealtime: dashboardData?.meta?.calculation_mode === 'realtime'
   };
 };
