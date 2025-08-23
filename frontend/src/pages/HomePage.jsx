@@ -1,11 +1,13 @@
 /*
  * Enhanced HomePage Component with Real Database Integration
  * Now uses actual database data instead of mock data
+ * REFACTORED: Using PageLayout for consistent navbar alignment
  */
 
 import React, { useState, useEffect } from 'react';
 import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
-import useDashboardData from '../hooks/useDashboardData'; // Add this import
+import useDashboardData from '../hooks/useDashboardData';
+import PageLayout from '../components/common/PageLayout';
 import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Zap } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -163,7 +165,7 @@ const LoadingSpinner = () => (
 
 function HomePage() {
   const { userInfo, navigate } = useAuthWithNavigation();
-  const { dashboardData, loading, error } = useDashboardData(userInfo); // Add this hook
+  const { dashboardData, loading, error } = useDashboardData(userInfo);
   const [animatedStats, setAnimatedStats] = useState(false);
 
   useEffect(() => {
@@ -182,6 +184,7 @@ function HomePage() {
     navigate('/weeks');
   };
 
+  // Not logged in - use basic container (no PageLayout needed for auth pages)
   if (!userInfo) {
     return (
       <div className="pt-16">
@@ -200,32 +203,30 @@ function HomePage() {
     );
   }
 
+  // Loading state with PageLayout
   if (loading) {
     return (
-      <div className="w-full" style={{ backgroundColor: '#1E1E20', color: 'white', marginTop: '64px' }}>
-        <div className="w-full px-2 pb-8">
-          <LoadingSpinner />
-          <p className="text-center" style={{ color: '#9ca3af' }}>Loading your dashboard...</p>
-        </div>
-      </div>
+      <PageLayout>
+        <LoadingSpinner />
+        <p className="text-center text-gray-400">Loading your dashboard...</p>
+      </PageLayout>
     );
   }
 
+  // Error state with PageLayout
   if (error) {
     return (
-      <div className="w-full" style={{ backgroundColor: '#1E1E20', color: 'white', marginTop: '64px' }}>
-        <div className="w-full px-2 pb-8">
-          <div className="text-center py-8">
-            <p className="text-red-400">Error loading dashboard: {error}</p>
-            <button 
-              className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg"
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </button>
-          </div>
+      <PageLayout>
+        <div className="text-center py-8">
+          <p className="text-red-400">Error loading dashboard: {error}</p>
+          <button 
+            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
         </div>
-      </div>
+      </PageLayout>
     );
   }
 
@@ -234,187 +235,185 @@ function HomePage() {
   const leaderboard = dashboardData?.leaderboard || [];
 
   return (
-    <div className="w-full" style={{ backgroundColor: '#1E1E20', color: 'white', marginTop: '64px' }}>
-      <div className="w-full px-2 pb-8">
-        {/* Welcome Header */}
-        <div className="mb-6 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-            Welcome back, <span style={{ color: '#8B5CF6' }}>{userInfo.username}</span>!
-          </h2>
-          <p style={{ color: '#9ca3af', fontSize: '14px' }}>
-            Week {userData.currentWeek} • Ready to make your picks?
-          </p>
-        </div>
+    <PageLayout>
+      {/* Welcome Header */}
+      <div className="mb-6 text-center">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-2">
+          Welcome back, <span style={{ color: '#8B5CF6' }}>{userInfo.username}</span>!
+        </h2>
+        <p style={{ color: '#9ca3af', fontSize: '14px' }}>
+          Week {userData.currentWeek} • Ready to make your picks?
+        </p>
+      </div>
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <StatCard
-            title="Current Rank"
-            value={`#${userData.rank || '—'}`}
-            subtitle={`${userData.rankChange || ''} this week`}
-            icon={Trophy}
-            trend={userData.rankTrend || null}
-            color="purple"
-          />
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <StatCard
+          title="Current Rank"
+          value={`#${userData.rank || '—'}`}
+          subtitle={`${userData.rankChange || ''} this week`}
+          icon={Trophy}
+          trend={userData.rankTrend || null}
+          color="purple"
+        />
 
-          <StatCard
-            title="Pending Picks"
-            value={userData.pendingPicks || 0}
-            subtitle="for this week"
-            icon={Clock}
-            color="blue"
-          />
+        <StatCard
+          title="Pending Picks"
+          value={userData.pendingPicks || 0}
+          subtitle="for this week"
+          icon={Clock}
+          color="blue"
+        />
+        
+        <StatCard
+          title="Points Behind"
+          value={userData.pointsFromLeader || 0}
+          subtitle="from 1st place"
+          icon={Target}
+          color="orange"
+        />
+
+        <StatCard
+          title="Best Category"
+          value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'}
+          subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`}
+          icon={Zap}
+          color="green"
+        />
+      </div>
+
+      {/* Season Performance */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+          <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
           
-          <StatCard
-            title="Points Behind"
-            value={userData.pointsFromLeader || 0}
-            subtitle="from 1st place"
-            icon={Target}
-            color="orange"
-          />
-
-          <StatCard
-            title="Best Category"
-            value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'}
-            subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`}
-            icon={Zap}
-            color="green"
-          />
-        </div>
-
-        {/* Season Performance */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-          <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-            <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
-            
-            {/* All Three Progress Rings Side by Side */}
-            <div className="flex space-x-4 items-center">
-              <div className="flex flex-col items-center">
-                <ProgressRing 
-                  percentage={userData.overallAccuracy || 0} 
-                  size={80} 
-                  strokeWidth={6} 
-                  fontSize="text-base" 
-                />
-                <div className="mt-2 text-center">
-                  <div className="text-xs font-bold" style={{ color: '#F5C45E' }}>Overall</div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <ProgressRing 
-                  percentage={userData.moneylineAccuracy || 0} 
-                  size={80} 
-                  strokeWidth={6} 
-                  showPercentage={true} 
-                  fontSize="text-base" 
-                />
-                <div className="mt-2 text-center">
-                  <div className="text-xs font-bold text-green-400">Moneyline</div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <ProgressRing 
-                  percentage={userData.propBetAccuracy || 0} 
-                  size={80} 
-                  strokeWidth={6} 
-                  showPercentage={true} 
-                  fontSize="text-base"
-                />
-                <div className="mt-2 text-center">
-                  <div className="text-xs font-bold text-blue-400">Prop Bets</div>
-                </div>
+          {/* All Three Progress Rings Side by Side */}
+          <div className="flex space-x-4 items-center">
+            <div className="flex flex-col items-center">
+              <ProgressRing 
+                percentage={userData.overallAccuracy || 0} 
+                size={80} 
+                strokeWidth={6} 
+                fontSize="text-base" 
+              />
+              <div className="mt-2 text-center">
+                <div className="text-xs font-bold" style={{ color: '#F5C45E' }}>Overall</div>
               </div>
             </div>
             
-            <div className="mt-4 text-center">
-              <div className="text-xl font-bold" style={{ color: "#7C3AED" }}>
-                {userData.totalPoints || 0}
+            <div className="flex flex-col items-center">
+              <ProgressRing 
+                percentage={userData.moneylineAccuracy || 0} 
+                size={80} 
+                strokeWidth={6} 
+                showPercentage={true} 
+                fontSize="text-base" 
+              />
+              <div className="mt-2 text-center">
+                <div className="text-xs font-bold text-green-400">Moneyline</div>
               </div>
-              <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <ProgressRing 
+                percentage={userData.propBetAccuracy || 0} 
+                size={80} 
+                strokeWidth={6} 
+                showPercentage={true} 
+                fontSize="text-base"
+              />
+              <div className="mt-2 text-center">
+                <div className="text-xs font-bold text-blue-400">Prop Bets</div>
+              </div>
             </div>
           </div>
-
-          {/* Leaderboard */}
-          <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Leaderboard</h3>
-              <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
+          
+          <div className="mt-4 text-center">
+            <div className="text-xl font-bold" style={{ color: "#7C3AED" }}>
+              {userData.totalPoints || 0}
             </div>
-            <div className="space-y-2">
-              {leaderboard.slice(0, 3).map((user, index) => (
-                <LeaderboardRow key={user.rank || index} user={user} index={index} />
-              ))}
-            </div>
-            <button 
-              className="w-full mt-3 text-xs font-medium transition-colors"
-              style={{ color: '#8B5CF6' }}
-              onClick={() => navigate('/standings')}
-            >
-              View Full Standings →
-            </button>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Recent Games</h3>
-              <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
-            </div>
-            <div className="space-y-3">
-              {userData.recentGames && userData.recentGames.length > 0 ? (
-                userData.recentGames.slice(0, 2).map(game => (
-                  <RecentGameCard key={game.id} game={game} />
-                ))
-              ) : (
-                <div className="text-center py-4" style={{ color: '#9ca3af' }}>
-                  <p>No recent completed games</p>
-                </div>
-              )}
-            </div>
+            <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
           </div>
         </div>
 
-        {/* Insights Section */}
-        {dashboardData?.insights && dashboardData.insights.length > 0 && (
-          <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Insights</h3>
-              <Zap className="w-4 h-4" style={{ color: '#9ca3af' }} />
-            </div>
-            <div className="space-y-3">
-              {dashboardData.insights.map((insight, index) => (
-                <div 
-                  key={index}
-                  className={`p-3 rounded-lg border-l-4 ${
-                    insight.type === 'positive' ? 'border-green-500 bg-green-500/10' :
-                    insight.type === 'warning' ? 'border-yellow-500 bg-yellow-500/10' :
-                    'border-blue-500 bg-blue-500/10'
-                  }`}
-                >
-                  <p className="text-sm text-white">{insight.message}</p>
-                </div>
-              ))}
-            </div>
+        {/* Leaderboard */}
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Leaderboard</h3>
+            <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
-        )}
-
-        {/* Action Button */}
-        <div className="flex justify-center">
+          <div className="space-y-2">
+            {leaderboard.slice(0, 3).map((user, index) => (
+              <LeaderboardRow key={user.rank || index} user={user} index={index} />
+            ))}
+          </div>
           <button 
-            className="px-6 py-3 rounded-2xl text-white font-semibold text-base transition-all duration-200 hover:scale-105 shadow-lg inline-flex items-center space-x-2"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }}
-            onClick={handleConfetti}
+            className="w-full mt-3 text-xs font-medium transition-colors hover:text-purple-300"
+            style={{ color: '#8B5CF6' }}
+            onClick={() => navigate('/standings')}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-            </svg>
-            <span>View All Games</span>
+            View Full Standings →
           </button>
         </div>
+
+        {/* Recent Activity */}
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Recent Games</h3>
+            <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
+          </div>
+          <div className="space-y-3">
+            {userData.recentGames && userData.recentGames.length > 0 ? (
+              userData.recentGames.slice(0, 2).map(game => (
+                <RecentGameCard key={game.id} game={game} />
+              ))
+            ) : (
+              <div className="text-center py-4" style={{ color: '#9ca3af' }}>
+                <p>No recent completed games</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+
+      {/* Insights Section */}
+      {dashboardData?.insights && dashboardData.insights.length > 0 && (
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Insights</h3>
+            <Zap className="w-4 h-4" style={{ color: '#9ca3af' }} />
+          </div>
+          <div className="space-y-3">
+            {dashboardData.insights.map((insight, index) => (
+              <div 
+                key={index}
+                className={`p-3 rounded-lg border-l-4 ${
+                  insight.type === 'positive' ? 'border-green-500 bg-green-500/10' :
+                  insight.type === 'warning' ? 'border-yellow-500 bg-yellow-500/10' :
+                  'border-blue-500 bg-blue-500/10'
+                }`}
+              >
+                <p className="text-sm text-white">{insight.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Action Button */}
+      <div className="flex justify-center">
+        <button 
+          className="px-6 py-3 rounded-2xl text-white font-semibold text-base transition-all duration-200 hover:scale-105 shadow-lg inline-flex items-center space-x-2"
+          style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }}
+          onClick={handleConfetti}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+          </svg>
+          <span>View All Games</span>
+        </button>
+      </div>
+    </PageLayout>
   );
 }
 
