@@ -69,7 +69,7 @@ export default function SignUpPage() {
             Sign Up
           </h2>
           <p className="mt-2 text-base" style={{ color: '#9ca3af' }}>
-            Join the Pick 'Em League
+            Join the Pickems.fun community!
           </p>
         </div>
 
