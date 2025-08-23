@@ -1070,7 +1070,7 @@
   font-weight: 500;
   margin-bottom: 14px;
   opacity: 0.9;
-  align-items: center;
+  align-items: flex-start;
 }
 
 /* Week footer with points or status */

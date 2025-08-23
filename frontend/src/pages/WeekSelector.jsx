@@ -17,8 +17,6 @@ export default function WeekSelector({
   const totalWeeks = 18;
   const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
 
-  // REMOVED: JavaScript scaling calculations - CSS handles this now
-
   const getCurrentNFLWeek = () => {
     const now = new Date();
     const firstTuesday = new Date('2025-09-02T16:00:00Z'); // Sept 2, 2025 8 AM PST
@@ -224,9 +222,6 @@ export default function WeekSelector({
                         
                         <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
                           {weekDates.start} - {weekDates.end}
-                        </div>
-                        
-                        <div className="week-footer">
                           {weekStatus.status === 'completed' && weekStatus.points !== null && (
                             <div className="points-earned">
                               <span className="points-label">Points: </span>
