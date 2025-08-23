@@ -1066,20 +1066,11 @@
 /* Week dates */
 .week-dates {
   display: flex;
-  font-size: 0.9rem;
   font-weight: 500;
   margin-bottom: 14px;
   opacity: 0.9;
-  align-items: flex-start;
-}
-
-/* Week footer with points or status */
-.week-footer {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: auto;
-  min-height: 0px;
+  justify-items: space-between;
 }
 
 .points-earned {
@@ -1138,7 +1129,7 @@
   }
   
   .points-label {
-    font-size: clamp(0.75rem, 3vw, 1rem);
+    font-size: clamp(0.4rem, 3.5vw, 1.2rem);
   }
   
   .points-value {
