@@ -1066,10 +1066,11 @@
 /* Week dates */
 .week-dates {
   display: flex;
-  font-weight: 100;
+  font-weight: 200;
   margin-bottom: 14px;
   opacity: 0.9;
   align-items: center;
+  justify-content: space-between;
 }
 
 .points-earned {
@@ -1548,7 +1549,7 @@
 }
 
 .points-value {
-  color: #10B981;
+  color: white;
   font-size: 1.6rem;
 }
 
