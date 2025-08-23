@@ -1,10 +1,13 @@
-// hooks/useDashboardData.js
+// hooks/useDashboardData.js - Updated to use simple /api/dashboard/ endpoint
 import { useState, useEffect } from 'react';
 
 const useDashboardData = (userInfo) => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Get API base URL from environment or use default
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   const getCsrfToken = () => {
     const cookieValue = document.cookie
@@ -18,7 +21,8 @@ const useDashboardData = (userInfo) => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/predictions/api/dashboard/', {
+      // Use the main dashboard endpoint (real-time by default)
+      const response = await fetch(`${API_BASE}/predictions/api/dashboard/`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -32,6 +36,10 @@ const useDashboardData = (userInfo) => {
       }
 
       const data = await response.json();
+      
+      // Log calculation mode for debugging (can be removed in production)
+      console.log('Dashboard data calculation mode:', data.meta?.calculation_mode);
+      
       setDashboardData(data);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -44,9 +52,16 @@ const useDashboardData = (userInfo) => {
   useEffect(() => {
     if (!userInfo?.username) return;
     fetchDashboardData();
-  }, [userInfo?.username]);
+  }, [userInfo?.username, API_BASE]);
 
-  return { dashboardData, loading, error, refetch: fetchDashboardData };
+  return { 
+    dashboardData, 
+    loading, 
+    error, 
+    refetch: fetchDashboardData,
+    // Expose the calculation mode for debugging/display purposes
+    isRealtime: dashboardData?.meta?.calculation_mode === 'realtime'
+  };
 };
 
 export default useDashboardData;

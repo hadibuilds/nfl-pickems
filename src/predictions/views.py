@@ -1,3 +1,4 @@
+# predictions/views.py - Cleaned up version with real-time as default
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
@@ -6,12 +7,19 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Prediction, PropBet, PropBetPrediction
 from games.models import Game
-from .dashboard_utils import (
+from .utils.dashboard_utils import (
+    # Real-time functions (primary)
+    calculate_user_dashboard_data_realtime,
+    get_leaderboard_data_realtime,
+    get_user_insights_realtime,
+    
+    # Snapshot functions (legacy/optional)
+    calculate_user_dashboard_data,
     get_leaderboard_data_with_trends,
     get_user_insights,
-    calculate_user_dashboard_data,
 )
 from collections import defaultdict
+import os
 
 User = get_user_model()
 
@@ -223,25 +231,32 @@ def user_accuracy(request):
 @permission_classes([IsAuthenticated])
 def get_dashboard_data(request):
     """
-    Enhanced dashboard API endpoint with historical trends and insights
-    Returns all data needed for the homepage dashboard including trends
+    Main dashboard API endpoint - REAL-TIME BY DEFAULT
+    Can use snapshots via ?mode=snapshot query parameter
     """
     try:
         user = request.user
         
-        # Get comprehensive user dashboard data with trends
-        dashboard_data = calculate_user_dashboard_data(user)
+        # Check mode - real-time is default
+        mode = request.GET.get('mode', 'realtime').lower()
         
-        # Get leaderboard data with trends
-        leaderboard = get_leaderboard_data_with_trends(limit=5)
+        if mode == 'snapshot':
+            # Use snapshot-based calculations
+            dashboard_data = calculate_user_dashboard_data(user)
+            leaderboard = get_leaderboard_data_with_trends(limit=5)
+            insights = get_user_insights(user)
+            calculation_mode = 'snapshot'
+        else:
+            # Use real-time calculations (DEFAULT)
+            dashboard_data = calculate_user_dashboard_data_realtime(user)
+            leaderboard = get_leaderboard_data_realtime(limit=5)
+            insights = get_user_insights_realtime(user)
+            calculation_mode = 'realtime'
         
         # Mark current user in leaderboard
         for user_data in leaderboard:
             if user_data['username'] == user.username:
                 user_data['isCurrentUser'] = True
-        
-        # Get personalized insights
-        insights = get_user_insights(user)
         
         response_data = {
             'user_data': dashboard_data,
@@ -251,6 +266,10 @@ def get_dashboard_data(request):
                 'performance_trend': dashboard_data.get('performanceTrend', 'stable'),
                 'weekly_trends': dashboard_data.get('weeklyTrends', []),
                 'rank_trend': dashboard_data.get('rankTrend', 'same')
+            },
+            'meta': {
+                'calculation_mode': calculation_mode,
+                'timestamp': dashboard_data.get('currentWeek', 'unknown')
             }
         }
         
@@ -262,11 +281,96 @@ def get_dashboard_data(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+# Keep these for specific use cases if needed
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_dashboard_data_realtime(request):
+    """
+    EXPLICIT real-time dashboard endpoint
+    """
+    try:
+        user = request.user
+        
+        dashboard_data = calculate_user_dashboard_data_realtime(user)
+        leaderboard = get_leaderboard_data_realtime(limit=5)
+        insights = get_user_insights_realtime(user)
+        
+        # Mark current user in leaderboard
+        for user_data in leaderboard:
+            if user_data['username'] == user.username:
+                user_data['isCurrentUser'] = True
+        
+        response_data = {
+            'user_data': dashboard_data,
+            'leaderboard': leaderboard,
+            'insights': insights,
+            'trends': {
+                'performance_trend': dashboard_data.get('performanceTrend', 'stable'),
+                'weekly_trends': dashboard_data.get('weeklyTrends', []),
+                'rank_trend': dashboard_data.get('rankTrend', 'same')
+            },
+            'meta': {
+                'calculation_mode': 'realtime',
+                'guaranteed_realtime': True
+            }
+        }
+        
+        return Response(response_data)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to fetch real-time dashboard data: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_dashboard_data_snapshot(request):
+    """
+    EXPLICIT snapshot-based dashboard endpoint
+    Good for historical analysis or when you want consistent historical rankings
+    """
+    try:
+        user = request.user
+        
+        dashboard_data = calculate_user_dashboard_data(user)
+        leaderboard = get_leaderboard_data_with_trends(limit=5)
+        insights = get_user_insights(user)
+        
+        # Mark current user in leaderboard
+        for user_data in leaderboard:
+            if user_data['username'] == user.username:
+                user_data['isCurrentUser'] = True
+        
+        response_data = {
+            'user_data': dashboard_data,
+            'leaderboard': leaderboard,
+            'insights': insights,
+            'trends': {
+                'performance_trend': dashboard_data.get('performanceTrend', 'stable'),
+                'weekly_trends': dashboard_data.get('weeklyTrends', []),
+                'rank_trend': dashboard_data.get('rankTrend', 'same')
+            },
+            'meta': {
+                'calculation_mode': 'snapshot',
+                'requires_snapshots': True
+            }
+        }
+        
+        return Response(response_data)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to fetch snapshot dashboard data: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def trigger_weekly_snapshot(request):
     """
     Manual trigger for weekly snapshot (admin use)
+    Useful for capturing historical data at week boundaries
     """
     try:
         from django.core.management import call_command
