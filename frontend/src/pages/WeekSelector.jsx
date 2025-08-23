@@ -7,15 +7,12 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import WeekCardProgress from "../components/weeks/WeekCardProgress.jsx";
 
 export default function WeekSelector({ 
   games = [], 
   gameResults = {}, 
   moneyLineSelections = {}, 
-  propBetSelections = {} ,
-  originalSubmittedPicks = {},
-  originalSubmittedPropBets = {}
+  propBetSelections = {} 
 }) {
   const totalWeeks = 18;
   const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
@@ -237,16 +234,6 @@ export default function WeekSelector({
                             </div>
                           )}
                         </div>
-                        
-                        {/* Progress bar outside footer for full-width span */}
-                        {weekStatus.status === 'current' && (
-                          <WeekCardProgress 
-                            weekNumber={week}
-                            games={games}
-                            originalSubmittedPicks={originalSubmittedPicks}
-                            originalSubmittedPropBets={originalSubmittedPropBets}
-                          />
-                        )}
                       </div>
                     </Link>
                   </div>
