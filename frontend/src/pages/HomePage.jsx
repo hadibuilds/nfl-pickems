@@ -165,7 +165,10 @@ const LoadingSpinner = () => (
 
 function HomePage() {
   const { userInfo, navigate } = useAuthWithNavigation();
-  const { dashboardData, loading, error } = useDashboardData(userInfo);
+  const { dashboardData, loadingStates, error } = useDashboardData(userInfo, {
+    loadGranular: true,
+    includeLeaderboard: true,
+  });
   const [animatedStats, setAnimatedStats] = useState(false);
 
   useEffect(() => {
@@ -204,7 +207,7 @@ function HomePage() {
   }
 
   // Loading state with PageLayout
-  if (loading) {
+  if (loadingStates.stats && loadingStates.accuracy && loadingStates.leaderboard && loadingStates.recent && loadingStates.insights) {
     return (
       <PageLayout>
         <LoadingSpinner />
@@ -248,47 +251,56 @@ function HomePage() {
 
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatCard
-          title="Current Rank"
-          value={`#${userData.rank || '—'}`}
-          subtitle={`${userData.rankChange || ''} this week`}
-          icon={Trophy}
-          trend={userData.rankTrend || null}
-          color="purple"
-        />
+        {loadingStates.stats ? (
+          <LoadingSpinner />
+        ) : (
+          <>
+            <StatCard
+              title="Current Rank"
+              value={`#${userData.rank || '—'}`}
+              subtitle={`${userData.rankChange || ''} this week`}
+              icon={Trophy}
+              trend={userData.rankTrend || null}
+              color="purple"
+            />
 
-        <StatCard
-          title="Pending Picks"
-          value={userData.pendingPicks || 0}
-          subtitle="for this week"
-          icon={Clock}
-          color="blue"
-        />
+            <StatCard
+              title="Pending Picks"
+              value={userData.pendingPicks || 0}
+              subtitle="for this week"
+              icon={Clock}
+              color="blue"
+            />
         
-        <StatCard
-          title="Points Behind"
-          value={userData.pointsFromLeader || 0}
-          subtitle="from 1st place"
-          icon={Target}
-          color="orange"
-        />
+            <StatCard
+              title="Points Behind"
+              value={userData.pointsFromLeader || 0}
+              subtitle="from 1st place"
+              icon={Target}
+              color="orange"
+            />
 
-        <StatCard
-          title="Best Category"
-          value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'}
-          subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`}
-          icon={Zap}
-          color="green"
-        />
+            <StatCard
+              title="Best Category"
+              value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'}
+              subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`}
+              icon={Zap}
+              color="green"
+            />
+          </>
+        )}
       </div>
 
       {/* Season Performance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-        <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-          <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
-          
-          {/* All Three Progress Rings Side by Side */}
-          <div className="flex space-x-4 items-center">
+        {loadingStates.accuracy ? (
+          <LoadingSpinner />
+        ) : (
+          <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+            <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
+            
+            {/* All Three Progress Rings Side by Side */}
+            <div className="flex space-x-4 items-center">
             <div className="flex flex-col items-center">
               <ProgressRing 
                 percentage={userData.overallAccuracy || 0} 
@@ -335,7 +347,8 @@ function HomePage() {
             <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
           </div>
         </div>
-
+        )}
+        
         {/* Leaderboard */}
         <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center justify-between mb-4">
@@ -343,9 +356,15 @@ function HomePage() {
             <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
           <div className="space-y-2">
-            {leaderboard.slice(0, 3).map((user, index) => (
-              <LeaderboardRow key={user.rank || index} user={user} index={index} />
-            ))}
+            {loadingStates.leaderboard ? (
+              <LoadingSpinner />
+            ) : (
+              <>
+              {leaderboard.slice(0, 3).map((user, index) => (
+                <LeaderboardRow key={user.rank || index} user={user} index={index} />
+              ))}
+              </>
+            )}
           </div>
           <button 
             className="w-full mt-3 text-xs font-medium transition-colors hover:text-purple-300"
@@ -363,6 +382,10 @@ function HomePage() {
             <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
           <div className="space-y-3">
+            {loadingStates.recent ? (
+              <LoadingSpinner />
+            ) : (
+              <>  
             {userData.recentGames && userData.recentGames.length > 0 ? (
               userData.recentGames.slice(0, 2).map(game => (
                 <RecentGameCard key={game.id} game={game} />
@@ -371,6 +394,8 @@ function HomePage() {
               <div className="text-center py-4" style={{ color: '#9ca3af' }}>
                 <p>No recent completed games</p>
               </div>
+            )}
+            </>
             )}
           </div>
         </div>
@@ -384,6 +409,10 @@ function HomePage() {
             <Zap className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
           <div className="space-y-3">
+            {loadingStates.insights ? (
+              <LoadingSpinner />
+            ) : (
+              <>
             {dashboardData.insights.map((insight, index) => (
               <div 
                 key={index}
@@ -396,6 +425,8 @@ function HomePage() {
                 <p className="text-sm text-white">{insight.message}</p>
               </div>
             ))}
+            </>
+            )}
           </div>
         </div>
       )}
