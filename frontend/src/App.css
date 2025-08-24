@@ -958,7 +958,6 @@
 .week-card-wrapper {
   width: 100%;
   height: 100%;
-  container-type: inline-size;
 }
 
 /* Base week card styling - iOS touch optimization */
@@ -990,7 +989,7 @@
 
 /* Week card active state for immediate feedback on touch devices */
 .week-card:active {
-  transform: translateY(2px);
+  transform: translateY(-2px);
   transition: transform 0.1s ease;
 }
 
@@ -1159,44 +1158,6 @@
   .week-dates { font-size: 0.95rem; margin-bottom: 16px; }
   .points-value { font-size: 1.4rem; }
   .current-indicator { font-size: 0.9rem; }
-}
-
-/* Fallback for browsers that don't support container queries */
-@supports not (font-size: 1cqi) {
-  @media (max-width: 768px) {
-    .week-number {
-      font-size: clamp(1.2rem, 5vw, 1.8rem);
-    }
-    .week-status-badge {
-      font-size: clamp(0.65rem, 2.5vw, 0.9rem);
-    }
-    .week-dates {
-      font-size: clamp(0.75rem, 3vw, 1rem);
-    }
-    .points-label {
-      font-size: clamp(0.7rem, 2.5vw, 0.9rem);
-    }
-    .points-value {
-      font-size: clamp(1rem, 4vw, 1.4rem);
-    }
-    .current-indicator {
-      font-size: clamp(0.75rem, 3vw, 1rem);
-    }
-  }
-}
-
-/* ==========================================
-   FALLBACK FOR UNSUPPORTED MEDIA QUERIES
-   ========================================== */
-@media (max-width: 768px) {
-  .week-card {
-    padding: 16px;
-    min-height: 120px;
-  }
-  .week-number { font-size: 1.4rem; }
-  .week-status-badge { font-size: 0.75rem; }
-  .week-dates { font-size: 0.85rem; }
-  .points-value { font-size: 1.2rem; }
 }
 
 /* =================================================================
@@ -2128,31 +2089,9 @@
   display: none !important;
 }
 
-/* =================================================================
-   WEEK SELECTOR PAGE ZOOM - Scale up cards like WeekPage
-   ================================================================= */
-
-/*
-.week-selector-wrapper {
-  transform: scale(1.15);
-  transform-origin: top center;
-  padding-top: 20px;
-}*/
-
-
 /* Ensure the scaled content doesn't overflow */
 .page-container {
   padding-bottom: 40px; /* Add extra bottom padding for scaled content */
 }
-
-/* Mobile - proportional scaling based on Samsung S10e baseline 
-@media (max-width: 768px) {
-  .week-selector-wrapper {
-    transform: scale(100vh / 360 * 1.15) !important;
-    transform-origin: top center;
-    padding-top: 20px;
-  }
-}*/
-
 
 
