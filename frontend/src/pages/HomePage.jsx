@@ -335,7 +335,7 @@ function HomePage() {
         {loadingStates.accuracy ? (
           <SeasonPerformanceSkeleton />
         ) : (
-          <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+          <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6">
             <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
             
             {/* All Three Progress Rings Side by Side */}
