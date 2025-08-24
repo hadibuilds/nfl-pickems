@@ -1069,7 +1069,7 @@
 /* Week dates */
 .week-dates {
   display: flex;
-  font-weight: 200;
+  font-weight: 400;
   margin-bottom: 1em;
   opacity: 0.9;
   align-items: center;
@@ -1113,37 +1113,46 @@
 @media (max-width: 375px) {
   .week-card {
     padding: 14px;
-    min-height: 110px;
+    /* REMOVE min-height completely */
+  }
+  .week-card-content {
+    gap: 6px; /* Fixed spacing */
   }
   .week-number { font-size: 1.3rem; }
   .week-status-badge { font-size: 0.7rem; padding: 3px 7px; }
-  .week-dates { font-size: 0.8rem; margin-bottom: 10px; }
+  .week-dates { font-size: 0.8rem; }
   .points-value { font-size: 1.1rem; }
   .current-indicator { font-size: 0.75rem; }
 }
 
-/* Group 2: Standard Phones (376px - 413px) */
-@media (min-width: 376px) and (max-width: 411px) {
+/* Group 2: Standard Phones (376px - 413px) - FIXED GAP */
+@media (min-width: 376px) and (max-width: 413px) {
   .week-card {
     padding: 16px;
-    min-height: 120px;
+    /* REMOVE min-height completely */
+  }
+  .week-card-content {
+    gap: 8px;
   }
   .week-number { font-size: 1.4rem; }
   .week-status-badge { font-size: 0.75rem; padding: 4px 8px; }
-  .week-dates { font-size: 0.85rem; margin-bottom: 12px; }
+  .week-dates { font-size: 0.85rem; }
   .points-value { font-size: 1.2rem; }
   .current-indicator { font-size: 0.8rem; }
 }
 
-/* Group 3: Large Phones (414px - 430px) - Pro Max Models */
-@media (min-width: 412px) and (max-width: 430px) {
+/* Group 3: Large Phones (414px - 430px) - FIXED FOR XS MAX */
+@media (min-width: 414px) and (max-width: 430px) {
   .week-card {
     padding: 18px;
-    min-height: 130px;
+    /* CRITICAL: NO min-height for iOS 15 compatibility */
+  }
+  .week-card-content {
+    gap: 10px; /* More generous spacing */
   }
   .week-number { font-size: 1.5rem; }
   .week-status-badge { font-size: 0.8rem; padding: 4px 9px; }
-  .week-dates { font-size: 0.9rem; margin-bottom: 14px; }
+  .week-dates { font-size: 0.9rem; }
   .points-value { font-size: 1.3rem; }
   .current-indicator { font-size: 0.85rem; }
 }
