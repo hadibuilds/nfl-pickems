@@ -38,9 +38,34 @@ export default function WeekSelector({
   const totalWeeks = 18;
   const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
 
-  // Extract currentWeek from dashboard data (following HomePage pattern)
+  // Extract currentWeek from dashboard data OR use fallback calculation
   const userData = dashboardData?.user_data || {};
-  const currentWeek = userData.currentWeek || null;
+  const getCurrentNFLWeekFallback = () => {
+    const now = new Date();
+    const firstTuesday = new Date('2025-09-02T16:00:00Z');
+    const seasonStart = new Date('2025-08-14T00:00:00Z');
+    
+    if (now >= seasonStart && now < firstTuesday) {
+      return 1;
+    }
+    
+    for (let weekNumber = 1; weekNumber <= 18; weekNumber++) {
+      const weekStart = new Date(firstTuesday);
+      weekStart.setDate(firstTuesday.getDate() + ((weekNumber - 1) * 7));
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 7);
+      
+      if (now >= weekStart && now < weekEnd) {
+        return weekNumber;
+      }
+    }
+    
+    return null;
+  };
+
+  // Use API currentWeek if available, otherwise calculate instantly
+  const currentWeek = userData.currentWeek || getCurrentNFLWeekFallback();
 
   // Not logged in
   if (!userInfo) {
@@ -278,71 +303,68 @@ export default function WeekSelector({
     <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="page-container">
         <div className="max-w-6xl mx-auto">
-          <div className="week-selector-wrapper">     
+          <div className="week-selector-wrapper">
+            {/* Debug info when currentWeek is available - following HomePage pattern */}
+            {currentWeek && (
+              <div className="mb-4 text-center text-sm text-gray-400">
+                Current Week: {currentWeek} {loadingStates.stats ? '(updating...)' : '(cached ⚡)'}
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {/* Show skeletons only if we don't have currentWeek yet */}
-              {!currentWeek ? (
-                // Show skeleton cards while loading
-                weeks.map((week) => (
-                  <div key={`skeleton-${week}`} className="week-card-wrapper">
-                    <WeekCardSkeleton />
-                  </div>
-                ))
-              ) : (
-                // Only show actual week cards once we have currentWeek from API
-                weeks.map((week) => {
-                  const weekStatus = getWeekStatus(week);
-                  const statusBadge = getStatusBadge(week, weekStatus.status);
-                  const weekDates = getWeekDates(week);
-                  const styles = getCardStyles(weekStatus.status);
+              {/* Always show week cards immediately - no more skeletons */}
+              {weeks.map((week) => {
+                const weekStatus = getWeekStatus(week);
+                const statusBadge = getStatusBadge(week, weekStatus.status);
+                const weekDates = getWeekDates(week);
+                const styles = getCardStyles(weekStatus.status);
 
-                  return (
-                    <div key={week} className="week-card-wrapper">
-                      <Link
-                        to={`/week/${week}`}
-                        className="week-card"
-                        style={{ 
-                          backgroundColor: styles.backgroundColor,
-                          borderColor: styles.borderColor,
-                          color: styles.textColor
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.backgroundColor = styles.hoverColor;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.backgroundColor = styles.backgroundColor;
-                        }}
-                      >
-                        <div className="week-card-content">
-                          <div className="week-card-header">
-                            <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                              {weekDates.start} - {weekDates.end}
-                            </div>
-                            <span 
-                              className={`week-status-badge ${statusBadge.className}`}
-                              style={{ 
-                                backgroundColor: statusBadge.backgroundColor
-                              }}
-                            >
-                              {statusBadge.label}
-                            </span>
+                return (
+                  <div key={week} className="week-card-wrapper">
+                    <Link
+                      to={`/week/${week}`}
+                      className="week-card"
+                      style={{ 
+                        backgroundColor: styles.backgroundColor,
+                        borderColor: styles.borderColor,
+                        color: styles.textColor
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = styles.hoverColor;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = styles.backgroundColor;
+                      }}
+                    >
+                      <div className="week-card-content">
+                        <div className="week-card-header">
+                          <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                            {weekDates.start} - {weekDates.end}
                           </div>
-                       
-                          <div className="points-container">
-                            {weekStatus.status === 'completed' && weekStatus.points !== null && (
-                              <div className="points-earned">
-                                <span className="points-label">Points: </span>
-                                <span className="points-value">{weekStatus.points}</span>
-                              </div>
-                            )}
-                            <h3 className="week-number">Week {week}</h3>
-                          </div>
+                          <span 
+                            className={`week-status-badge ${statusBadge.className}`}
+                            style={{ 
+                              backgroundColor: statusBadge.backgroundColor
+                            }}
+                          >
+                            {statusBadge.label}
+                          </span>
                         </div>
-                      </Link>
-                    </div>
-                  );
-                })
-              )}
+                     
+                        <div className="points-container">
+                          {weekStatus.status === 'completed' && weekStatus.points !== null && (
+                            <div className="points-earned">
+                              <span className="points-label">Points: </span>
+                              <span className="points-value">{weekStatus.points}</span>
+                            </div>
+                          )}
+                          <h3 className="week-number">Week {week}</h3>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
