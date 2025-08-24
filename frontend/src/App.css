@@ -950,21 +950,15 @@
   }
 }
 
-/* =================================================================
-   FIXED: WEEK SELECTOR CARD STYLES - iOS Double Tap Prevention
-   ================================================================= */
-
-/* Week card wrapper */
 .week-card-wrapper {
   width: 100%;
   height: 100%;
 }
 
-/* Base week card styling - iOS touch optimization */
 .week-card {
   display: block;
   width: 100%;
-  padding: 20px;
+  padding: clamp(12px, 4vw, 20px);
   border-radius: 16px;
   border: 2px solid;
   text-decoration: none;
@@ -973,21 +967,18 @@
   aspect-ratio: 2.5 / 1;
   position: relative;
   overflow: hidden;
-  /* iOS tap optimization */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  /* Improved touch interaction */
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
 }
 
-/* DISABLE pointer events on ALL child elements - only card should be hoverable */
+/* DISABLE pointer events on ALL child elements */
 .week-card * {
   pointer-events: none;
 }
 
-/* Week card active state for immediate feedback on touch devices */
 .week-card:active {
   transform: translateY(-2px);
   transition: transform 0.1s ease;
@@ -1000,34 +991,17 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
   }
 
-  /* Status-specific hover colors - using CSS custom properties */
   .week-card[style*="139, 92, 246"]:hover {
-    background-color: #7C3AED !important; /* Purple hover */
+    background-color: #7C3AED !important;
   }
 
   .week-card[style*="16, 185, 129"]:hover {
-    background-color: #047857 !important; /* Green hover */
+    background-color: #047857 !important;
   }
 
   .week-card[style*="55, 65, 81"]:hover {
-    background-color: #4B5563 !important; /* Gray hover */
+    background-color: #4B5563 !important;
   }
-}
-
-/* Disabled card styling */
-.week-card.disabled {
-  display: block;
-  width: 100%;
-  padding: 20px;
-  border-radius: 16px;
-  border: 2px solid;
-  cursor: not-allowed;
-  min-height: 140px;
-  position: relative;
-  overflow: hidden;
-  opacity: 0.6;
-  /* Disable touch interactions */
-  pointer-events: none;
 }
 
 /* Card content layout */
@@ -1038,7 +1012,7 @@
   justify-content: space-between;
   align-items: stretch;
   padding: 0;
-  gap: 8px;
+  gap: clamp(6px, 2vw, 10px);
 }
 
 /* Week header with number and status */
@@ -1046,20 +1020,20 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.75em;
+  margin-bottom: 0.5em;
 }
 
 .week-number {
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 5vw, 1.6rem);
   font-weight: bold;
   margin: 0;
   line-height: 1.2;
 }
 
 .week-status-badge {
-  font-size: 0.75rem;
+  font-size: clamp(0.65rem, 2.5vw, 0.85rem);
   font-weight: 600;
-  padding: 4px 8px;
+  padding: 3px 8px;
   border-radius: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1070,10 +1044,11 @@
 .week-dates {
   display: flex;
   font-weight: 400;
-  margin-bottom: 1em;
+  margin-bottom: 0.5em;
   opacity: 0.9;
   align-items: center;
   justify-content: space-between;
+  font-size: clamp(0.75rem, 3vw, 0.95rem);
 }
 
 .points-earned {
@@ -1083,91 +1058,30 @@
 }
 
 .points-label {
-  font-size: 0.9rem;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
   opacity: 0.8;
 }
 
 .points-value {
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 4vw, 1.4rem);
   font-weight: bold;
   margin-left: 4px;
 }
 
-.current-indicator {
-  font-size: 0.9rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-}
-
-.lock-icon {
-  font-size: 1.2rem;
-  opacity: 0.6;
-}
-
-/* ==========================================
-   MOBILE SIZE TIERS - Proportional Scaling
-   ========================================== */
-
-/* Group 1: Compact Phones (≤375px) */
-@media (max-width: 375px) {
+/* Simplified media queries for specific adjustments */
+@media (max-width: 340px) {
   .week-card {
-    padding: 14px;
-    /* REMOVE min-height completely */
+    padding: 10px;
   }
-  .week-card-content {
-    gap: 6px; /* Fixed spacing */
+  .week-status-badge {
+    padding: 2px 6px;
   }
-  .week-number { font-size: 1.3rem; }
-  .week-status-badge { font-size: 0.7rem; padding: 3px 7px; }
-  .week-dates { font-size: 0.8rem; }
-  .points-value { font-size: 1.1rem; }
-  .current-indicator { font-size: 0.75rem; }
 }
 
-/* Group 2: Standard Phones (376px - 413px) - FIXED GAP */
-@media (min-width: 376px) and (max-width: 413px) {
+@media (min-width: 768px) {
   .week-card {
-    padding: 16px;
-    /* REMOVE min-height completely */
+    aspect-ratio: 2.2 / 1;
   }
-  .week-card-content {
-    gap: 8px;
-  }
-  .week-number { font-size: 1.4rem; }
-  .week-status-badge { font-size: 0.75rem; padding: 4px 8px; }
-  .week-dates { font-size: 0.85rem; }
-  .points-value { font-size: 1.2rem; }
-  .current-indicator { font-size: 0.8rem; }
-}
-
-/* Group 3: Large Phones (414px - 430px) - FIXED FOR XS MAX */
-@media (min-width: 414px) and (max-width: 430px) {
-  .week-card {
-    padding: 18px;
-    /* CRITICAL: NO min-height for iOS 15 compatibility */
-  }
-  .week-card-content {
-    gap: 10px; /* More generous spacing */
-  }
-  .week-number { font-size: 1.5rem; }
-  .week-status-badge { font-size: 0.8rem; padding: 4px 9px; }
-  .week-dates { font-size: 0.9rem; }
-  .points-value { font-size: 1.3rem; }
-  .current-indicator { font-size: 0.85rem; }
-}
-
-/* Group 4: Extra Large (431px+) - Future-proofing */
-@media (min-width: 431px) and (max-width: 768px) {
-  .week-card {
-    padding: 20px;
-    min-height: 140px;
-  }
-  .week-number { font-size: 1.6rem; }
-  .week-status-badge { font-size: 0.85rem; padding: 5px 10px; }
-  .week-dates { font-size: 0.95rem; margin-bottom: 16px; }
-  .points-value { font-size: 1.4rem; }
-  .current-indicator { font-size: 0.9rem; }
 }
 
 /* =================================================================
