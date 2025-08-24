@@ -293,7 +293,7 @@ function HomePage() {
 
       {/* Season Performance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-        {loadingStates.accuracy ? (
+        {loadingStates.stats || loadingStates.accuracy ? (
           <LoadingSpinner />
         ) : (
           <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
@@ -356,7 +356,7 @@ function HomePage() {
             <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
           <div className="space-y-2">
-            {loadingStates.leaderboard ? (
+            {loadingStates.stats || loadingStates.leaderboard ? (
               <LoadingSpinner />
             ) : (
               <>
