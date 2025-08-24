@@ -1,133 +1,47 @@
-// WeekSelector.jsx - Following HomePage pattern with skeleton loading
+/*
+ * Updated WeekSelector.jsx - CSS-Based Responsive Scaling
+ * REMOVED: JavaScript viewport scaling calculations
+ * RELIES ON: CSS responsive system with viewport units and clamp()
+ * MAINTAINS: All week logic, status, dates, and styling
+ */
+
 import React from "react";
 import { Link } from "react-router-dom";
-import useDashboardData from '../hooks/useDashboardData';
-import { useAuth } from '../context/AuthContext';
-
-// Skeleton Component for Week Cards
-const WeekCardSkeleton = () => (
-  <div className="week-card bg-gradient-to-br from-gray-600 to-gray-700 rounded-2xl shadow-lg animate-pulse">
-    <div className="week-card-content">
-      <div className="week-card-header">
-        <div className="w-20 h-4 bg-gray-500 rounded opacity-70"></div>
-        <div className="w-16 h-6 bg-gray-500 rounded opacity-50"></div>
-      </div>
-      
-      <div className="points-container">
-        <div className="w-24 h-8 bg-gray-500 rounded mb-1 mx-auto"></div>
-      </div>
-    </div>
-  </div>
-);
 
 export default function WeekSelector({ 
   games = [], 
   gameResults = {}, 
   moneyLineSelections = {}, 
-  propBetSelections = {}
+  propBetSelections = {} 
 }) {
-  const { userInfo } = useAuth();
-  
-  // Fetch dashboard data to get currentWeek (following HomePage pattern)
-  const { dashboardData, loadingStates, error } = useDashboardData(userInfo, {
-    loadGranular: true,
-    includeLeaderboard: false, // Don't need leaderboard for weeks page
-    sections: ['stats'] // Only need stats section for currentWeek
-  });
-
   const totalWeeks = 18;
   const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
 
-  // Extract currentWeek from dashboard data OR use fallback calculation
-  const userData = dashboardData?.user_data || {};
-  const getCurrentNFLWeekFallback = () => {
-    const now = new Date();
-    const firstTuesday = new Date('2025-09-02T16:00:00Z');
-    const seasonStart = new Date('2025-08-14T00:00:00Z');
-    
-    if (now >= seasonStart && now < firstTuesday) {
-      return 1;
-    }
-    
-    for (let weekNumber = 1; weekNumber <= 18; weekNumber++) {
-      const weekStart = new Date(firstTuesday);
-      weekStart.setDate(firstTuesday.getDate() + ((weekNumber - 1) * 7));
-      
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7);
-      
-      if (now >= weekStart && now < weekEnd) {
-        return weekNumber;
-      }
-    }
-    
-    return null;
-  };
-
-  // Use API currentWeek if available, otherwise calculate instantly
-  const currentWeek = userData.currentWeek || getCurrentNFLWeekFallback();
-
-  // Not logged in
-  if (!userInfo) {
-    return (
-      <div className="pt-16">
-        <h2>you are not logged in</h2>
-        <p className="text-center text-small">
-          <a href="/login" style={{ color: '#8B5CF6', fontSize: '16px' }}>
-            Login
-          </a>
-        </p>
-        <p className="text-center text-small">
-          <a href="/signup" style={{ color: '#8B5CF6', fontSize: '16px' }}>
-            Sign Up
-          </a>
-        </p>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
-        <div className="page-container">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center py-8">
-              <p className="text-red-400">Error loading dashboard: {error}</p>
-              <button 
-                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                onClick={() => window.location.reload()}
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const getCurrentNFLWeek = () => {
     const now = new Date();
-    const firstTuesday = new Date('2025-09-02T16:00:00Z');
-    const seasonStart = new Date('2025-08-14T00:00:00Z');
+    const firstTuesday = new Date('2025-09-02T16:00:00Z'); // Sept 2, 2025 8 AM PST
+    const seasonStart = new Date('2025-08-14T00:00:00Z'); // Week 1 opens early (today)
     
+    // EXCEPTION: Week 1 starts early (August 14) but ends on normal schedule
     if (now >= seasonStart && now < firstTuesday) {
-      return 1;
+      return 1; // Extended Week 1 period
     }
     
+    // Normal weekly logic starting from Week 1's official Tuesday
     for (let weekNumber = 1; weekNumber <= 18; weekNumber++) {
       const weekStart = new Date(firstTuesday);
       weekStart.setDate(firstTuesday.getDate() + ((weekNumber - 1) * 7));
       
       const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7);
+      weekEnd.setDate(weekStart.getDate() + 7); // Next Tuesday
       
+      // If now is between this Tuesday and next Tuesday, this is the current week
       if (now >= weekStart && now < weekEnd) {
         return weekNumber;
       }
     }
     
+    // If we're after Week 18 ends, return null (post-season)
     return null;
   };
 
@@ -135,38 +49,42 @@ export default function WeekSelector({
     const currentNFLWeek = getCurrentNFLWeek();
     const weekGames = games.filter(game => game.week === weekNumber);
     
+    // If no games, it's upcoming (shouldn't happen if all games are populated)
     if (weekGames.length === 0) {
-      if (weekNumber <= currentNFLWeek) {
-        return {
-          status: 'current',
-          points: null,
-          label: 'Current'
-        };
-      } else {
-        return {
-          status: 'upcoming', 
-          points: null,
-          label: 'Upcoming'
-        };
-      }
+      return {
+        status: 'upcoming',
+        points: null,
+        label: 'Coming Soon'
+      };
     }
 
+    // Check if ALL games have results (winner field populated in database)
+    // AND all prop bets have correct_answer populated
     const allGamesHaveResults = weekGames.every(game => {
-      const hasWinner = gameResults[game.id]?.winner;
+      // Check if game has winner (from your Game.winner field)
+      const hasMoneyLineResult = gameResults[game.id]?.winner;
+      
+      // Check if all prop bets have correct_answer (from your PropBet.correct_answer field)
       const hasPropResult = !game.prop_bets?.length || 
         game.prop_bets.every(propBet => gameResults[game.id]?.prop_result);
-      return hasWinner && hasPropResult;
+      
+      return hasMoneyLineResult && hasPropResult;
     });
 
+    // If all games have results, week is completed
     if (allGamesHaveResults) {
+      // Calculate total points earned for this week
       let totalPoints = 0;
+      
       weekGames.forEach(game => {
-        const userPick = moneyLineSelections[game.id];
+        // Money line points (1pt) - based on Game.winner vs user prediction
+        const userMoneyLinePick = moneyLineSelections[game.id];
         const actualWinner = gameResults[game.id]?.winner;
-        if (userPick === actualWinner) {
+        if (userMoneyLinePick === actualWinner) {
           totalPoints += 1;
         }
-
+        
+        // Prop bet points (2pts) - based on PropBet.correct_answer vs user prediction
         if (game.prop_bets?.length > 0) {
           const userPropPick = propBetSelections[game.prop_bets[0].id];
           const actualPropResult = gameResults[game.id]?.prop_result;
@@ -183,6 +101,7 @@ export default function WeekSelector({
       };
     }
 
+    // If this is THE current NFL week and not completed, it's current
     if (weekNumber === currentNFLWeek) {
       return {
         status: 'current',
@@ -191,6 +110,8 @@ export default function WeekSelector({
       };
     }
 
+    // If week is before current week but not completed, it's still current
+    // (in case games got postponed or results delayed)
     if (weekNumber < currentNFLWeek && !allGamesHaveResults) {
       return {
         status: 'current',
@@ -199,6 +120,7 @@ export default function WeekSelector({
       };
     }
 
+    // Otherwise it's upcoming
     return {
       status: 'upcoming',
       points: null,
@@ -206,56 +128,23 @@ export default function WeekSelector({
     };
   };
 
-  const getStatusBadge = (weekNumber, status) => {
-    const currentNFLWeek = getCurrentNFLWeek();
-    
-    if (currentNFLWeek !== null) {
-      if (weekNumber === currentNFLWeek) {
-        return {
-          label: 'Current',
-          backgroundColor: '#5B21B6',
-          className: 'current-week-badge'
-        };
-      } else if (weekNumber < currentNFLWeek) {
-        return {
-          label: status === 'completed' ? 'Completed' : 'In Progress',
-          backgroundColor: status === 'completed' ? '#065F46' : '#5B21B6',
-          className: status === 'completed' ? 'completed-badge' : 'in-progress-badge'
-        };
-      } else {
-        return {
-          label: 'Upcoming',
-          backgroundColor: '#374151',
-          className: 'upcoming-badge'
-        };
-      }
-    }
-
-    return {
-      label: status === 'completed' ? 'Completed' : 
-             status === 'current' ? 'Current' : 'Upcoming',
-      backgroundColor: status === 'completed' ? '#065F46' : 
-                      status === 'current' ? '#5B21B6' : '#374151',
-      className: `${status}-badge`
-    };
-  };
-
   const getWeekDates = (weekNumber) => {
-    const firstTuesday = new Date('2025-09-02T16:00:00Z');
+    // Calculate week dates based on Tuesday schedule
+    const firstTuesday = new Date('2025-09-02T16:00:00Z'); // Sept 2, 2025 8 AM PST
     
     const weekStart = new Date(firstTuesday);
     weekStart.setDate(firstTuesday.getDate() + ((weekNumber - 1) * 7));
     
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setDate(weekStart.getDate() + 6); // 7 days later (Tuesday to Monday)
 
     const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
     
     return {
       start: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       end: sameMonth 
-        ? weekEnd.toLocaleDateString('en-US', { day: 'numeric' })
-        : weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        ? weekEnd.toLocaleDateString('en-US', { day: 'numeric' }) // Only show day number
+        : weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), // Show month and day
       sameMonth: sameMonth
     };
   };
@@ -264,21 +153,21 @@ export default function WeekSelector({
     switch (status) {
       case 'completed':
         return {
-          backgroundColor: '#10B981',
+          backgroundColor: '#10B981', // Green
           borderColor: '#059669',
           textColor: 'white',
           hoverColor: '#047857'
         };
       case 'current':
         return {
-          backgroundColor: '#8B5CF6',
+          backgroundColor: '#8B5CF6', // Purple
           borderColor: '#7C3AED',
           textColor: 'white',
           hoverColor: '#7C3AED'
         };
       case 'upcoming':
         return {
-          backgroundColor: '#374151',
+          backgroundColor: '#374151', // Gray
           borderColor: '#4B5563',
           textColor: '#9CA3AF',
           hoverColor: '#4B5563'
@@ -297,12 +186,11 @@ export default function WeekSelector({
     <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="page-container">
         <div className="max-w-6xl mx-auto">
+          {/* UPDATED: Removed dynamic scaling - CSS handles responsive scaling */}
           <div className="week-selector-wrapper">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {/* Always show week cards immediately - no more skeletons */}
               {weeks.map((week) => {
                 const weekStatus = getWeekStatus(week);
-                const statusBadge = getStatusBadge(week, weekStatus.status);
                 const weekDates = getWeekDates(week);
                 const styles = getCardStyles(weekStatus.status);
 
@@ -329,16 +217,17 @@ export default function WeekSelector({
                             {weekDates.start} - {weekDates.end}
                           </div>
                           <span 
-                            className={`week-status-badge ${statusBadge.className}`}
+                            className="week-status-badge" 
                             style={{ 
-                              backgroundColor: statusBadge.backgroundColor
+                              backgroundColor: weekStatus.status === 'completed' ? '#065F46' : 
+                                             weekStatus.status === 'current' ? '#5B21B6' : '#374151'
                             }}
                           >
-                            {statusBadge.label}
+                            {weekStatus.label}
                           </span>
                         </div>
                      
-                        <div className="points-container">
+                          <div className="points-container">
                           {weekStatus.status === 'completed' && weekStatus.points !== null && (
                             <div className="points-earned">
                               <span className="points-label">Points: </span>
@@ -348,6 +237,7 @@ export default function WeekSelector({
                           <h3 className="week-number">Week {week}</h3>
                         </div>
                       </div>
+          
                     </Link>
                   </div>
                 );
