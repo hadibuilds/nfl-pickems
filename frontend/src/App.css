@@ -1036,8 +1036,9 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding-bottom: 4px;
-  gap: 0.5em;
+  align-items: stretch;
+  padding: 0;
+  gap: 8px;
 }
 
 /* Week header with number and status */
