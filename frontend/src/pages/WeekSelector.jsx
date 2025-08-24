@@ -215,14 +215,14 @@ export default function WeekSelector({
   const getStatusBadge = (weekNumber, status) => {
     const currentNFLWeek = getCurrentNFLWeek();
     
-    if (currentWeek !== null) {
-      if (weekNumber === currentWeek) {
+    if (currentNFLWeek !== null) {
+      if (weekNumber === currentNFLWeek) {
         return {
           label: 'Current',
           backgroundColor: '#5B21B6',
           className: 'current-week-badge'
         };
-      } else if (weekNumber < currentWeek) {
+      } else if (weekNumber < currentNFLWeek) {
         return {
           label: status === 'completed' ? 'Completed' : 'In Progress',
           backgroundColor: status === 'completed' ? '#065F46' : '#5B21B6',
@@ -304,13 +304,6 @@ export default function WeekSelector({
       <div className="page-container">
         <div className="max-w-6xl mx-auto">
           <div className="week-selector-wrapper">
-            {/* Debug info when currentWeek is available - following HomePage pattern */}
-            {currentWeek && (
-              <div className="mb-4 text-center text-sm text-gray-400">
-                Current Week: {currentWeek} {loadingStates.stats ? '(updating...)' : '(cached ⚡)'}
-              </div>
-            )}
-            
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {/* Always show week cards immediately - no more skeletons */}
               {weeks.map((week) => {
