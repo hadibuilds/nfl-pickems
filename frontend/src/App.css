@@ -1185,21 +1185,6 @@
     }
   }
 }
-/* ==========================================
-   FALLBACK FOR UNSUPPORTED MEDIA QUERIES
-   ========================================== */
-
-@media (max-width: 768px) {
-  .week-card {
-    padding: 20px;
-    min-height: 140px;
-  }
-  .week-number { font-size: 1.6rem; }
-  .week-status-badge { font-size: 0.85rem; padding: 5px 10px; }
-  .week-dates { font-size: 0.95rem; margin-bottom: 16px; }
-  .points-value { font-size: 1.4rem; }
-  .current-indicator { font-size: 0.9rem; }
-}
 
 /* =================================================================
    FLOATING SUBMIT BUTTON STYLES
