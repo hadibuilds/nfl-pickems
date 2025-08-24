@@ -233,9 +233,11 @@ function HomePage() {
     );
   }
 
-  // Extract data from API response
+  // Extract data from API response - FIXED to match current hook structure
   const userData = dashboardData?.user_data || {};
   const leaderboard = dashboardData?.leaderboard || [];
+  const insights = dashboardData?.insights || [];
+  const recentGames = userData.recentGames || [];
 
   return (
     <PageLayout>
@@ -293,61 +295,63 @@ function HomePage() {
 
       {/* Season Performance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-        {loadingStates.stats || loadingStates.accuracy ? (
-          <LoadingSpinner />
-        ) : (
-          <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-            <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
-            
-            {/* All Three Progress Rings Side by Side */}
-            <div className="flex space-x-4 items-center">
-            <div className="flex flex-col items-center">
-              <ProgressRing 
-                percentage={userData.overallAccuracy || 0} 
-                size={80} 
-                strokeWidth={6} 
-                fontSize="text-base" 
-              />
-              <div className="mt-2 text-center">
-                <div className="text-xs font-bold" style={{ color: '#F5C45E' }}>Overall</div>
-              </div>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              <ProgressRing 
-                percentage={userData.moneylineAccuracy || 0} 
-                size={80} 
-                strokeWidth={6} 
-                showPercentage={true} 
-                fontSize="text-base" 
-              />
-              <div className="mt-2 text-center">
-                <div className="text-xs font-bold text-green-400">Moneyline</div>
-              </div>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              <ProgressRing 
-                percentage={userData.propBetAccuracy || 0} 
-                size={80} 
-                strokeWidth={6} 
-                showPercentage={true} 
-                fontSize="text-base"
-              />
-              <div className="mt-2 text-center">
-                <div className="text-xs font-bold text-blue-400">Prop Bets</div>
-              </div>
-            </div>
-          </div>
+        <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+          <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
           
-          <div className="mt-4 text-center">
-            <div className="text-xl font-bold" style={{ color: "#7C3AED" }}>
-              {userData.totalPoints || 0}
-            </div>
-            <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
-          </div>
+          {/* All Three Progress Rings Side by Side */}
+          {loadingStates.accuracy ? (
+            <LoadingSpinner />
+          ) : (
+            <>
+              <div className="flex space-x-4 items-center">
+                <div className="flex flex-col items-center">
+                  <ProgressRing 
+                    percentage={userData.overallAccuracy || 0} 
+                    size={80} 
+                    strokeWidth={6} 
+                    fontSize="text-base" 
+                  />
+                  <div className="mt-2 text-center">
+                    <div className="text-xs font-bold" style={{ color: '#F5C45E' }}>Overall</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center">
+                  <ProgressRing 
+                    percentage={userData.moneylineAccuracy || 0} 
+                    size={80} 
+                    strokeWidth={6} 
+                    showPercentage={true} 
+                    fontSize="text-base" 
+                  />
+                  <div className="mt-2 text-center">
+                    <div className="text-xs font-bold text-green-400">Moneyline</div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center">
+                  <ProgressRing 
+                    percentage={userData.propBetAccuracy || 0} 
+                    size={80} 
+                    strokeWidth={6} 
+                    showPercentage={true} 
+                    fontSize="text-base"
+                  />
+                  <div className="mt-2 text-center">
+                    <div className="text-xs font-bold text-blue-400">Prop Bets</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4 text-center">
+                <div className="text-xl font-bold" style={{ color: "#7C3AED" }}>
+                  {userData.totalPoints || 0}
+                </div>
+                <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
+              </div>
+            </>
+          )}
         </div>
-        )}
         
         {/* Leaderboard */}
         <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
@@ -356,13 +360,13 @@ function HomePage() {
             <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
           <div className="space-y-2">
-            {loadingStates.stats || loadingStates.leaderboard ? (
+            {loadingStates.leaderboard ? (
               <LoadingSpinner />
             ) : (
               <>
-              {leaderboard.slice(0, 3).map((user, index) => (
-                <LeaderboardRow key={user.rank || index} user={user} index={index} />
-              ))}
+                {leaderboard.slice(0, 3).map((user, index) => (
+                  <LeaderboardRow key={user.rank || index} user={user} index={index} />
+                ))}
               </>
             )}
           </div>
@@ -386,23 +390,23 @@ function HomePage() {
               <LoadingSpinner />
             ) : (
               <>  
-            {userData.recentGames && userData.recentGames.length > 0 ? (
-              userData.recentGames.slice(0, 2).map(game => (
-                <RecentGameCard key={game.id} game={game} />
-              ))
-            ) : (
-              <div className="text-center py-4" style={{ color: '#9ca3af' }}>
-                <p>No recent completed games</p>
-              </div>
-            )}
-            </>
+                {recentGames.length > 0 ? (
+                  recentGames.slice(0, 2).map(game => (
+                    <RecentGameCard key={game.id} game={game} />
+                  ))
+                ) : (
+                  <div className="text-center py-4" style={{ color: '#9ca3af' }}>
+                    <p>No recent completed games</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
       </div>
 
       {/* Insights Section */}
-      {dashboardData?.insights && dashboardData.insights.length > 0 && (
+      {insights.length > 0 && (
         <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Insights</h3>
@@ -413,19 +417,19 @@ function HomePage() {
               <LoadingSpinner />
             ) : (
               <>
-            {dashboardData.insights.map((insight, index) => (
-              <div 
-                key={index}
-                className={`p-3 rounded-lg border-l-4 ${
-                  insight.type === 'positive' ? 'border-green-500 bg-green-500/10' :
-                  insight.type === 'warning' ? 'border-yellow-500 bg-yellow-500/10' :
-                  'border-blue-500 bg-blue-500/10'
-                }`}
-              >
-                <p className="text-sm text-white">{insight.message}</p>
-              </div>
-            ))}
-            </>
+                {insights.map((insight, index) => (
+                  <div 
+                    key={index}
+                    className={`p-3 rounded-lg border-l-4 ${
+                      insight.type === 'positive' ? 'border-green-500 bg-green-500/10' :
+                      insight.type === 'warning' ? 'border-yellow-500 bg-yellow-500/10' :
+                      'border-blue-500 bg-blue-500/10'
+                    }`}
+                  >
+                    <p className="text-sm text-white">{insight.message}</p>
+                  </div>
+                ))}
+              </>
             )}
           </div>
         </div>

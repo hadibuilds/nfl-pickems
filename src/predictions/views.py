@@ -10,8 +10,10 @@ from games.models import Game
 from .utils.dashboard_utils import (
     # Real-time functions (primary)
     calculate_user_dashboard_data_realtime,
+    calculate_total_points_simple,
     get_leaderboard_data_realtime,
     get_user_insights_realtime,
+    
     
     # Individual component functions for granular endpoints
     get_current_week,
@@ -278,11 +280,14 @@ def get_user_accuracy_only(request):
         user = request.user
         
         best_category, best_accuracy = get_best_category_realtime(user)
+
+        total_points = calculate_total_points_simple(user)
         
         return Response({
             'overallAccuracy': calculate_current_accuracy(user, 'overall'),
             'moneylineAccuracy': calculate_current_accuracy(user, 'moneyline'),
             'propBetAccuracy': calculate_current_accuracy(user, 'prop'),
+            'totalPoints': total_points,
             'bestCategory': best_category,
             'bestCategoryAccuracy': best_accuracy,
         })

@@ -139,7 +139,7 @@ def get_user_weekly_insights(user):
     insights = []
     
     # Rank change insight
-    rank_change, trend = get_user_rank_trend()
+    rank_change, trend = get_user_rank_trend(user)
     if trend == "up" and rank_change != "—":
         insights.append({
             'type': 'positive',
