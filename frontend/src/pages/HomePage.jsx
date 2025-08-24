@@ -36,7 +36,7 @@ const ProgressRingSkeleton = ({ size = 80 }) => (
 );
 
 const SeasonPerformanceSkeleton = () => (
-  <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+  <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6">
     <div className="w-32 h-5 bg-gray-600 rounded mb-4 animate-pulse"></div>
     
     <div className="flex space-x-4 items-center">
