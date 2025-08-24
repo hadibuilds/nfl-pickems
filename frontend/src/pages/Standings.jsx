@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PageLayout from '../components/common/PageLayout';
-import { Trophy, TrendingUp, TrendingDown, Crown, Medal, Award } from 'lucide-react';
+import UserAvatar from '../components/common/UserAvatar';
+import { Trophy, Award } from 'lucide-react';
+import { calculateRankWithTies, getMedalTier, getRingColorClass } from '../components/standings/rankingUtils';
 
 export default function Standings() {
   const { userInfo } = useAuth();
@@ -48,34 +50,25 @@ export default function Standings() {
     const aPoints = selectedWeek ? a.weekly_scores[selectedWeek] || 0 : a.total_points;
     const bPoints = selectedWeek ? b.weekly_scores[selectedWeek] || 0 : b.total_points;
 
+    // First sort by points (descending)
     if (bPoints !== aPoints) return bPoints - aPoints;
+    
+    // If points are tied, sort alphabetically by username
     return a.username.localeCompare(b.username);
   });
 
-  const getRankIcon = (rank) => {
-    switch (rank) {
-      case 1:
-        return <Crown className="w-5 h-5 text-yellow-500" />;
-      case 2:
-        return <Medal className="w-5 h-5 text-gray-400" />;
-      case 3:
-        return <Award className="w-5 h-5 text-amber-600" />;
-      default:
-        return <Trophy className="w-5 h-5 text-gray-500" />;
-    }
+  // Helper function to capitalize first letter
+  const capitalizeFirstLetter = (str) => {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  const getRankBadgeColor = (rank) => {
-    switch (rank) {
-      case 1:
-        return 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-yellow-900';
-      case 2:
-        return 'bg-gradient-to-r from-gray-300 to-gray-500 text-gray-900';
-      case 3:
-        return 'bg-gradient-to-r from-amber-400 to-amber-600 text-amber-900';
-      default:
-        return 'bg-gradient-to-r from-gray-600 to-gray-700 text-white';
-    }
+  // Helper function to get point color based on medal tier
+  const getPointColor = (tier) => {
+    if (tier === 1) return 'text-yellow-400';  // Gold
+    if (tier === 2) return 'text-gray-400';    // Silver
+    if (tier === 3) return 'text-amber-600';   // Bronze
+    return 'text-white'; // White for 4th place and below
   };
 
   const LoadingSpinner = () => (
@@ -161,8 +154,8 @@ export default function Standings() {
         </div>
       </div>
 
-      {/* Standings Cards */}
-      <div className="space-y-4">
+      {/* Standings List */}
+      <div className="max-w-md mx-auto">
         {sortedStandings.length === 0 ? (
           <div className="text-center py-16">
             <Trophy className="w-16 h-16 text-gray-500 mx-auto mb-4" />
@@ -171,127 +164,54 @@ export default function Standings() {
           </div>
         ) : (
           sortedStandings.map((entry, index) => {
-            const rank = index + 1;
             const points = selectedWeek
               ? entry.weekly_scores[selectedWeek] || 0
               : entry.total_points;
             const isCurrentUser = entry.username === userInfo?.username;
 
+            // Use shared utilities for consistent ranking
+            const displayRank = calculateRankWithTies(standings, entry.username, selectedWeek);
+            const medalTier = getMedalTier(standings, entry.username, selectedWeek);
+
             return (
-              <div
-                key={entry.username}
-                className={`
-                  relative rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl border
-                  ${isCurrentUser 
-                    ? 'bg-gradient-to-r from-purple-900/20 to-purple-800/20 border-purple-500/50 shadow-purple-500/20' 
-                    : 'bg-gradient-to-r from-gray-800/50 to-gray-900/50 border-gray-700/50'
-                  }
-                `}
-                style={{ 
-                  backgroundColor: isCurrentUser ? 'rgba(139, 92, 246, 0.1)' : 'rgba(45, 45, 45, 0.8)',
-                  boxShadow: isCurrentUser 
-                    ? '0 20px 25px -5px rgba(139, 92, 246, 0.1), 0 10px 10px -5px rgba(139, 92, 246, 0.04)' 
-                    : '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
-                }}
-              >
-                {/* Rank Badge */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className={`
-                      flex items-center justify-center w-12 h-12 rounded-xl font-bold text-lg
-                      ${getRankBadgeColor(rank)}
-                    `}>
-                      {rank <= 3 ? getRankIcon(rank) : rank}
-                    </div>
-                    
-                    <div>
-                      <div className={`
-                        font-bold text-lg
-                        ${isCurrentUser ? 'text-purple-300' : 'text-white'}
-                      `}>
-                        {entry.username}
-                        {isCurrentUser && (
-                          <span className="ml-2 px-2 py-1 text-xs bg-purple-500 text-white rounded-full">
-                            You
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-gray-400 text-sm">
-                        Rank #{rank}
-                      </div>
+              <div key={entry.username}>
+                {/* Divider line (not for first player) */}
+                {index > 0 && (
+                  <div className="border-t border-gray-700 mx-6"></div>
+                )}
+                
+                <div className="flex items-center space-x-4 py-4 px-6">
+                  {/* Avatar with ring based on medal tier */}
+                  <UserAvatar
+                    username={entry.username}
+                    size="md"
+                    className={`w-12 h-12 flex-shrink-0 ${getRingColorClass(medalTier)}`}
+                  />
+
+                  {/* Rank (with T- for ties) */}
+                  <div className={`text-xl font-bold w-8 ${getPointColor(medalTier)}`}>
+                    {displayRank}
+                  </div>
+
+                  {/* Username */}
+                  <div className="flex-1 min-w-0">
+                    <div className={`font-bold text-lg truncate ${
+                      isCurrentUser ? 'text-purple-300' : 'text-white'
+                    }`}>
+                      {capitalizeFirstLetter(entry.username)}
                     </div>
                   </div>
 
-                  {/* Points Display */}
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-white mb-1">
-                      {points}
-                    </div>
-                    <div className="text-gray-400 text-sm">
-                      {selectedWeek ? 'week points' : 'total points'}
-                    </div>
+                  {/* Points */}
+                  <div className={`text-2xl font-bold ${getPointColor(medalTier)}`}>
+                    {points}
                   </div>
                 </div>
-
-                {/* Trend Indicator (if available) */}
-                {entry.trend && (
-                  <div className="absolute top-4 right-4">
-                    {entry.trend === 'up' && (
-                      <TrendingUp className="w-5 h-5 text-green-400" />
-                    )}
-                    {entry.trend === 'down' && (
-                      <TrendingDown className="w-5 h-5 text-red-400" />
-                    )}
-                  </div>
-                )}
-
-                {/* Top 3 Special Effects */}
-                {rank <= 3 && (
-                  <div className="absolute inset-0 rounded-2xl opacity-20 pointer-events-none">
-                    <div className={`
-                      absolute inset-0 rounded-2xl
-                      ${rank === 1 ? 'bg-gradient-to-r from-yellow-400/20 to-yellow-600/20' : ''}
-                      ${rank === 2 ? 'bg-gradient-to-r from-gray-300/20 to-gray-500/20' : ''}
-                      ${rank === 3 ? 'bg-gradient-to-r from-amber-400/20 to-amber-600/20' : ''}
-                    `} />
-                  </div>
-                )}
               </div>
             );
           })
         )}
       </div>
-
-      {/* Stats Summary */}
-      {standings.length > 0 && (
-        <div className="mt-12 text-center">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700/50">
-              <Trophy className="w-8 h-8 text-yellow-500 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white mb-1">
-                {standings.length}
-              </div>
-              <div className="text-gray-400">Total Players</div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700/50">
-              <Crown className="w-8 h-8 text-purple-500 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white mb-1">
-                {sortedStandings[0]?.total_points || 0}
-              </div>
-              <div className="text-gray-400">Leading Score</div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-2xl p-6 border border-gray-700/50">
-              <Award className="w-8 h-8 text-green-500 mx-auto mb-3" />
-              <div className="text-2xl font-bold text-white mb-1">
-                {weeks.length}
-              </div>
-              <div className="text-gray-400">Weeks Tracked</div>
-            </div>
-          </div>
-        </div>
-      )}
     </PageLayout>
   );
 }

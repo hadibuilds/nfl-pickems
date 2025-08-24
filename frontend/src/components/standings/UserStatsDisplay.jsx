@@ -2,9 +2,11 @@
  * UserStatsDisplay Component
  * Fetches and displays user statistics in dropdown
  * Shows rank, accuracy, and total points
+ * Now uses shared ranking utilities for consistency
  */
 
 import React, { useState, useEffect } from 'react';
+import { calculateRankWithTies } from './rankingUtils'; // Import shared utility
 
 export default function UserStatsDisplay({ userInfo }) {
   const [stats, setStats] = useState({
@@ -70,11 +72,10 @@ export default function UserStatsDisplay({ userInfo }) {
       };
     }
 
-    // Calculate rank with proper tie handling
-    const sortedStandings = [...standings].sort((a, b) => b.total_points - a.total_points);
-    const userRank = calculateRankWithTies(sortedStandings, username);
+    // Use shared ranking utility for consistent ranking
+    const userRank = calculateRankWithTies(standings, username);
 
-    // Calculate accuracy from actual predictions data (await the async function)
+    // Calculate accuracy from actual predictions data
     const accuracy = await calculateAccuracy(username);
 
     return {
@@ -82,44 +83,6 @@ export default function UserStatsDisplay({ userInfo }) {
       accuracy: accuracy,
       totalPoints: userStanding.total_points || 0
     };
-  };
-
-  // Calculate rank with tie handling (T1, T2, etc.)
-  const calculateRankWithTies = (sortedStandings, username) => {
-    const userStanding = sortedStandings.find(standing => 
-      standing.username.toLowerCase() === username.toLowerCase()
-    );
-    
-    if (!userStanding) return '—';
-
-    const userPoints = userStanding.total_points || 0;
-    let rank = 1;
-    let currentRank = 1;
-    
-    for (let i = 0; i < sortedStandings.length; i++) {
-      const standing = sortedStandings[i];
-      const points = standing.total_points || 0;
-      
-      // If this is not the first person and points are different, update rank
-      if (i > 0 && points !== (sortedStandings[i-1].total_points || 0)) {
-        currentRank = i + 1;
-      }
-      
-      if (standing.username.toLowerCase() === username.toLowerCase()) {
-        // Check if there are ties
-        const playersWithSamePoints = sortedStandings.filter(s => 
-          (s.total_points || 0) === userPoints
-        );
-        
-        if (playersWithSamePoints.length > 1) {
-          return `T-${currentRank}`;
-        } else {
-          return currentRank;
-        }
-      }
-    }
-    
-    return '—';
   };
 
   // Calculate accuracy from actual prediction data
