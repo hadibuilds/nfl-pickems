@@ -137,10 +137,15 @@ export default function WeekSelector({
     
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6); // 7 days later (Tuesday to Monday)
+
+    const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
     
     return {
       start: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      end: weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      end: sameMonth 
+        ? weekEnd.toLocaleDateString('en-US', { day: 'numeric' }) // Only show day number
+        : weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), // Show month and day
+      sameMonth: sameMonth
     };
   };
 
