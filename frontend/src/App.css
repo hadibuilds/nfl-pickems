@@ -1188,16 +1188,16 @@
 /* ==========================================
    FALLBACK FOR UNSUPPORTED MEDIA QUERIES
    ========================================== */
-   
+
 @media (max-width: 768px) {
   .week-card {
-    padding: 16px;
-    min-height: 120px;
+    padding: 20px;
+    min-height: 140px;
   }
-  .week-number { font-size: 1.4rem; }
-  .week-status-badge { font-size: 0.75rem; }
-  .week-dates { font-size: 0.85rem; }
-  .points-value { font-size: 1.2rem; }
+  .week-number { font-size: 1.6rem; }
+  .week-status-badge { font-size: 0.85rem; }
+  .week-dates { font-size: 0.9rem; }
+  .points-value { font-size: 1.4rem; }
 }
 
 /* =================================================================
