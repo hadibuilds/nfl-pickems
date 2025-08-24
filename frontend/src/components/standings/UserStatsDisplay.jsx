@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { calculateRankWithTies } from './rankingUtils'; // Import shared utility
+import { calculateRankWithTies } from './rankingUtils.jsx'; // Import shared utility
 
 export default function UserStatsDisplay({ userInfo }) {
   const [stats, setStats] = useState({
