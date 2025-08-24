@@ -108,12 +108,6 @@ export default function WeekSelector({
   }
 
   const getCurrentNFLWeek = () => {
-    // Use currentWeek from API if available
-    if (currentWeek !== null) {
-      return currentWeek;
-    }
-
-    // Fallback calculation if API data not available
     const now = new Date();
     const firstTuesday = new Date('2025-09-02T16:00:00Z');
     const seasonStart = new Date('2025-08-14T00:00:00Z');
