@@ -348,7 +348,7 @@ function HomePage() {
                   fontSize="text-base" 
                 />
                 <div className="mt-2 text-center">
-                  <div className="text-xs font-bold" style={{ color: '#F5C45E' }}>Overall</div>
+                  <div className="text-xs font-bold" style={{ color: '#F9A825' }}>Overall</div>
                 </div>
               </div>
               
@@ -380,16 +380,16 @@ function HomePage() {
             </div>
             
             <div className="mt-4 text-center">
-              <div className="text-xl font-bold" style={{ color: "#7C3AED" }}>
+              <div className="text-2xl font-bold" style={{ color: "#F9A825" }}>
                 {userData.totalPoints || 0}
               </div>
-              <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
+              <div className="text-sm" style={{ color: '#9ca3af' }}>Total Points</div>
             </div>
           </div>
         )}
         
         {/* Leaderboard */}
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#1f1f1f' }}>
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Leaderboard</h3>
             <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
@@ -415,7 +415,7 @@ function HomePage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#1f1f1f' }}>
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Recent Games</h3>
             <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
