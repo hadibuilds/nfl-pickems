@@ -1123,7 +1123,7 @@
 }
 
 /* Group 2: Standard Phones (376px - 413px) */
-@media (min-width: 376px) and (max-width: 413px) {
+@media (min-width: 376px) and (max-width: 411px) {
   .week-card {
     padding: 16px;
     min-height: 120px;
@@ -1136,7 +1136,7 @@
 }
 
 /* Group 3: Large Phones (414px - 430px) - Pro Max Models */
-@media (min-width: 414px) and (max-width: 430px) {
+@media (min-width: 412px) and (max-width: 430px) {
   .week-card {
     padding: 18px;
     min-height: 130px;
@@ -1161,7 +1161,6 @@
   .current-indicator { font-size: 0.9rem; }
 }
 
-
 /* Fallback for browsers that don't support container queries */
 @supports not (font-size: 1cqi) {
   @media (max-width: 768px) {
@@ -1184,6 +1183,20 @@
       font-size: clamp(0.75rem, 3vw, 1rem);
     }
   }
+}
+
+/* ==========================================
+   FALLBACK FOR UNSUPPORTED MEDIA QUERIES
+   ========================================== */
+@media (max-width: 768px) {
+  .week-card {
+    padding: 16px;
+    min-height: 120px;
+  }
+  .week-number { font-size: 1.4rem; }
+  .week-status-badge { font-size: 0.75rem; }
+  .week-dates { font-size: 0.85rem; }
+  .points-value { font-size: 1.2rem; }
 }
 
 /* =================================================================
