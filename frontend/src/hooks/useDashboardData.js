@@ -71,7 +71,13 @@ const useDashboardData = (userInfo, options = {}) => {
       setLoading(true);
       setError(null);
       
-      const results = {};
+      // Initialize with proper structure that matches Django response
+      setDashboardData({
+        user_data: {},    // This is what Django returns
+        leaderboard: [],
+        insights: []
+      });
+
       const promises = [];
 
       // FAST: Load user stats first (shows immediately)
@@ -79,10 +85,13 @@ const useDashboardData = (userInfo, options = {}) => {
         credentials: 'include',
         headers: { 'X-CSRFToken': getCsrfToken() }
       }).then(res => res.json()).then(data => {
-        results.user_data = data;
         setLoadingStates(prev => ({ ...prev, stats: false }));
-        // Update dashboard with partial data immediately
-        setDashboardData(prev => ({ ...prev, user_data: data }));
+        // Update dashboard with stats data
+        setDashboardData(prev => ({
+          ...prev,
+          user_data: { ...prev?.user_data, ...data }
+        }));
+        return data;
       });
 
       promises.push(statsPromise);
@@ -92,13 +101,21 @@ const useDashboardData = (userInfo, options = {}) => {
         credentials: 'include',
         headers: { 'X-CSRFToken': getCsrfToken() }
       }).then(res => res.json()).then(data => {
-        results.user_data = { ...results.user_data, ...data };
         setLoadingStates(prev => ({ ...prev, accuracy: false }));
-        // Update dashboard with accuracy data
+        // Update dashboard with accuracy data - careful merging
         setDashboardData(prev => ({
           ...prev,
-          user_data: { ...prev?.user_data, ...data }
+          user_data: { 
+            ...prev?.user_data, 
+            overallAccuracy: data.overallAccuracy,
+            moneylineAccuracy: data.moneylineAccuracy,
+            propBetAccuracy: data.propBetAccuracy,
+            bestCategory: data.bestCategory,
+            bestCategoryAccuracy: data.bestCategoryAccuracy,
+            totalPoints: data.totalPoints
+          }
         }));
+        return data;
       });
 
       promises.push(accuracyPromise);
@@ -109,10 +126,10 @@ const useDashboardData = (userInfo, options = {}) => {
           credentials: 'include',
           headers: { 'X-CSRFToken': getCsrfToken() }
         }).then(res => res.json()).then(data => {
-          results.leaderboard = data.leaderboard;
           setLoadingStates(prev => ({ ...prev, leaderboard: false }));
           // Update dashboard with leaderboard
           setDashboardData(prev => ({ ...prev, leaderboard: data.leaderboard }));
+          return data;
         });
 
         promises.push(leaderboardPromise);
@@ -125,13 +142,13 @@ const useDashboardData = (userInfo, options = {}) => {
         credentials: 'include',
         headers: { 'X-CSRFToken': getCsrfToken() }
       }).then(res => res.json()).then(data => {
-        results.user_data = { ...results.user_data, ...data };
         setLoadingStates(prev => ({ ...prev, recent: false }));
         // Update dashboard with recent games
         setDashboardData(prev => ({
           ...prev,
-          user_data: { ...prev?.user_data, ...data }
+          user_data: { ...prev?.user_data, recentGames: data.recentGames }
         }));
+        return data;
       });
 
       promises.push(recentPromise);
@@ -141,15 +158,6 @@ const useDashboardData = (userInfo, options = {}) => {
         credentials: 'include',
         headers: { 'X-CSRFToken': getCsrfToken() }
       }).then(res => res.json()).then(data => {
-        results.insights = data.insights;
-        results.user_data = { 
-          ...results.user_data, 
-          streak: data.streak,
-          streakType: data.streakType,
-          longestWinStreak: data.longestWinStreak,
-          longestLossStreak: data.longestLossStreak,
-          seasonStats: data.seasonStats
-        };
         setLoadingStates(prev => ({ ...prev, insights: false }));
         // Update dashboard with insights
         setDashboardData(prev => ({
@@ -164,6 +172,7 @@ const useDashboardData = (userInfo, options = {}) => {
             seasonStats: data.seasonStats
           }
         }));
+        return data;
       });
 
       promises.push(insightsPromise);
