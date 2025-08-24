@@ -1001,21 +1001,28 @@
 }
 
 /* Week header styling */
-.week-header {
+.week-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
 
+.week-card-middle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .week-number {
-  font-size: clamp(1.25rem, 4vw, 1.45rem);
+  font-family: 'Bebas Neue';
+  font-size: clamp(1.25rem, 20vw, 2rem);
   font-weight: bold;
   margin: 0;
-  line-height: 1.2;
+  text-align: center;
 }
 
 .week-status-badge {
-  font-size: clamp(0.7rem, 4vw, 0.85rem);
+  font-size: clamp(0.7rem, 3vw, 0.85rem);
   font-weight: 600;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -1034,10 +1041,13 @@
 
 /* Points container */
 .points-container {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: auto;
+  text-align: center;
+  display: flex;
+  align-content: flex-end;
+  flex-wrap: wrap;
+  flex-direction: row-reverse;
+  justify-content: space-around;
 }
 
 .points-earned {
@@ -1091,7 +1101,6 @@
 @media (max-width: 414px) {
   .week-card { aspect-ratio: 2 / 1; padding: 0.75rem; }
   .week-header { margin-bottom: 0.25rem; }
-  .points-container { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
 }
 
 @media (min-width: 1024px) {

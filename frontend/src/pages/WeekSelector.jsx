@@ -49,7 +49,7 @@ export default function WeekSelector({
     const currentNFLWeek = getCurrentNFLWeek();
     const weekGames = games.filter(game => game.week === weekNumber);
     
-    // If no games, it's upcoming (shouldn't happen since you populated all weeks)
+    // If no games, it's upcoming (shouldn't happen if all games are populated)
     if (weekGames.length === 0) {
       return {
         status: 'upcoming',
@@ -124,7 +124,7 @@ export default function WeekSelector({
     return {
       status: 'upcoming',
       points: null,
-      label: 'Coming Soon'
+      label: 'Upcoming'
     };
   };
 
@@ -207,8 +207,10 @@ export default function WeekSelector({
                       }}
                     >
                       <div className="week-card-content">
-                        <div className="week-header">
-                          <h3 className="week-number">Week {week}</h3>
+                        <div className="week-card-header">
+                          <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                            {weekDates.start} - {weekDates.end}
+                          </div>
                           <span 
                             className="week-status-badge" 
                             style={{ 
@@ -219,17 +221,18 @@ export default function WeekSelector({
                             {weekStatus.label}
                           </span>
                         </div>
-                        
-                        <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                          {weekDates.start} - {weekDates.end}
+                     
+                          <div className="points-container">
                           {weekStatus.status === 'completed' && weekStatus.points !== null && (
                             <div className="points-earned">
                               <span className="points-label">Points: </span>
                               <span className="points-value">{weekStatus.points}</span>
                             </div>
                           )}
+                          <h3 className="week-number">Week {week}</h3>
                         </div>
                       </div>
+          
                     </Link>
                   </div>
                 );
