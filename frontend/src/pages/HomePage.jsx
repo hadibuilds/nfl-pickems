@@ -2,6 +2,7 @@
  * Enhanced HomePage Component with Real Database Integration
  * Now uses actual database data instead of mock data
  * REFACTORED: Using PageLayout for consistent navbar alignment
+ * ENHANCED: Added skeleton loaders for user stats section
  */
 
 import React, { useState, useEffect } from 'react';
@@ -10,6 +11,46 @@ import useDashboardData from '../hooks/useDashboardData';
 import PageLayout from '../components/common/PageLayout';
 import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Zap } from 'lucide-react';
 import confetti from 'canvas-confetti';
+
+// Skeleton Components
+const StatCardSkeleton = () => (
+  <div className="bg-gradient-to-br from-gray-600 to-gray-700 rounded-2xl p-6 shadow-lg animate-pulse">
+    <div className="flex items-center justify-between">
+      <div className="w-8 h-8 bg-gray-500 rounded opacity-50"></div>
+    </div>
+    <div className="w-16 h-8 bg-gray-500 rounded mt-4 mb-1"></div>
+    <div className="w-20 h-4 bg-gray-500 rounded opacity-70"></div>
+  </div>
+);
+
+const ProgressRingSkeleton = ({ size = 80 }) => (
+  <div className="flex flex-col items-center">
+    <div 
+      className="rounded-full bg-gray-600 animate-pulse flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      <div className="w-6 h-6 bg-gray-500 rounded"></div>
+    </div>
+    <div className="mt-2 w-12 h-3 bg-gray-600 rounded animate-pulse"></div>
+  </div>
+);
+
+const SeasonPerformanceSkeleton = () => (
+  <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+    <div className="w-32 h-5 bg-gray-600 rounded mb-4 animate-pulse"></div>
+    
+    <div className="flex space-x-4 items-center">
+      <ProgressRingSkeleton size={80} />
+      <ProgressRingSkeleton size={80} />
+      <ProgressRingSkeleton size={80} />
+    </div>
+    
+    <div className="mt-4 text-center">
+      <div className="w-16 h-6 bg-gray-600 rounded mb-1 animate-pulse mx-auto"></div>
+      <div className="w-20 h-3 bg-gray-600 rounded animate-pulse mx-auto"></div>
+    </div>
+  </div>
+);
 
 // Component definitions remain the same
 const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage = true, fontSize = 'text-2xl' }) => {
@@ -206,16 +247,6 @@ function HomePage() {
     );
   }
 
-  // Loading state with PageLayout
-  if (loadingStates.stats && loadingStates.accuracy && loadingStates.leaderboard && loadingStates.recent && loadingStates.insights) {
-    return (
-      <PageLayout>
-        <LoadingSpinner />
-        <p className="text-center text-gray-400">Loading your dashboard...</p>
-      </PageLayout>
-    );
-  }
-
   // Error state with PageLayout
   if (error) {
     return (
@@ -251,10 +282,15 @@ function HomePage() {
         </p>
       </div>
 
-      {/* Quick Stats Grid */}
+      {/* Quick Stats Grid - WITH SKELETONS */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {loadingStates.stats ? (
-          <LoadingSpinner />
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
         ) : (
           <>
             <StatCard
@@ -295,63 +331,62 @@ function HomePage() {
 
       {/* Season Performance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-        <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-          <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
-          
-          {/* All Three Progress Rings Side by Side */}
-          {loadingStates.accuracy ? (
-            <LoadingSpinner />
-          ) : (
-            <>
-              <div className="flex space-x-4 items-center">
-                <div className="flex flex-col items-center">
-                  <ProgressRing 
-                    percentage={userData.overallAccuracy || 0} 
-                    size={80} 
-                    strokeWidth={6} 
-                    fontSize="text-base" 
-                  />
-                  <div className="mt-2 text-center">
-                    <div className="text-xs font-bold" style={{ color: '#F5C45E' }}>Overall</div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center">
-                  <ProgressRing 
-                    percentage={userData.moneylineAccuracy || 0} 
-                    size={80} 
-                    strokeWidth={6} 
-                    showPercentage={true} 
-                    fontSize="text-base" 
-                  />
-                  <div className="mt-2 text-center">
-                    <div className="text-xs font-bold text-green-400">Moneyline</div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center">
-                  <ProgressRing 
-                    percentage={userData.propBetAccuracy || 0} 
-                    size={80} 
-                    strokeWidth={6} 
-                    showPercentage={true} 
-                    fontSize="text-base"
-                  />
-                  <div className="mt-2 text-center">
-                    <div className="text-xs font-bold text-blue-400">Prop Bets</div>
-                  </div>
+        {/* Season Performance Card - WITH SKELETON */}
+        {loadingStates.accuracy ? (
+          <SeasonPerformanceSkeleton />
+        ) : (
+          <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+            <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
+            
+            {/* All Three Progress Rings Side by Side */}
+            <div className="flex space-x-4 items-center">
+              <div className="flex flex-col items-center">
+                <ProgressRing 
+                  percentage={userData.overallAccuracy || 0} 
+                  size={80} 
+                  strokeWidth={6} 
+                  fontSize="text-base" 
+                />
+                <div className="mt-2 text-center">
+                  <div className="text-xs font-bold" style={{ color: '#F5C45E' }}>Overall</div>
                 </div>
               </div>
               
-              <div className="mt-4 text-center">
-                <div className="text-xl font-bold" style={{ color: "#7C3AED" }}>
-                  {userData.totalPoints || 0}
+              <div className="flex flex-col items-center">
+                <ProgressRing 
+                  percentage={userData.moneylineAccuracy || 0} 
+                  size={80} 
+                  strokeWidth={6} 
+                  showPercentage={true} 
+                  fontSize="text-base" 
+                />
+                <div className="mt-2 text-center">
+                  <div className="text-xs font-bold text-green-400">Moneyline</div>
                 </div>
-                <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
               </div>
-            </>
-          )}
-        </div>
+              
+              <div className="flex flex-col items-center">
+                <ProgressRing 
+                  percentage={userData.propBetAccuracy || 0} 
+                  size={80} 
+                  strokeWidth={6} 
+                  showPercentage={true} 
+                  fontSize="text-base"
+                />
+                <div className="mt-2 text-center">
+                  <div className="text-xs font-bold text-blue-400">Prop Bets</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <div className="text-xl font-bold" style={{ color: "#7C3AED" }}>
+                {userData.totalPoints || 0}
+              </div>
+              <div className="text-xs" style={{ color: '#9ca3af' }}>Total Points</div>
+            </div>
+          </div>
+        )}
         
         {/* Leaderboard */}
         <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
