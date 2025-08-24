@@ -990,13 +990,14 @@
 
 /* Week card active state for immediate feedback on touch devices */
 .week-card:active {
-  transform: translateY(-2px);
+  transform: translateY(2px);
+  transition: transform 0.1s ease;
 }
 
 /* Only apply hover effects on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   .week-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px);  
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
   }
 
@@ -1037,6 +1038,7 @@
   flex-direction: column;
   justify-content: space-between;
   padding-bottom: 4px;
+  gap: 0.5em;
 }
 
 /* Week header with number and status */
@@ -1044,7 +1046,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 0.75em;
 }
 
 .week-number {
@@ -1068,7 +1070,7 @@
 .week-dates {
   display: flex;
   font-weight: 200;
-  margin-bottom: 14px;
+  margin-bottom: 1em;
   opacity: 0.9;
   align-items: center;
   justify-content: space-between;
@@ -1103,45 +1105,62 @@
   opacity: 0.6;
 }
 
-@media (max-width: 768px) {
+/* ==========================================
+   MOBILE SIZE TIERS - Proportional Scaling
+   ========================================== */
+
+/* Group 1: Compact Phones (≤375px) */
+@media (max-width: 375px) {
   .week-card {
-    padding: clamp(12px, 3%, 20px); /* Use percentage of CARD width, not viewport */
-    aspect-ratio: 2.2 / 1; /* Slightly taller aspect ratio for mobile */
+    padding: 14px;
+    min-height: 110px;
   }
-  
-  /* FIXED: Scale everything relative to CARD size, not viewport */
-  .week-header {
-    margin-bottom: clamp(8px, 2%, 16px);
-  }
-  
-  .week-number {
-    font-size: clamp(1.2rem, 6cqi, 1.8rem); /* Use container query units! */
-    line-height: 1.1;
-  }
-  
-  .week-status-badge {
-    font-size: clamp(0.65rem, 3cqi, 0.9rem); /* cqi = container query inline size */
-    padding: clamp(2px, 0.5%, 4px) clamp(6px, 1.5%, 10px);
-  }
-  
-  .week-dates {
-    font-size: clamp(0.75rem, 3.5cqi, 1rem);
-    margin-bottom: clamp(8px, 2%, 12px);
-  }
-  
-  .points-label {
-    font-size: clamp(0.7rem, 3cqi, 0.9rem);
-  }
-  
-  .points-value {
-    font-size: clamp(1rem, 5cqi, 1.4rem);
-    margin-left: 4px;
-  }
-  
-  .current-indicator {
-    font-size: clamp(0.75rem, 3.5cqi, 1rem);
-  }
+  .week-number { font-size: 1.3rem; }
+  .week-status-badge { font-size: 0.7rem; padding: 3px 7px; }
+  .week-dates { font-size: 0.8rem; margin-bottom: 10px; }
+  .points-value { font-size: 1.1rem; }
+  .current-indicator { font-size: 0.75rem; }
 }
+
+/* Group 2: Standard Phones (376px - 413px) */
+@media (min-width: 376px) and (max-width: 413px) {
+  .week-card {
+    padding: 16px;
+    min-height: 120px;
+  }
+  .week-number { font-size: 1.4rem; }
+  .week-status-badge { font-size: 0.75rem; padding: 4px 8px; }
+  .week-dates { font-size: 0.85rem; margin-bottom: 12px; }
+  .points-value { font-size: 1.2rem; }
+  .current-indicator { font-size: 0.8rem; }
+}
+
+/* Group 3: Large Phones (414px - 430px) - Pro Max Models */
+@media (min-width: 414px) and (max-width: 430px) {
+  .week-card {
+    padding: 18px;
+    min-height: 130px;
+  }
+  .week-number { font-size: 1.5rem; }
+  .week-status-badge { font-size: 0.8rem; padding: 4px 9px; }
+  .week-dates { font-size: 0.9rem; margin-bottom: 14px; }
+  .points-value { font-size: 1.3rem; }
+  .current-indicator { font-size: 0.85rem; }
+}
+
+/* Group 4: Extra Large (431px+) - Future-proofing */
+@media (min-width: 431px) and (max-width: 768px) {
+  .week-card {
+    padding: 20px;
+    min-height: 140px;
+  }
+  .week-number { font-size: 1.6rem; }
+  .week-status-badge { font-size: 0.85rem; padding: 5px 10px; }
+  .week-dates { font-size: 0.95rem; margin-bottom: 16px; }
+  .points-value { font-size: 1.4rem; }
+  .current-indicator { font-size: 0.9rem; }
+}
+
 
 /* Fallback for browsers that don't support container queries */
 @supports not (font-size: 1cqi) {
@@ -1165,6 +1184,20 @@
       font-size: clamp(0.75rem, 3vw, 1rem);
     }
   }
+}
+/* ==========================================
+   FALLBACK FOR UNSUPPORTED MEDIA QUERIES
+   ========================================== */
+   
+@media (max-width: 768px) {
+  .week-card {
+    padding: 16px;
+    min-height: 120px;
+  }
+  .week-number { font-size: 1.4rem; }
+  .week-status-badge { font-size: 0.75rem; }
+  .week-dates { font-size: 0.85rem; }
+  .points-value { font-size: 1.2rem; }
 }
 
 /* =================================================================
