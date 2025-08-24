@@ -348,7 +348,7 @@ function HomePage() {
                   fontSize="text-base" 
                 />
                 <div className="mt-2 text-center">
-                  <div className="text-xs font-bold" style={{ color: '#F9A825' }}>Overall</div>
+                  <div className="text-xs font-bold" style={{ color: '#C2185B' }}>Overall</div>
                 </div>
               </div>
               
