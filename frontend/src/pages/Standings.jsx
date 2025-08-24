@@ -3,7 +3,13 @@ import { useAuth } from '../context/AuthContext';
 import PageLayout from '../components/common/PageLayout';
 import UserAvatar from '../components/common/UserAvatar';
 import { Trophy, Award } from 'lucide-react';
-import { calculateRankWithTies, getMedalTier, getRingColorClass } from '../components/standings/rankingUtils';
+import { 
+  calculateRankWithTies, 
+  getMedalTier, 
+  getRingColorClass,
+  capitalizeFirstLetter,
+  renderRank
+} from '../components/standings/rankingUtils.jsx';
 
 export default function Standings() {
   const { userInfo } = useAuth();
@@ -57,18 +63,17 @@ export default function Standings() {
     return a.username.localeCompare(b.username);
   });
 
-  // Helper function to capitalize first letter
-  const capitalizeFirstLetter = (str) => {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  };
+  // Helper function to get container styling based on user status
+  const getContainerStyling = (isCurrentUser) => {
+    let baseClasses = 'rounded-xl p-4 transition-all duration-300 border ';
+    
+    if (isCurrentUser) {
+      baseClasses += 'bg-gradient-to-r from-purple-900/20 to-purple-800/20 border-purple-500/50';
+    } else {
+      baseClasses += 'bg-gradient-to-r from-gray-800/50 to-gray-900/50 border-gray-700/50';
+    }
 
-  // Helper function to get point color based on medal tier
-  const getPointColor = (tier) => {
-    if (tier === 1) return 'text-yellow-400';  // Gold
-    if (tier === 2) return 'text-gray-400';    // Silver
-    if (tier === 3) return 'text-amber-600';   // Bronze
-    return 'text-white'; // White for 4th place and below
+    return baseClasses;
   };
 
   const LoadingSpinner = () => (
@@ -155,7 +160,7 @@ export default function Standings() {
       </div>
 
       {/* Standings List */}
-      <div className="max-w-md mx-auto">
+      <div className="max-w-md mx-auto space-y-3">
         {sortedStandings.length === 0 ? (
           <div className="text-center py-16">
             <Trophy className="w-16 h-16 text-gray-500 mx-auto mb-4" />
@@ -174,13 +179,11 @@ export default function Standings() {
             const medalTier = getMedalTier(standings, entry.username, selectedWeek);
 
             return (
-              <div key={entry.username}>
-                {/* Divider line (not for first player) */}
-                {index > 0 && (
-                  <div className="border-t border-gray-700 mx-6"></div>
-                )}
-                
-                <div className="flex items-center space-x-4 py-4 px-6">
+              <div
+                key={entry.username}
+                className={getContainerStyling(isCurrentUser)}
+              >
+                <div className="flex items-center space-x-4">
                   {/* Avatar with ring based on medal tier */}
                   <UserAvatar
                     username={entry.username}
@@ -188,9 +191,9 @@ export default function Standings() {
                     className={`w-12 h-12 flex-shrink-0 ${getRingColorClass(medalTier)}`}
                   />
 
-                  {/* Rank (with T- for ties) */}
-                  <div className={`text-xl font-bold w-8 ${getPointColor(medalTier)}`}>
-                    {displayRank}
+                  {/* Rank (medal for top 3, number for others) */}
+                  <div className="w-8 flex justify-center">
+                    {renderRank(medalTier, displayRank)}
                   </div>
 
                   {/* Username */}
@@ -203,7 +206,7 @@ export default function Standings() {
                   </div>
 
                   {/* Points */}
-                  <div className={`text-2xl font-bold ${getPointColor(medalTier)}`}>
+                  <div className="text-2xl font-bold text-white">
                     {points}
                   </div>
                 </div>
