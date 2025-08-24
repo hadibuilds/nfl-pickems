@@ -14,7 +14,7 @@ import React from 'react';
  * @returns {string|number} - Rank (e.g., "T-1", 2, 3, etc.)
  */
 export const calculateRankWithTies = (standings, username, selectedWeek = null) => {
-    if (!standings || standings.length === 0) return '—';
+    if (!standings || standings.length === 0) return 'â€”';
     
     // Sort standings by points (descending) then alphabetically
     const sortedStandings = [...standings].sort((a, b) => {
@@ -33,7 +33,7 @@ export const calculateRankWithTies = (standings, username, selectedWeek = null) 
       standing.username.toLowerCase() === username.toLowerCase()
     );
     
-    if (!userStanding) return '—';
+    if (!userStanding) return 'â€”';
   
     const userPoints = selectedWeek 
       ? userStanding.weekly_scores?.[selectedWeek] || 0 

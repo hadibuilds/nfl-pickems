@@ -3,13 +3,23 @@
  * Now uses actual database data instead of mock data
  * REFACTORED: Using PageLayout for consistent navbar alignment
  * ENHANCED: Added skeleton loaders for user stats section
+ * UPDATED: Added medal badges to leaderboard section
  */
 
 import React, { useState, useEffect } from 'react';
 import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
 import useDashboardData from '../hooks/useDashboardData';
 import PageLayout from '../components/common/PageLayout';
+import UserAvatar from '../components/common/UserAvatar';
 import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Zap } from 'lucide-react';
+import { 
+  GoldMedal, 
+  SilverMedal, 
+  BronzeMedal, 
+  capitalizeFirstLetter,
+  calculateRankWithTies,
+  getMedalTier
+} from '../components/standings/rankingUtils.jsx';
 import confetti from 'canvas-confetti';
 
 // Skeleton Components
@@ -170,22 +180,50 @@ const RecentGameCard = ({ game }) => {
   );
 };
 
-const LeaderboardRow = ({ user, index }) => {
+// Updated LeaderboardRow component with proper tie logic
+const LeaderboardRow = ({ user, leaderboardData }) => {
+  // Convert leaderboard data to standings format for tie calculation
+  const standingsFormat = leaderboardData.map(u => ({
+    username: u.username,
+    total_points: u.points
+  }));
+
+  // Calculate proper medal tier using the same logic as standings
+  const medalTier = getMedalTier(standingsFormat, user.username);
+  
+  // Helper function to render rank (medal or number) based on medal tier
+  const renderRankBadge = (tier) => {
+    if (tier === 1) return <GoldMedal />;
+    if (tier === 2) return <SilverMedal />;
+    if (tier === 3) return <BronzeMedal />;
+    return (
+      <div className="w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
+        {user.rank}
+      </div>
+    );
+  };
+
   return (
     <div className={`
       flex items-center justify-between p-3 rounded-lg transition-all duration-200
       ${user.isCurrentUser ? 'bg-purple-500/20 border border-purple-500/30' : 'hover:bg-gray-700/50'}
     `}>
       <div className="flex items-center space-x-3">
-        <div className={`
-          w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
-          ${index < 3 ? 'bg-yellow-500 text-yellow-900' : 'bg-gray-600 text-white'}
-        `}>
-          {user.rank}
+        {/* Avatar */}
+        <UserAvatar
+          username={user.username}
+          size="sm"
+          className="w-8 h-8 flex-shrink-0"
+        />
+
+        {/* Rank Badge using medal tier logic */}
+        <div className="flex items-center justify-center">
+          {renderRankBadge(medalTier)}
         </div>
+
         <div>
-          <div className={`font-medium ${user.isCurrentUser ? 'text-purple-300' : 'text-white'}`}>
-            {user.username}
+          <div className={`font-medium text-sm ${user.isCurrentUser ? 'text-purple-300' : 'text-white'}`}>
+            {capitalizeFirstLetter(user.username)}
           </div>
           <div className="text-xs" style={{ color: '#9ca3af' }}>{user.points} points</div>
         </div>
@@ -400,7 +438,11 @@ function HomePage() {
             ) : (
               <>
                 {leaderboard.slice(0, 3).map((user, index) => (
-                  <LeaderboardRow key={user.rank || index} user={user} index={index} />
+                  <LeaderboardRow 
+                    key={user.rank || index} 
+                    user={user} 
+                    leaderboardData={leaderboard}
+                  />
                 ))}
               </>
             )}
