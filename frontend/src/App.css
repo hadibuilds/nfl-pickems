@@ -965,7 +965,7 @@
   text-decoration: none;
   transition: all 0.3s ease;
   cursor: pointer;
-  aspect-ratio: 2 / 1;
+  aspect-ratio: 2.5 / 1;
   position: relative;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
@@ -1005,7 +1005,6 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.5rem;
 }
 
 .week-number {
@@ -1029,8 +1028,8 @@
 .week-dates {
   font-size: clamp(0.8rem, 4vw, 1rem);
   font-weight: 500;
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
+  align-items: flex-start;
+  text-align: left;
 }
 
 /* Points container */
