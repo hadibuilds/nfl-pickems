@@ -1,4 +1,4 @@
-// hooks/useDashboardData.js - Optimized version with granular loading
+// hooks/useDashboardData.js - Original version without caching
 import { useState, useEffect } from 'react';
 
 const useDashboardData = (userInfo, options = {}) => {
@@ -18,10 +18,10 @@ const useDashboardData = (userInfo, options = {}) => {
   
   // Options for what to load
   const {
-    loadFull = false,          // Load everything at once (slower)
-    loadGranular = true,       // Load pieces separately (faster initial load)
-    includeLeaderboard = true, // Skip leaderboard if not needed (big performance boost)
-    sections = null            // Specific sections: ['stats', 'accuracy', 'leaderboard', 'recent', 'insights']
+    loadFull = false,
+    loadGranular = true,
+    includeLeaderboard = true,
+    sections = null
   } = options;
 
   const getCsrfToken = () => {
@@ -36,7 +36,6 @@ const useDashboardData = (userInfo, options = {}) => {
       setLoading(true);
       setError(null);
 
-      // Option 1: Get everything at once
       const url = sections 
         ? `${API_BASE}/predictions/api/dashboard/?sections=${sections.join(',')}`
         : `${API_BASE}/predictions/api/dashboard/`;
@@ -73,7 +72,7 @@ const useDashboardData = (userInfo, options = {}) => {
       
       // Initialize with proper structure that matches Django response
       setDashboardData({
-        user_data: {},    // This is what Django returns
+        user_data: {},
         leaderboard: [],
         insights: []
       });
@@ -201,7 +200,7 @@ const useDashboardData = (userInfo, options = {}) => {
     dashboardData, 
     loading, 
     error, 
-    loadingStates, // Individual loading states for each section
+    loadingStates,
     refetch: fetchDashboardData,
     isRealtime: dashboardData?.meta?.calculation_mode === 'realtime'
   };

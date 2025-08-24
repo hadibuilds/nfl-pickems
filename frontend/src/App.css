@@ -82,14 +82,12 @@
 /* Locked game styling - only gray out if NO results yet */
 .game-box.locked:not(.has-results) {
   opacity: 0.8;
-  background-color: #2a2a2a;
 }
 
 /* Cards with results look normal */
 .game-box.has-results {
   opacity: 1;
   filter: none;
-  background-color: #2d2d2d;
 }
 
 /* =================================================================
