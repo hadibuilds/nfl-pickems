@@ -389,7 +389,7 @@ function HomePage() {
         )}
         
         {/* Leaderboard */}
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#1f1f1f' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Leaderboard</h3>
             <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
@@ -415,7 +415,7 @@ function HomePage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#1f1f1f' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Recent Games</h3>
             <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
@@ -442,7 +442,7 @@ function HomePage() {
 
       {/* Insights Section */}
       {insights.length > 0 && (
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#1f1f1f' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Insights</h3>
             <Zap className="w-4 h-4" style={{ color: '#9ca3af' }} />
