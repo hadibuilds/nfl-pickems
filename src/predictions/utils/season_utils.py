@@ -11,7 +11,7 @@ from .dashboard_utils import (
     get_leaderboard_data_realtime,
     get_current_week,
 )
-from .ranking_utils import assign_competition_ranks as _assign
+from .ranking_utils import assign_dense_ranks as _assign
 
 User = get_user_model()
 
@@ -143,17 +143,17 @@ def build_season_leaderboard_fast(through_week=None, limit=10):
     board.sort(key=lambda x: (-x.get('total_points', 0), x['username'].lower()))
     return {'standings': board[:min(int(limit), 50)], 'limit': min(int(limit), 50), 'through_week': through_week}
 
-# at top of file (already imported): from .ranking_utils import assign_competition_ranks as _assign
+# at top of file (already imported): from .ranking_utils import assign_dense_ranks as _assign
+
 
 def build_season_leaderboard_dynamic(limit=10):
     # full realtime list for rank mapping
     realtime = get_leaderboard_data_realtime(limit=None)
-    # normalize to total_points key
+    # Normalize points key and compute dense ranks on the full list
     current_rows = [{
-        'username': row['username'],
-        'total_points': row.get('total_points', row.get('points', 0)),
-    } for row in realtime]
-    # assign dense ranks 1,2,2,3
+        'username': r['username'],
+        'total_points': r.get('total_points', r.get('points', 0)),
+    } for r in realtime]
     _assign(current_rows, points_key='total_points')
     current_rank_map = {r['username']: r['rank'] for r in current_rows}
 
@@ -181,14 +181,13 @@ def build_season_leaderboard_dynamic(limit=10):
         enriched.append({
             'username': row['username'],
             'total_points': row['total_points'],
-            'rank': cur if isinstance(cur, int) else  None,
+            'rank': cur,
             'trend': trend,
             'rank_change': delta,
         })
 
     enriched.sort(key=lambda r: (-r['total_points'], r['username'].lower()))
-    # fill any missing ranks within the sorted list (dense)
+    # dense rank within the final sorted list too (for safety)
     _assign(enriched, points_key='total_points')
-    for e in enriched:
-        e['rank'] = e.get('rank')  # keep assigned
     return {'standings': enriched[:min(int(limit), 50)], 'limit': min(int(limit), 50), 'mode': 'realtime_vs_snapshot'}
+

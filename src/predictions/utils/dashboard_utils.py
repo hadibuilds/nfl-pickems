@@ -77,26 +77,26 @@ def calculate_total_points_simple(user):
     return cg + (cp * 2)
 
 
+from .ranking_utils import assign_dense_ranks
+
+
 def calculate_current_user_rank_realtime(user, current_week):
-    user_points = []
+    """Realtime user rank using DENSE ranking (1,2,2,3)."""
+    rows = []
     for u in User.objects.all():
         completed_total = sum(calculate_user_points_by_week(u).values()) if TREND_UTILS_AVAILABLE else calculate_total_points_simple(u)
         live = calculate_live_stats(u, current_week)['weekly_points']
-        user_points.append((u, completed_total + live))
-
-    user_points.sort(key=lambda t: (-t[1], t[0].username))
-
-    leader = user_points[0][1] if user_points else 0
-    my_rank, my_points = 1, 0
-    for i, (u, pts) in enumerate(user_points):
-        if u == user:
-            my_rank, my_points = i + 1, pts
-            break
-
+        rows.append({'user': u, 'username': u.username, 'total_points': completed_total + live})
+    assign_dense_ranks(rows, points_key='total_points')
+    rows.sort(key=lambda r: (r['rank'], r['username']))  # deterministic
+    leader_points = rows[0]['total_points'] if rows else 0
+    me = next((r for r in rows if r['user'] == user), None)
+    my_rank = me['rank'] if me else None
+    my_points = me['total_points'] if me else 0
     return {
         'rank': my_rank,
-        'total_users': len(user_points),
-        'points_from_leader': leader - my_points,
+        'total_users': len(rows),
+        'points_from_leader': leader_points - my_points,
     }
 
 
@@ -436,21 +436,36 @@ def get_best_category_with_history(user):
     return ("Moneyline", m) if m >= p else ("Prop Bets", p)
 
 
+
 def get_leaderboard_data_realtime(limit=5):
+    """Realtime leaderboard slice using DENSE ranks (1,2,2,3)."""
     current_week = get_current_week()
     rows = []
     for u in User.objects.all():
         completed_total = sum(calculate_user_points_by_week(u).values()) if TREND_UTILS_AVAILABLE else calculate_total_points_simple(u)
         live = calculate_live_stats(u, current_week)['weekly_points']
         try:
-            change, trend = get_user_rank_trend(u) if TREND_UTILS_AVAILABLE else ("—", "same")
+            change_display, trend = get_user_rank_trend(u) if TREND_UTILS_AVAILABLE else ("—", "same")
         except Exception:
-            change, trend = "—", "same"
-        rows.append({'username': u.username, 'points': completed_total + live, 'trend': trend, 'rank_change': change})
-    rows.sort(key=lambda r: (-r['points'], r['username']))
+            change_display, trend = "—", "same"
+        # derive numeric rank_change (positive = up) from string like "+2"/"-1"/"—"
+        try:
+            change_num = int(str(change_display)) if str(change_display).replace('+','').replace('-','').isdigit() else 0
+        except Exception:
+            change_num = 0
+        rows.append({
+            'username': u.username,
+            'total_points': completed_total + live,
+            'trend': trend or 'same',
+            'rank_change_display': change_display,
+            'rank_change': change_num,
+        })
+    assign_dense_ranks(rows, points_key='total_points')
+    # slice (None -> full list is fine)
+    sliced = rows if limit is None else rows[:limit]
     out = []
-    for i, r in enumerate(rows[:limit]):
-        r.update({'rank': i+1, 'current_rank': i+1, 'current_points': r['points']})
+    for r in sliced:
+        r.update({'rank': r['rank'], 'current_rank': r['rank'], 'current_points': r['total_points']})
         out.append(r)
     return out
 
