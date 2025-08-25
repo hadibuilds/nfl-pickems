@@ -1,12 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="background-color: #1E1E20 !important;">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Pickems.fun{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Force the exact same background as your React app */
+    html {
+      background-color: #1E1E20 !important;
+      color: rgba(255, 255, 255, 0.87) !important;
+    }
+    
+    body {
+      background-color: #1E1E20 !important;
+      color: rgba(255, 255, 255, 0.87) !important;
+      margin: 0;
+      padding: 0;
+      font-family: 'General Sans', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* Override any Tailwind defaults */
+    * {
+      box-sizing: border-box;
+    }
+
+    /* Spinner animation */
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    /* Focus ring styling */
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgb(139, 92, 246) !important;
+    }
+  </style>
 </head>
-<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-white">
+<body style="background-color: #1E1E20 !important; color: rgba(255, 255, 255, 0.87) !important;">
   {% block content %}{% endblock %}
 </body>
 </html>
