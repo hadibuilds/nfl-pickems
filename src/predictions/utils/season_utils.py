@@ -137,22 +137,25 @@ def build_season_leaderboard_fast(through_week=None, limit=10):
             r['rank_change'] = delta
             r['trend'] = 'up' if delta > 0 else 'down' if delta < 0 else 'same'
         else:
-            r['rank_change'] = None
-            r['trend'] = None
+            r['rank_change'] = 0
+            r['trend'] = 'same'
 
     board.sort(key=lambda x: (-x.get('total_points', 0), x['username'].lower()))
     return {'standings': board[:min(int(limit), 50)], 'limit': min(int(limit), 50), 'through_week': through_week}
 
+# at top of file (already imported): from .ranking_utils import assign_competition_ranks as _assign
+
 def build_season_leaderboard_dynamic(limit=10):
     # full realtime list for rank mapping
     realtime = get_leaderboard_data_realtime(limit=None)
-    realtime_sorted = sorted(realtime, key=lambda r: (-r.get('points', r.get('total_points', 0)), r['username'].lower()))
-    current_rank_map = {row['username']: idx + 1 for idx, row in enumerate(realtime_sorted)}
+    # normalize to total_points key
     current_rows = [{
         'username': row['username'],
-        'total_points': row.get('points', row.get('total_points', 0)),
-        'current_rank': current_rank_map[row['username']],
-    } for row in realtime_sorted]
+        'total_points': row.get('total_points', row.get('points', 0)),
+    } for row in realtime]
+    # assign dense ranks 1,2,2,3
+    _assign(current_rows, points_key='total_points')
+    current_rank_map = {r['username']: r['rank'] for r in current_rows}
 
     # latest snapshot rank per user
     baseline_rank = {}
@@ -168,20 +171,24 @@ def build_season_leaderboard_dynamic(limit=10):
     enriched = []
     for row in current_rows:
         base = baseline_rank.get(row['username'])
-        cur = row['current_rank']
+        cur = current_rank_map.get(row['username'])
         if isinstance(base, int) and isinstance(cur, int):
             delta = base - cur
             trend = 'up' if delta > 0 else 'down' if delta < 0 else 'same'
         else:
-            delta = None
-            trend = None
+            delta = 0
+            trend = 'same'
         enriched.append({
             'username': row['username'],
             'total_points': row['total_points'],
-            'rank': cur,
+            'rank': cur if isinstance(cur, int) else  None,
             'trend': trend,
             'rank_change': delta,
         })
 
     enriched.sort(key=lambda r: (-r['total_points'], r['username'].lower()))
+    # fill any missing ranks within the sorted list (dense)
+    _assign(enriched, points_key='total_points')
+    for e in enriched:
+        e['rank'] = e.get('rank')  # keep assigned
     return {'standings': enriched[:min(int(limit), 50)], 'limit': min(int(limit), 50), 'mode': 'realtime_vs_snapshot'}
