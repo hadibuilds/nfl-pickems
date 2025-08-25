@@ -155,29 +155,52 @@ def logout_view(request):
         print(f"Error during logout: {e}")
         return JsonResponse({"detail": "Internal server error"}, status=500)
 
-
 class CustomPasswordResetView(PasswordResetView):
     """
-    Custom password reset view that sends HTML emails
+    Custom password reset view that sends HTML emails - DEBUG VERSION
     """
     template_name = 'registration/password_reset_form.html'
     email_template_name = 'registration/password_reset_email.html'
     subject_template_name = 'registration/password_reset_subject.txt'
+    
+    def __init__(self, *args, **kwargs):
+        print("DEBUG: CustomPasswordResetView __init__ called")
+        super().__init__(*args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        print("DEBUG: CustomPasswordResetView POST method called")
+        print(f"DEBUG: Request data: {request.POST}")
+        return super().post(request, *args, **kwargs)
+    
+    def form_valid(self, form):
+        print("DEBUG: CustomPasswordResetView form_valid called")
+        print(f"DEBUG: Form cleaned_data: {form.cleaned_data}")
+        return super().form_valid(form)
     
     def send_mail(self, subject_template_name, email_template_name,
                   context, from_email, to_email, html_email_template_name=None):
         """
         Send a Django email with both HTML and plain text versions
         """
+        print("DEBUG: ===== CustomPasswordResetView.send_mail() CALLED =====")
+        print(f"DEBUG: To email: {to_email}")
+        print(f"DEBUG: From email: {from_email}")
+        print(f"DEBUG: Email template: {email_template_name}")
+        print(f"DEBUG: Subject template: {subject_template_name}")
+        
         subject = render_to_string(subject_template_name, context)
         # Remove newlines from subject
         subject = ''.join(subject.splitlines())
+        print(f"DEBUG: Subject: {subject}")
         
         # Render HTML email
         html_content = render_to_string(email_template_name, context)
+        print(f"DEBUG: HTML content length: {len(html_content)} characters")
+        print(f"DEBUG: HTML preview (first 100 chars): {html_content[:100]}")
         
         # Create plain text version by stripping HTML tags
         text_content = strip_tags(html_content)
+        print(f"DEBUG: Text content length: {len(text_content)} characters")
         
         # Create email with both HTML and text versions
         email_message = EmailMultiAlternatives(
@@ -189,6 +212,15 @@ class CustomPasswordResetView(PasswordResetView):
         
         # Attach HTML version
         email_message.attach_alternative(html_content, "text/html")
+        print("DEBUG: EmailMultiAlternatives created with HTML alternative attached")
         
         # Send the email
-        email_message.send()
+        try:
+            result = email_message.send()
+            print(f"DEBUG: Email sent successfully, result: {result}")
+        except Exception as e:
+            print(f"DEBUG: Email send failed: {e}")
+            raise
+        
+        print("DEBUG: ===== send_mail() COMPLETED =====")
+        return result

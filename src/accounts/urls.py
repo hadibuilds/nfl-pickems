@@ -17,7 +17,7 @@ urlpatterns = [
     path('api/logout/', logout_view, name='logout'),
 
     # Use the custom view instead of the default one
-    path('api/password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),
+    path('api/password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),  
 
     path('api/password-reset/done/', auth_views.PasswordResetDoneView.as_view(
         template_name='registration/reset_link_sent.html',
