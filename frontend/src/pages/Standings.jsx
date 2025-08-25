@@ -165,7 +165,7 @@ export default function Standings() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className={`font-bold text-lg truncate ${isCurrentUser ? 'text-purple-300' : 'text-white'}`}>
-                      {capitalizeFirstLetter(entry.username)}
+                      {capitalizeFirstLetter(entry.first_name || entry.username)}
                     </div>
                   </div>
                   <div className="text-2xl font-bold text-white">
@@ -179,4 +179,5 @@ export default function Standings() {
       </div>
     </PageLayout>
   );
+
 }
