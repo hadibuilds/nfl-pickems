@@ -1,4 +1,4 @@
-# predictions/urls.py
+# predictions/urls.py (unchanged routes; views were slimmed)
 from django.urls import path
 from .views import (
     # Existing endpoints
@@ -28,6 +28,7 @@ from .views import (
     user_season_stats_fast_view,
     user_weekly_trends_fast_view,
     season_leaderboard_fast_view,
+    season_leaderboard_dynamic_trend_view,
 )
 
 urlpatterns = [
@@ -60,4 +61,5 @@ urlpatterns = [
     path('api/user-season-stats-fast/', user_season_stats_fast_view, name='user-season-stats-fast'),
     path('api/user-trends-fast/', user_weekly_trends_fast_view, name='user-trends-fast'),
     path('api/season-leaderboard-fast/', season_leaderboard_fast_view, name='season-leaderboard-fast'),
+    path('api/season-leaderboard-dynamic/', season_leaderboard_dynamic_trend_view, name='season-leaderboard-dynamic'),
 ]

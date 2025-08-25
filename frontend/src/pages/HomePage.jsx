@@ -193,10 +193,10 @@ function HomePage() {
     if (!userInfo) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/season-leaderboard-fast/?limit=3`, {
+        const res = await fetch(`${API_BASE}/predictions/api/season-leaderboard-dynamic/?limit=3`, {
           credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') }
         });
-        if (!res.ok) throw new Error('season-leaderboard-fast failed');
+        if (!res.ok) throw new Error('season-leaderboard-dynamic failed');
         const data = await res.json();
         const rows = Array.isArray(data?.standings) ? data.standings : [];
         // mark current user; preserve trend
