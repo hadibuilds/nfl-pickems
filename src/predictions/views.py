@@ -27,9 +27,7 @@ from .utils.dashboard_utils import (
     get_user_season_stats,
     
     # Snapshot functions (legacy/optional)
-    calculate_user_dashboard_data,
     get_leaderboard_data_with_trends,
-    get_user_insights,
 )
 from collections import defaultdict
 import os
