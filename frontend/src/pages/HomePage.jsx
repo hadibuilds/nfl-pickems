@@ -318,7 +318,7 @@ function HomePage() {
             <h3 className="text-lg font-semibold">Leaderboard</h3>
             <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-0">
             {loadingStates.leaderboard ? (
               <LoadingSpinner />
             ) : (

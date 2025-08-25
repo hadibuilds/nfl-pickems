@@ -1,209 +1,204 @@
-// hooks/useDashboardData.js - Original version without caching
-import { useState, useEffect } from 'react';
+// hooks/useDashboardData.js — Optimized, robust, and consistent
+// - Parallel granular fetches with AbortController
+// - Safe immutable merges (no invalid spreads)
+// - Fine‑grained loadingStates + single error surface
+// - Idempotent reload() and option flags
+// - Uses server as source of truth for currentWeek
 
-const useDashboardData = (userInfo, options = {}) => {
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+// Small helper: read Django's CSRF cookie when needed
+function getCookie(name) {
+  const cookie = document.cookie
+    .split('; ')
+    .find(row => row.startsWith(name + '='));
+  return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+}
+
+/**
+ * useDashboardData
+ * Fetches granular dashboard data in parallel and merges into a single object.
+ *
+ * @param {object} userInfo - expects { username } at minimum when authenticated
+ * @param {object} options
+ *   - includeLeaderboard (boolean): fetch leaderboard block
+ *   - loadGranular (boolean): use granular endpoints (stats/accuracy/leaderboard/recent/insights)
+ *   - eager (boolean): if true, start fetching even if userInfo is missing (defaults to false)
+ */
+export default function useDashboardData(
+  userInfo,
+  { includeLeaderboard = true, loadGranular = true, eager = false } = {}
+) {
+  const [dashboardData, setDashboardData] = useState(() => ({ user_data: {} }));
   const [loadingStates, setLoadingStates] = useState({
-    stats: true,
-    accuracy: true,
-    leaderboard: true,
-    recent: true,
-    insights: true
+    stats: !!loadGranular,
+    accuracy: !!loadGranular,
+    leaderboard: !!includeLeaderboard,
+    recent: !!loadGranular,
+    insights: !!loadGranular,
   });
+  const [error, setError] = useState(null);
 
-  // Get API base URL from environment or use default
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-  
-  // Options for what to load
-  const {
-    loadFull = false,
-    loadGranular = true,
-    includeLeaderboard = true,
-    sections = null
-  } = options;
+  // Track latest in-flight request to avoid state updates from stale effects
+  const abortRef = useRef(null);
 
-  const getCsrfToken = () => {
-    const cookieValue = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('csrftoken='));
-    return cookieValue ? decodeURIComponent(cookieValue.split('=')[1]) : null;
-  };
+  const updateLoading = useCallback((patch) => {
+    setLoadingStates(prev => ({ ...prev, ...patch }));
+  }, []);
 
-  const fetchFullDashboard = async () => {
+  const mergeUserData = useCallback((patch) => {
+    setDashboardData(prev => ({
+      ...prev,
+      user_data: { ...(prev?.user_data || {}), ...patch },
+    }));
+  }, []);
+
+  const mergeRoot = useCallback((patch) => {
+    setDashboardData(prev => ({ ...prev, ...patch }));
+  }, []);
+
+  const fetchJSON = useCallback(async (path) => {
+    const controller = abortRef.current;
+    const resp = await fetch(`${API_BASE}${path}`, {
+      credentials: 'include',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') || '' },
+      signal: controller?.signal,
+    });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`${resp.status} ${resp.statusText} for ${path}${text ? ` — ${text}` : ''}`);
+    }
+    return resp.json();
+  }, []);
+
+  const startFetch = useCallback(async () => {
+    // Cancel any previous run
+    if (abortRef.current) abortRef.current.abort();
+    abortRef.current = new AbortController();
+
+    setError(null);
+
+    // Reset loading flags only for enabled sections
+    setLoadingStates({
+      stats: loadGranular,
+      accuracy: loadGranular,
+      leaderboard: includeLeaderboard,
+      recent: loadGranular,
+      insights: loadGranular,
+    });
+
     try {
-      setLoading(true);
-      setError(null);
-
-      const url = sections 
-        ? `${API_BASE}/predictions/api/dashboard/?sections=${sections.join(',')}`
-        : `${API_BASE}/predictions/api/dashboard/`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCsrfToken(),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!loadGranular) {
+        // Legacy monolithic endpoint fallback if you still keep it around
+        const data = await fetchJSON('/predictions/api/dashboard/realtime/');
+        mergeRoot(data || {});
+        setLoadingStates({ stats: false, accuracy: false, leaderboard: false, recent: false, insights: false });
+        return;
       }
 
-      const data = await response.json();
-      console.log('Dashboard data calculation mode:', data.meta?.calculation_mode);
-      
-      setDashboardData(data);
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Granular parallel fetches
+      const tasks = [];
 
-  const fetchGranularDashboard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Initialize with proper structure that matches Django response
-      setDashboardData({
-        user_data: {},
-        leaderboard: [],
-        insights: []
-      });
+      // STATS — includes currentWeek and basic numbers used on Home
+      updateLoading({ stats: true });
+      tasks.push(
+        fetchJSON('/predictions/api/dashboard/stats/')
+          .then((data) => {
+            // Normalize expected fields into user_data
+            const patch = {
+              username: userInfo?.username,
+              currentWeek: data.currentWeek,
+              weeklyPoints: data.weeklyPoints,
+              rank: data.rank,
+              totalUsers: data.totalUsers,
+              pointsFromLeader: data.pointsFromLeader,
+              pendingPicks: data.pendingPicks,
+            };
+            mergeUserData(patch);
+          })
+          .catch((e) => { setError((prev) => prev || e.message); })
+          .finally(() => updateLoading({ stats: false }))
+      );
 
-      const promises = [];
+      // ACCURACY + BEST CATEGORY + TOTAL POINTS
+      updateLoading({ accuracy: true });
+      tasks.push(
+        fetchJSON('/predictions/api/dashboard/accuracy/')
+          .then((data) => {
+            const patch = {
+              overallAccuracy: data.overallAccuracy ?? 0,
+              moneylineAccuracy: data.moneylineAccuracy ?? 0,
+              propBetAccuracy: data.propBetAccuracy ?? 0,
+              bestCategory: data.bestCategory ?? null,
+              bestCategoryAccuracy: data.bestCategoryAccuracy ?? 0,
+              totalPoints: data.totalPoints ?? 0,
+            };
+            mergeUserData(patch);
+          })
+          .catch((e) => { setError((prev) => prev || e.message); })
+          .finally(() => updateLoading({ accuracy: false }))
+      );
 
-      // FAST: Load user stats first (shows immediately)
-      const statsPromise = fetch(`${API_BASE}/predictions/api/dashboard/stats/`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCsrfToken() }
-      }).then(res => res.json()).then(data => {
-        setLoadingStates(prev => ({ ...prev, stats: false }));
-        // Update dashboard with stats data
-        setDashboardData(prev => ({
-          ...prev,
-          user_data: { ...prev?.user_data, ...data }
-        }));
-        return data;
-      });
-
-      promises.push(statsPromise);
-
-      // FAST: Load accuracy data
-      const accuracyPromise = fetch(`${API_BASE}/predictions/api/dashboard/accuracy/`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCsrfToken() }
-      }).then(res => res.json()).then(data => {
-        setLoadingStates(prev => ({ ...prev, accuracy: false }));
-        // Update dashboard with accuracy data - careful merging
-        setDashboardData(prev => ({
-          ...prev,
-          user_data: { 
-            ...prev?.user_data, 
-            overallAccuracy: data.overallAccuracy,
-            moneylineAccuracy: data.moneylineAccuracy,
-            propBetAccuracy: data.propBetAccuracy,
-            bestCategory: data.bestCategory,
-            bestCategoryAccuracy: data.bestCategoryAccuracy,
-            totalPoints: data.totalPoints
-          }
-        }));
-        return data;
-      });
-
-      promises.push(accuracyPromise);
-
-      // MEDIUM: Load leaderboard (only if needed)
+      // LEADERBOARD (optional)
       if (includeLeaderboard) {
-        const leaderboardPromise = fetch(`${API_BASE}/predictions/api/dashboard/leaderboard/?limit=5`, {
-          credentials: 'include',
-          headers: { 'X-CSRFToken': getCsrfToken() }
-        }).then(res => res.json()).then(data => {
-          setLoadingStates(prev => ({ ...prev, leaderboard: false }));
-          // Update dashboard with leaderboard
-          setDashboardData(prev => ({ ...prev, leaderboard: data.leaderboard }));
-          return data;
-        });
-
-        promises.push(leaderboardPromise);
-      } else {
-        setLoadingStates(prev => ({ ...prev, leaderboard: false }));
+        updateLoading({ leaderboard: true });
+        tasks.push(
+          fetchJSON('/predictions/api/dashboard/leaderboard/')
+            .then((data) => {
+              // Expecting { leaderboard: [...] }
+              mergeRoot({ leaderboard: Array.isArray(data?.leaderboard) ? data.leaderboard : [] });
+            })
+            .catch((e) => { setError((prev) => prev || e.message); })
+            .finally(() => updateLoading({ leaderboard: false }))
+        );
       }
 
-      // FAST: Load recent games
-      const recentPromise = fetch(`${API_BASE}/predictions/api/dashboard/recent/?limit=3`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCsrfToken() }
-      }).then(res => res.json()).then(data => {
-        setLoadingStates(prev => ({ ...prev, recent: false }));
-        // Update dashboard with recent games
-        setDashboardData(prev => ({
-          ...prev,
-          user_data: { ...prev?.user_data, recentGames: data.recentGames }
-        }));
-        return data;
-      });
+      // RECENT GAMES
+      updateLoading({ recent: true });
+      tasks.push(
+        fetchJSON('/predictions/api/dashboard/recent/')
+          .then((data) => {
+            const patch = { recentGames: Array.isArray(data?.recentGames) ? data.recentGames : [] };
+            mergeUserData(patch);
+          })
+          .catch((e) => { setError((prev) => prev || e.message); })
+          .finally(() => updateLoading({ recent: false }))
+      );
 
-      promises.push(recentPromise);
+      // INSIGHTS
+      updateLoading({ insights: true });
+      tasks.push(
+        fetchJSON('/predictions/api/dashboard/insights/')
+          .then((data) => {
+            mergeRoot({ insights: Array.isArray(data?.insights) ? data.insights : [] });
+          })
+          .catch((e) => { setError((prev) => prev || e.message); })
+          .finally(() => updateLoading({ insights: false }))
+      );
 
-      // FAST: Load insights
-      const insightsPromise = fetch(`${API_BASE}/predictions/api/dashboard/insights/`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCsrfToken() }
-      }).then(res => res.json()).then(data => {
-        setLoadingStates(prev => ({ ...prev, insights: false }));
-        // Update dashboard with insights
-        setDashboardData(prev => ({
-          ...prev,
-          insights: data.insights,
-          user_data: {
-            ...prev?.user_data,
-            streak: data.streak,
-            streakType: data.streakType,
-            longestWinStreak: data.longestWinStreak,
-            longestLossStreak: data.longestLossStreak,
-            seasonStats: data.seasonStats
-          }
-        }));
-        return data;
-      });
-
-      promises.push(insightsPromise);
-
-      // Wait for all requests to complete
-      await Promise.all(promises);
-
-      console.log('All granular dashboard data loaded');
-      
-    } catch (err) {
-      console.error('Error fetching granular dashboard data:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      await Promise.all(tasks);
+    } catch (e) {
+      if (e?.name === 'AbortError') return; // ignore aborted runs
+      setError((prev) => prev || e.message);
     }
-  };
+  }, [includeLeaderboard, loadGranular, userInfo?.username, fetchJSON, mergeRoot, mergeUserData, updateLoading]);
 
-  const fetchDashboardData = loadFull ? fetchFullDashboard : fetchGranularDashboard;
-
+  // Kick off loads when user is available (or eager flag is set)
   useEffect(() => {
-    if (!userInfo?.username) return;
-    fetchDashboardData();
-  }, [userInfo?.username, API_BASE, loadFull, loadGranular, includeLeaderboard]);
+    if (!eager && !userInfo?.username) return;
+    startFetch();
+    return () => {
+      if (abortRef.current) abortRef.current.abort();
+    };
+  }, [eager, userInfo?.username, startFetch]);
 
-  return { 
-    dashboardData, 
-    loading, 
-    error, 
-    loadingStates,
-    refetch: fetchDashboardData,
-    isRealtime: dashboardData?.meta?.calculation_mode === 'realtime'
-  };
-};
+  // Stable reload reference for buttons/manual retries
+  const reload = useCallback(() => {
+    startFetch();
+  }, [startFetch]);
 
-export default useDashboardData;
+  const api = useMemo(() => ({ dashboardData, loadingStates, error, reload }), [dashboardData, loadingStates, error, reload]);
+  return api;
+}
