@@ -6,12 +6,11 @@
   <title>{% block title %}Pickems.fun{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Force the exact same background as your React app */
+    /* Match the React app look */
     html {
       background-color: #1E1E20 !important;
       color: rgba(255, 255, 255, 0.87) !important;
     }
-    
     body {
       background-color: #1E1E20 !important;
       color: rgba(255, 255, 255, 0.87) !important;
@@ -20,22 +19,11 @@
       font-family: 'General Sans', system-ui, sans-serif;
       min-height: 100vh;
     }
-
-    /* Override any Tailwind defaults */
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     /* Spinner animation */
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    .animate-spin {
-      animation: spin 1s linear infinite;
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 1s linear infinite; }
 
     /* Focus ring styling */
     input:focus {
@@ -43,9 +31,82 @@
       box-shadow: 0 0 0 2px rgb(139, 92, 246) !important;
     }
   </style>
+
+  <script>
+    // Universal form double-submit guard with instant "Working…" feedback.
+    // - Disables all submit buttons on first submit
+    // - Replaces clicked button's content with spinner + loading text
+    // - Opt-out per form: data-allow-multiple-submit="true"
+    // - Customize button text: data-loading-text="Sending…"
+    (function() {
+      function enhanceForm(form) {
+        if (form.__guardEnhanced) return;
+        form.__guardEnhanced = true;
+
+        // Track which submit button was clicked
+        form.addEventListener('click', function(e) {
+          const btn = e.target && e.target.closest('button[type="submit"], input[type="submit"]');
+          if (btn) form.__lastClickedSubmit = btn;
+        }, true);
+
+        form.addEventListener('submit', function(e) {
+          if (form.hasAttribute('data-allow-multiple-submit')) return;
+
+          if (form.dataset.locked === '1') {
+            e.preventDefault();
+            return;
+          }
+          form.dataset.locked = '1';
+
+          // Disable all submit controls
+          form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(function(btn){
+            btn.disabled = true;
+            btn.setAttribute('aria-disabled', 'true');
+          });
+
+          // Show spinner / loading text on the clicked button (if it's a <button>)
+          let submitEl = form.__lastClickedSubmit || form.querySelector('button[type="submit"]');
+          if (submitEl && submitEl.tagName === 'BUTTON') {
+            const loadingText = submitEl.getAttribute('data-loading-text') || 'Working…';
+            if (!submitEl.dataset.originalHtml) {
+              submitEl.dataset.originalHtml = submitEl.innerHTML;
+            }
+            submitEl.innerHTML =
+              "<span class=\"inline-flex items-center gap-2\">" +
+                "<svg class=\"animate-spin\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" aria-hidden=\"true\">" +
+                  "<circle cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\" fill=\"none\" opacity=\".25\"></circle>" +
+                  "<path d=\"M4 12a8 8 0 0 1 8-8\" fill=\"currentColor\" opacity=\".75\"></path>" +
+                "</svg>" +
+                "<span>" + loadingText + "</span>" +
+              "</span>";
+          }
+        }, true);
+      }
+
+      function init() {
+        document.querySelectorAll('form').forEach(enhanceForm);
+        const mo = new MutationObserver((muts) => {
+          muts.forEach((m) => {
+            m.addedNodes.forEach((node) => {
+              if (node.nodeType === 1) {
+                if (node.tagName === 'FORM') enhanceForm(node);
+                node.querySelectorAll && node.querySelectorAll('form').forEach(enhanceForm);
+              }
+            });
+          });
+        });
+        mo.observe(document.documentElement, { childList: true, subtree: true });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </head>
 <body style="background-color: #1E1E20 !important; color: rgba(255, 255, 255, 0.87) !important;">
   {% block content %}{% endblock %}
 </body>
 </html>
-
