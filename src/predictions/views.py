@@ -4,7 +4,7 @@ from collections import defaultdict
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.shortcuts import get_object_or_404
-
+from django.views.decorators.cache import cache_page
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +12,7 @@ from rest_framework.response import Response
 
 from games.models import Game
 from .models import Prediction, PropBet, PropBetPrediction
+
 
 # Primary realtime helpers
 from .utils.dashboard_utils import (
@@ -527,6 +528,7 @@ def season_leaderboard_fast_view(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@cache_page(15)
 def season_leaderboard_dynamic_trend_view(request):
     limit = parse_int(request.GET.get('limit'), default=10, minimum=1, maximum=50)
     data = build_season_leaderboard_dynamic(limit=limit)
