@@ -84,7 +84,7 @@ export const getRingColorClass = (medalTier) => {
 
 export const capitalizeFirstLetter = (str) => {
   if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1);
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
 // Medal SVG Components
@@ -175,4 +175,5 @@ export const renderRank = (medalTier, displayRank) => {
   if (medalTier === 2) return <SilverMedal />;
   if (medalTier === 3) return <BronzeMedal />;
   return <span className="text-xl font-bold text-white">{displayRank}</span>;
+
 };
