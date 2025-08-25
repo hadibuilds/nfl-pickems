@@ -10,12 +10,14 @@ from .views import (
     get_dashboard_data_realtime,
     get_dashboard_data_snapshot,
     trigger_weekly_snapshot,
+    
     # New granular endpoints
     get_user_stats_only,
     get_user_accuracy_only,
     get_leaderboard_only,
     get_recent_games_only,
     get_user_insights_only,
+    get_current_week_only,
 )
 
 urlpatterns = [
@@ -37,6 +39,8 @@ urlpatterns = [
     path('api/dashboard/leaderboard/', get_leaderboard_only, name='dashboard-leaderboard-only'), # Slowest: but isolated
     path('api/dashboard/recent/', get_recent_games_only, name='dashboard-recent-only'),       # Fast: recent games
     path('api/dashboard/insights/', get_user_insights_only, name='dashboard-insights-only'), # Fast: streaks & insights
+
+    path('api/current-week/', get_current_week_only, name='current-week'),
     
     # Admin endpoint for snapshots
     path('api/admin/trigger-snapshot/', trigger_weekly_snapshot, name='trigger-weekly-snapshot'),

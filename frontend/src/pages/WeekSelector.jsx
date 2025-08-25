@@ -1,11 +1,9 @@
 /*
- * Updated WeekSelector.jsx - CSS-Based Responsive Scaling
- * REMOVED: JavaScript viewport scaling calculations
- * RELIES ON: CSS responsive system with viewport units and clamp()
- * MAINTAINS: All week logic, status, dates, and styling
+ * WeekSelector.jsx - Logic-only update to use server current week (with fallback)
+ * STYLING UNCHANGED
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function WeekSelector({ 
@@ -17,168 +15,123 @@ export default function WeekSelector({
   const totalWeeks = 18;
   const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
 
-  const getCurrentNFLWeek = () => {
+  // NEW: state for tiny endpoint
+  const [serverCurrentWeek, setServerCurrentWeek] = useState(null);
+  const [serverWeeks, setServerWeeks] = useState(null);
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+  // NEW: one-time fetch of authoritative week; no styling changes, no spinners
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/predictions/api/current-week/`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json(); // { currentWeek, weeks }
+        if (!mounted) return;
+        if (Number.isInteger(data.currentWeek)) setServerCurrentWeek(data.currentWeek);
+        if (Array.isArray(data.weeks)) setServerWeeks(data.weeks);
+      } catch (e) {
+        // silent fail; fallback to client date logic
+        console.warn('current-week endpoint unavailable; using fallback week calc');
+      }
+    })();
+    return () => { mounted = false; };
+  }, [API_BASE]);
+
+  // Existing date-based heuristic (kept as-is for fallback)
+  const getCurrentNFLWeekFallback = () => {
     const now = new Date();
     const firstTuesday = new Date('2025-09-02T16:00:00Z'); // Sept 2, 2025 8 AM PST
-    const seasonStart = new Date('2025-08-14T00:00:00Z'); // Week 1 opens early (today)
+    const seasonStart = new Date('2025-08-14T00:00:00Z'); // Week 1 opens early
     
-    // EXCEPTION: Week 1 starts early (August 14) but ends on normal schedule
-    if (now >= seasonStart && now < firstTuesday) {
-      return 1; // Extended Week 1 period
-    }
-    
-    // Normal weekly logic starting from Week 1's official Tuesday
+    if (now >= seasonStart && now < firstTuesday) return 1;
+
     for (let weekNumber = 1; weekNumber <= 18; weekNumber++) {
       const weekStart = new Date(firstTuesday);
       weekStart.setDate(firstTuesday.getDate() + ((weekNumber - 1) * 7));
-      
       const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7); // Next Tuesday
-      
-      // If now is between this Tuesday and next Tuesday, this is the current week
-      if (now >= weekStart && now < weekEnd) {
-        return weekNumber;
-      }
+      weekEnd.setDate(weekStart.getDate() + 7);
+      if (now >= weekStart && now < weekEnd) return weekNumber;
     }
-    
-    // If we're after Week 18 ends, return null (post-season)
     return null;
   };
 
+  // RESOLVED current week: prefer server, fallback to heuristic
+  const getResolvedCurrentWeek = () => {
+    return serverCurrentWeek ?? getCurrentNFLWeekFallback();
+  };
+
+  // unchanged helper: computes status/points, but now uses resolved current week
   const getWeekStatus = (weekNumber) => {
-    const currentNFLWeek = getCurrentNFLWeek();
+    const currentNFLWeek = getResolvedCurrentWeek();
     const weekGames = games.filter(game => game.week === weekNumber);
-    
-    // If no games, it's upcoming (shouldn't happen if all games are populated)
+
     if (weekGames.length === 0) {
-      return {
-        status: 'upcoming',
-        points: null,
-        label: 'Coming Soon'
-      };
+      return { status: 'upcoming', points: null, label: 'Coming Soon' };
     }
 
-    // Check if ALL games have results (winner field populated in database)
-    // AND all prop bets have correct_answer populated
     const allGamesHaveResults = weekGames.every(game => {
-      // Check if game has winner (from your Game.winner field)
       const hasMoneyLineResult = gameResults[game.id]?.winner;
-      
-      // Check if all prop bets have correct_answer (from your PropBet.correct_answer field)
       const hasPropResult = !game.prop_bets?.length || 
-        game.prop_bets.every(propBet => gameResults[game.id]?.prop_result);
-      
+        game.prop_bets.every(() => gameResults[game.id]?.prop_result);
       return hasMoneyLineResult && hasPropResult;
     });
 
-    // If all games have results, week is completed
     if (allGamesHaveResults) {
-      // Calculate total points earned for this week
       let totalPoints = 0;
-      
       weekGames.forEach(game => {
-        // Money line points (1pt) - based on Game.winner vs user prediction
         const userMoneyLinePick = moneyLineSelections[game.id];
         const actualWinner = gameResults[game.id]?.winner;
-        if (userMoneyLinePick === actualWinner) {
-          totalPoints += 1;
-        }
-        
-        // Prop bet points (2pts) - based on PropBet.correct_answer vs user prediction
+        if (userMoneyLinePick === actualWinner) totalPoints += 1;
+
         if (game.prop_bets?.length > 0) {
           const userPropPick = propBetSelections[game.prop_bets[0].id];
           const actualPropResult = gameResults[game.id]?.prop_result;
-          if (userPropPick === actualPropResult) {
-            totalPoints += 2;
-          }
+          if (userPropPick === actualPropResult) totalPoints += 2;
         }
       });
-
-      return {
-        status: 'completed',
-        points: totalPoints,
-        label: 'Completed'
-      };
+      return { status: 'completed', points: totalPoints, label: 'Completed' };
     }
 
-    // If this is THE current NFL week and not completed, it's current
-    if (weekNumber === currentNFLWeek) {
-      return {
-        status: 'current',
-        points: null,
-        label: 'Current'
-      };
+    if (currentNFLWeek && weekNumber === currentNFLWeek) {
+      return { status: 'current', points: null, label: 'Current' };
     }
 
-    // If week is before current week but not completed, it's still current
-    // (in case games got postponed or results delayed)
-    if (weekNumber < currentNFLWeek && !allGamesHaveResults) {
-      return {
-        status: 'current',
-        points: null,
-        label: 'In Progress'
-      };
+    if (currentNFLWeek && weekNumber < currentNFLWeek && !allGamesHaveResults) {
+      return { status: 'current', points: null, label: 'In Progress' };
     }
 
-    // Otherwise it's upcoming
-    return {
-      status: 'upcoming',
-      points: null,
-      label: 'Upcoming'
-    };
+    return { status: 'upcoming', points: null, label: 'Upcoming' };
   };
 
   const getWeekDates = (weekNumber) => {
-    // Calculate week dates based on Tuesday schedule
     const firstTuesday = new Date('2025-09-02T16:00:00Z'); // Sept 2, 2025 8 AM PST
-    
     const weekStart = new Date(firstTuesday);
     weekStart.setDate(firstTuesday.getDate() + ((weekNumber - 1) * 7));
-    
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6); // 7 days later (Tuesday to Monday)
+    weekEnd.setDate(weekStart.getDate() + 6);
 
     const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
-    
     return {
       start: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       end: sameMonth 
-        ? weekEnd.toLocaleDateString('en-US', { day: 'numeric' }) // Only show day number
-        : weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), // Show month and day
-      sameMonth: sameMonth
+        ? weekEnd.toLocaleDateString('en-US', { day: 'numeric' })
+        : weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      sameMonth
     };
   };
 
   const getCardStyles = (status) => {
     switch (status) {
       case 'completed':
-        return {
-          backgroundColor: '#10B981', // Green
-          borderColor: '#059669',
-          textColor: 'white',
-          hoverColor: '#047857'
-        };
+        return { backgroundColor: '#10B981', borderColor: '#059669', textColor: 'white', hoverColor: '#047857' };
       case 'current':
-        return {
-          backgroundColor: '#8B5CF6', // Purple
-          borderColor: '#7C3AED',
-          textColor: 'white',
-          hoverColor: '#7C3AED'
-        };
+        return { backgroundColor: '#8B5CF6', borderColor: '#7C3AED', textColor: 'white', hoverColor: '#7C3AED' };
       case 'upcoming':
-        return {
-          backgroundColor: '#374151', // Gray
-          borderColor: '#4B5563',
-          textColor: '#9CA3AF',
-          hoverColor: '#4B5563'
-        };
+        return { backgroundColor: '#374151', borderColor: '#4B5563', textColor: '#9CA3AF', hoverColor: '#4B5563' };
       default:
-        return {
-          backgroundColor: '#2d2d2d',
-          borderColor: '#4B5563',
-          textColor: 'white',
-          hoverColor: '#3a3a3a'
-        };
+        return { backgroundColor: '#2d2d2d', borderColor: '#4B5563', textColor: 'white', hoverColor: '#3a3a3a' };
     }
   };
 
@@ -186,7 +139,6 @@ export default function WeekSelector({
     <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="page-container">
         <div className="max-w-6xl mx-auto">
-          {/* UPDATED: Removed dynamic scaling - CSS handles responsive scaling */}
           <div className="week-selector-wrapper">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {weeks.map((week) => {
@@ -204,12 +156,8 @@ export default function WeekSelector({
                         borderColor: styles.borderColor,
                         color: styles.textColor
                       }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = styles.hoverColor;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = styles.backgroundColor;
-                      }}
+                      onMouseEnter={(e) => { e.target.style.backgroundColor = styles.hoverColor; }}
+                      onMouseLeave={(e) => { e.target.style.backgroundColor = styles.backgroundColor; }}
                     >
                       <div className="week-card-content">
                         <div className="week-card-header">
@@ -226,8 +174,8 @@ export default function WeekSelector({
                             {weekStatus.label}
                           </span>
                         </div>
-                     
-                          <div className="points-container">
+
+                        <div className="points-container">
                           {weekStatus.status === 'completed' && weekStatus.points !== null && (
                             <div className="points-earned">
                               <span className="points-label">Points: </span>
@@ -237,7 +185,6 @@ export default function WeekSelector({
                           <h3 className="week-number">Week {week}</h3>
                         </div>
                       </div>
-          
                     </Link>
                   </div>
                 );

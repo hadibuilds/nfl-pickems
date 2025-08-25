@@ -1,28 +1,26 @@
 /*
- * Enhanced HomePage Component with Real Database Integration
- * Now uses actual database data instead of mock data
- * REFACTORED: Using PageLayout for consistent navbar alignment
- * ENHANCED: Added skeleton loaders for user stats section
- * UPDATED: Added medal badges to leaderboard section
+ * HomePage: uses shared ranking logic to render the small leaderboard
+ * All medal/tie logic now matches Standings exactly.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
 import useDashboardData from '../hooks/useDashboardData';
 import PageLayout from '../components/common/PageLayout';
 import UserAvatar from '../components/common/UserAvatar';
 import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Zap } from 'lucide-react';
-import { 
-  GoldMedal, 
-  SilverMedal, 
-  BronzeMedal, 
+import {
+  GoldMedal,
+  SilverMedal,
+  BronzeMedal,
   capitalizeFirstLetter,
   calculateRankWithTies,
-  getMedalTier
+  getMedalTier,
+  sortStandings
 } from '../components/standings/rankingUtils.jsx';
 import confetti from 'canvas-confetti';
 
-// Skeleton Components
+// (skeletons & components left unchanged)
 const StatCardSkeleton = () => (
   <div className="bg-gradient-to-br from-gray-600 to-gray-700 rounded-2xl p-6 shadow-lg animate-pulse">
     <div className="flex items-center justify-between">
@@ -35,10 +33,7 @@ const StatCardSkeleton = () => (
 
 const ProgressRingSkeleton = ({ size = 80 }) => (
   <div className="flex flex-col items-center">
-    <div 
-      className="rounded-full bg-gray-600 animate-pulse flex items-center justify-center"
-      style={{ width: size, height: size }}
-    >
+    <div className="rounded-full bg-gray-600 animate-pulse flex items-center justify-center" style={{ width: size, height: size }}>
       <div className="w-6 h-6 bg-gray-500 rounded"></div>
     </div>
     <div className="mt-2 w-12 h-3 bg-gray-600 rounded animate-pulse"></div>
@@ -48,13 +43,11 @@ const ProgressRingSkeleton = ({ size = 80 }) => (
 const SeasonPerformanceSkeleton = () => (
   <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6">
     <div className="w-32 h-5 bg-gray-600 rounded mb-4 animate-pulse"></div>
-    
     <div className="flex space-x-4 items-center">
       <ProgressRingSkeleton size={80} />
       <ProgressRingSkeleton size={80} />
       <ProgressRingSkeleton size={80} />
     </div>
-    
     <div className="mt-4 text-center">
       <div className="w-16 h-6 bg-gray-600 rounded mb-1 animate-pulse mx-auto"></div>
       <div className="w-20 h-3 bg-gray-600 rounded animate-pulse mx-auto"></div>
@@ -62,7 +55,6 @@ const SeasonPerformanceSkeleton = () => (
   </div>
 );
 
-// Component definitions remain the same
 const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage = true, fontSize = 'text-2xl' }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -71,19 +63,8 @@ const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage 
 
   return (
     <div className="relative inline-flex items-center justify-center">
-      <svg
-        className="transform -rotate-90"
-        width={size}
-        height={size}
-      >
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="rgba(139, 92, 246, 0.1)"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
+      <svg className="transform -rotate-90" width={size} height={size}>
+        <circle cx={size / 2} cy={size / 2} r={radius} stroke="rgba(139, 92, 246, 0.1)" strokeWidth={strokeWidth} fill="transparent" />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -114,24 +95,18 @@ const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage 
 
 const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", animated = false }) => {
   const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
-
+  useEffect(() => { const t = setTimeout(() => setIsVisible(true), 100); return () => clearTimeout(t); }, []);
   const colorClasses = {
     blue: "from-blue-500 to-blue-600",
-    purple: "from-purple-500 to-purple-600", 
+    purple: "from-purple-500 to-purple-600",
     green: "from-green-500 to-green-600",
     orange: "from-orange-500 to-orange-600",
     red: "from-red-500 to-red-600"
   };
-
   return (
     <div className={`
-      bg-gradient-to-br ${colorClasses[color]} 
-      rounded-2xl p-6 text-white shadow-lg hover:shadow-xl 
+      bg-gradient-to-br ${colorClasses[color]}
+      rounded-2xl p-6 text-white shadow-lg hover:shadow-xl
       transition-all duration-300 hover:scale-105 cursor-pointer
       ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
     `}>
@@ -143,62 +118,25 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", a
           </div>
         )}
       </div>
-      <div className={`text-3xl font-bold mb-1 ${animated ? 'transition-all duration-1000' : ''}`}>
-        {value}
-      </div>
+      <div className={`text-3xl font-bold mb-1 ${animated ? 'transition-all duration-1000' : ''}`}>{value}</div>
       <div className="text-sm opacity-90">{title}</div>
       {subtitle && <div className="text-xs opacity-70 mt-1">{subtitle}</div>}
     </div>
   );
 };
 
-const RecentGameCard = ({ game }) => {
-  return (
-    <div className={`
-      p-4 rounded-lg border-l-4 transition-all duration-200
-      ${game.correct ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'}
-    `}
-    style={{ backgroundColor: game.correct ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="text-sm font-medium" style={{ color: '#9ca3af' }}>
-            {game.awayTeam} @ {game.homeTeam}
-          </div>
-          <div className={`text-xs px-2 py-1 rounded-full ${
-            game.correct ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
-          }`}>
-            {game.correct ? '✓' : '✗'}
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="text-sm font-semibold text-white">+{game.points} pts</div>
-          <div className="text-xs" style={{ color: '#9ca3af' }}>Pick: {game.userPick}</div>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Leaderboard row now fully aligned with standings logic
+const LeaderboardRow = ({ entry, standings }) => {
+  const medalTier = getMedalTier(standings, entry.username);
+  const rank = calculateRankWithTies(standings, entry.username);
 
-// Updated LeaderboardRow component with proper tie logic
-const LeaderboardRow = ({ user, leaderboardData }) => {
-  // Convert leaderboard data to standings format for tie calculation
-  const standingsFormat = leaderboardData.map(u => ({
-    username: u.username,
-    total_points: u.points
-  }));
-
-  // Calculate proper medal tier using the same logic as standings
-  const medalTier = getMedalTier(standingsFormat, user.username);
-  
-  // Helper function to render rank (medal or number) based on medal tier
   const renderRankBadge = (tier) => {
     if (tier === 1) return <GoldMedal />;
     if (tier === 2) return <SilverMedal />;
     if (tier === 3) return <BronzeMedal />;
     return (
       <div className="w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
-        {user.rank}
+        {rank}
       </div>
     );
   };
@@ -206,31 +144,21 @@ const LeaderboardRow = ({ user, leaderboardData }) => {
   return (
     <div className={`
       flex items-center justify-between p-3 rounded-lg transition-all duration-200
-      ${user.isCurrentUser ? 'bg-purple-500/20 border border-purple-500/30' : 'hover:bg-gray-700/50'}
+      ${entry.isCurrentUser ? 'bg-purple-500/20 border border-purple-500/30' : 'hover:bg-gray-700/50'}
     `}>
       <div className="flex items-center space-x-3">
-        {/* Avatar */}
-        <UserAvatar
-          username={user.username}
-          size="sm"
-          className="w-8 h-8 flex-shrink-0"
-        />
-
-        {/* Rank Badge using medal tier logic */}
-        <div className="flex items-center justify-center">
-          {renderRankBadge(medalTier)}
-        </div>
-
+        <UserAvatar username={entry.username} size="sm" className="w-8 h-8 flex-shrink-0" />
+        <div className="flex items-center justify-center">{renderRankBadge(medalTier)}</div>
         <div>
-          <div className={`font-medium text-sm ${user.isCurrentUser ? 'text-purple-300' : 'text-white'}`}>
-            {capitalizeFirstLetter(user.username)}
+          <div className={`font-medium text-sm ${entry.isCurrentUser ? 'text-purple-300' : 'text-white'}`}>
+            {capitalizeFirstLetter(entry.username)}
           </div>
-          <div className="text-xs" style={{ color: '#9ca3af' }}>{user.points} points</div>
+          <div className="text-xs" style={{ color: '#9ca3af' }}>{entry.total_points ?? entry.points ?? 0} points</div>
         </div>
       </div>
       <div className="flex items-center space-x-2">
-        {user.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-400" />}
-        {user.trend === 'down' && <TrendingDown className="w-4 h-4 text-red-400" />}
+        {entry.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-400" />}
+        {entry.trend === 'down' && <TrendingDown className="w-4 h-4 text-red-400" />}
       </div>
     </div>
   );
@@ -258,40 +186,30 @@ function HomePage() {
   }, [userInfo, dashboardData]);
 
   const handleConfetti = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     navigate('/weeks');
   };
 
-  // Not logged in - use basic container (no PageLayout needed for auth pages)
   if (!userInfo) {
     return (
       <div className="pt-16">
         <h2>you are not logged in</h2>
         <p className="text-center text-small">
-          <a href="/login" style={{ color: '#8B5CF6', fontSize: '16px' }}>
-            Login
-          </a>
+          <a href="/login" style={{ color: '#8B5CF6', fontSize: '16px' }}>Login</a>
         </p>
         <p className="text-center text-small">
-          <a href="/signup" style={{ color: '#8B5CF6', fontSize: '16px' }}>
-            Sign Up
-          </a>
+          <a href="/signup" style={{ color: '#8B5CF6', fontSize: '16px' }}>Sign Up</a>
         </p>
       </div>
     );
   }
 
-  // Error state with PageLayout
   if (error) {
     return (
       <PageLayout>
         <div className="text-center py-8">
           <p className="text-red-400">Error loading dashboard: {error}</p>
-          <button 
+          <button
             className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             onClick={() => window.location.reload()}
           >
@@ -302,11 +220,26 @@ function HomePage() {
     );
   }
 
-  // Extract data from API response - FIXED to match current hook structure
+  // Extract from API response
   const userData = dashboardData?.user_data || {};
-  const leaderboard = dashboardData?.leaderboard || [];
   const insights = dashboardData?.insights || [];
   const recentGames = userData.recentGames || [];
+
+  // ✅ Normalize leaderboard into standings shape and sort with the same logic as Standings
+  const rawLeaderboard = dashboardData?.leaderboard || [];
+  const leaderboardStandings = useMemo(
+    () =>
+      rawLeaderboard.map(u => ({
+        username: u.username,
+        total_points: u.points ?? u.total_points ?? 0,
+        weekly_scores: u.weekly_scores || {},
+        isCurrentUser: String(u.username) === String(userInfo?.username),
+        trend: u.trend,
+      })),
+    [rawLeaderboard, userInfo?.username]
+  );
+  const sortedLeaderboard = useMemo(() => sortStandings(leaderboardStandings, null), [leaderboardStandings]);
+  const topThree = sortedLeaderboard.slice(0, 3);
 
   return (
     <PageLayout>
@@ -320,42 +253,24 @@ function HomePage() {
         </p>
       </div>
 
-      {/* Quick Stats Grid - WITH SKELETONS */}
+      {/* Quick Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {loadingStates.stats ? (
           <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
+            <StatCardSkeleton /><StatCardSkeleton /><StatCardSkeleton /><StatCardSkeleton />
           </>
         ) : (
           <>
             <StatCard
               title="Current Rank"
-              value={`#${userData.rank || '—'}`}
+              value={`#${userData.rank ?? '—'}`}
               subtitle={`${userData.rankChange || ''} this week`}
               icon={Trophy}
               trend={userData.rankTrend || null}
               color="purple"
             />
-
-            <StatCard
-              title="Pending Picks"
-              value={userData.pendingPicks || 0}
-              subtitle="for this week"
-              icon={Clock}
-              color="blue"
-            />
-        
-            <StatCard
-              title="Points Behind"
-              value={userData.pointsFromLeader || 0}
-              subtitle="from 1st place"
-              icon={Target}
-              color="orange"
-            />
-
+            <StatCard title="Pending Picks" value={userData.pendingPicks || 0} subtitle="for this week" icon={Clock} color="blue" />
+            <StatCard title="Points Behind" value={userData.pointsFromLeader || 0} subtitle="from 1st place" icon={Target} color="orange" />
             <StatCard
               title="Best Category"
               value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'}
@@ -369,54 +284,25 @@ function HomePage() {
 
       {/* Season Performance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-        {/* Season Performance Card - WITH SKELETON */}
         {loadingStates.accuracy ? (
           <SeasonPerformanceSkeleton />
         ) : (
           <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6">
             <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
-            
-            {/* All Three Progress Rings Side by Side */}
             <div className="flex space-x-4 items-center">
               <div className="flex flex-col items-center">
-                <ProgressRing 
-                  percentage={userData.overallAccuracy || 0} 
-                  size={80} 
-                  strokeWidth={6} 
-                  fontSize="text-base" 
-                />
-                <div className="mt-2 text-center">
-                  <div className="text-xs font-bold" style={{ color: '#C2185B' }}>Overall</div>
-                </div>
+                <ProgressRing percentage={userData.overallAccuracy || 0} size={80} strokeWidth={6} fontSize="text-base" />
+                <div className="mt-2 text-center"><div className="text-xs font-bold" style={{ color: '#C2185B' }}>Overall</div></div>
               </div>
-              
               <div className="flex flex-col items-center">
-                <ProgressRing 
-                  percentage={userData.moneylineAccuracy || 0} 
-                  size={80} 
-                  strokeWidth={6} 
-                  showPercentage={true} 
-                  fontSize="text-base" 
-                />
-                <div className="mt-2 text-center">
-                  <div className="text-xs font-bold text-green-400">Moneyline</div>
-                </div>
+                <ProgressRing percentage={userData.moneylineAccuracy || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
+                <div className="mt-2 text-center"><div className="text-xs font-bold text-green-400">Moneyline</div></div>
               </div>
-              
               <div className="flex flex-col items-center">
-                <ProgressRing 
-                  percentage={userData.propBetAccuracy || 0} 
-                  size={80} 
-                  strokeWidth={6} 
-                  showPercentage={true} 
-                  fontSize="text-base"
-                />
-                <div className="mt-2 text-center">
-                  <div className="text-xs font-bold text-blue-400">Prop Bets</div>
-                </div>
+                <ProgressRing percentage={userData.propBetAccuracy || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
+                <div className="mt-2 text-center"><div className="text-xs font-bold text-blue-400">Prop Bets</div></div>
               </div>
             </div>
-            
             <div className="mt-4 text-center">
               <div className="text-2xl font-bold" style={{ color: "#F9A825" }}>
                 {userData.totalPoints || 0}
@@ -425,7 +311,7 @@ function HomePage() {
             </div>
           </div>
         )}
-        
+
         {/* Leaderboard */}
         <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center justify-between mb-4">
@@ -437,17 +323,13 @@ function HomePage() {
               <LoadingSpinner />
             ) : (
               <>
-                {leaderboard.slice(0, 3).map((user, index) => (
-                  <LeaderboardRow 
-                    key={user.rank || index} 
-                    user={user} 
-                    leaderboardData={leaderboard}
-                  />
+                {topThree.map((entry, idx) => (
+                  <LeaderboardRow key={entry.username || idx} entry={entry} standings={sortedLeaderboard} />
                 ))}
               </>
             )}
           </div>
-          <button 
+          <button
             className="w-full mt-3 text-xs font-medium transition-colors hover:text-purple-300"
             style={{ color: '#8B5CF6' }}
             onClick={() => navigate('/standings')}
@@ -466,10 +348,33 @@ function HomePage() {
             {loadingStates.recent ? (
               <LoadingSpinner />
             ) : (
-              <>  
+              <>
                 {recentGames.length > 0 ? (
                   recentGames.slice(0, 2).map(game => (
-                    <RecentGameCard key={game.id} game={game} />
+                    <div
+                      key={game.id}
+                      className={`p-4 rounded-lg border-l-4 transition-all duration-200 ${
+                        game.correct ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'
+                      }`}
+                      style={{ backgroundColor: game.correct ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="text-sm font-medium" style={{ color: '#9ca3af' }}>
+                            {game.awayTeam} @ {game.homeTeam}
+                          </div>
+                          <div className={`text-xs px-2 py-1 rounded-full ${
+                            game.correct ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
+                          }`}>
+                            {game.correct ? '✓' : '✗'}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold text-white">+{game.points} pts</div>
+                          <div className="text-xs" style={{ color: '#9ca3af' }}>Pick: {game.userPick}</div>
+                        </div>
+                      </div>
+                    </div>
                   ))
                 ) : (
                   <div className="text-center py-4" style={{ color: '#9ca3af' }}>
@@ -482,7 +387,7 @@ function HomePage() {
         </div>
       </div>
 
-      {/* Insights Section */}
+      {/* Insights */}
       {insights.length > 0 && (
         <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#1f1f1f' }}>
           <div className="flex items-center justify-between mb-4">
@@ -495,7 +400,7 @@ function HomePage() {
             ) : (
               <>
                 {insights.map((insight, index) => (
-                  <div 
+                  <div
                     key={index}
                     className={`p-3 rounded-lg border-l-4 ${
                       insight.type === 'positive' ? 'border-green-500 bg-green-500/10' :
@@ -512,9 +417,9 @@ function HomePage() {
         </div>
       )}
 
-      {/* Action Button */}
+      {/* CTA */}
       <div className="flex justify-center">
-        <button 
+        <button
           className="px-6 py-3 rounded-2xl text-white font-semibold text-base transition-all duration-200 hover:scale-105 shadow-lg inline-flex items-center space-x-2"
           style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }}
           onClick={handleConfetti}
