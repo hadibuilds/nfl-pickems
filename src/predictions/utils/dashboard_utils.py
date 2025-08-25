@@ -1,8 +1,8 @@
-# predictions/utils/dashboard_utils.py – snapshot‑light, bugfixes, no duplicate functions
+# predictions/utils/dashboard_utils.py — updated without UserStreak, focus on rank-based insights
 from django.contrib.auth import get_user_model
 from ..models import (
     Prediction, PropBetPrediction, WeeklySnapshot,
-    RankHistory, UserStreak, LeaderboardSnapshot, SeasonStats
+    UserStatHistory, LeaderboardSnapshot, SeasonStats
 )
 from games.models import Game
 
@@ -134,22 +134,68 @@ def get_weekly_performance_trends_realtime(user, weeks=5):
     return sorted(trends, key=lambda x: x['week'])
 
 
-def get_user_streak_info(user):
-    try:
-        s = UserStreak.objects.get(user=user)
+def get_user_rank_achievements(user):
+    """
+    Get rank-based achievements instead of arbitrary game streaks.
+    Much more meaningful than streak data.
+    """
+    current_week = get_current_week()
+    rank_history = UserStatHistory.objects.filter(user=user, week__lte=current_week).order_by('week')
+    
+    if not rank_history.exists():
         return {
-            'current_streak': s.current_streak,
-            'streak_type': s.streak_type,
-            'longest_win_streak': s.longest_win_streak,
-            'longest_loss_streak': s.longest_loss_streak,
+            'current_rank': None,
+            'consecutive_weeks_at_1': 0,
+            'consecutive_weeks_in_top3': 0,
+            'best_rank': None,
+            'weeks_at_1': 0,
+            'weeks_in_top3': 0,
+            'biggest_climb': 0,
         }
-    except UserStreak.DoesNotExist:
-        return {
-            'current_streak': 0,
-            'streak_type': 'none',
-            'longest_win_streak': 0,
-            'longest_loss_streak': 0,
-        }
+    
+    ranks = list(rank_history.values_list('rank', 'week'))
+    current_rank = ranks[-1][0] if ranks else None
+    best_rank = min(rank for rank, week in ranks)
+    
+    # Count consecutive weeks at #1 (current)
+    consecutive_at_1 = 0
+    for rank, week in reversed(ranks):
+        if rank == 1:
+            consecutive_at_1 += 1
+        else:
+            break
+    
+    # Count consecutive weeks in top 3 (current)
+    consecutive_top3 = 0
+    for rank, week in reversed(ranks):
+        if rank <= 3:
+            consecutive_top3 += 1
+        else:
+            break
+    
+    # Total weeks at #1 and in top 3
+    weeks_at_1 = sum(1 for rank, week in ranks if rank == 1)
+    weeks_in_top3 = sum(1 for rank, week in ranks if rank <= 3)
+    
+    # Find biggest single-week climb
+    biggest_climb = 0
+    for i in range(1, len(ranks)):
+        prev_rank = ranks[i-1][0]
+        curr_rank = ranks[i][0]
+        climb = prev_rank - curr_rank  # Positive = climbed up
+        if climb > biggest_climb:
+            biggest_climb = climb
+    
+    return {
+        'current_rank': current_rank,
+        'consecutive_weeks_at_1': consecutive_at_1,
+        'consecutive_weeks_in_top3': consecutive_top3,
+        'best_rank': best_rank,
+        'weeks_at_1': weeks_at_1,
+        'weeks_in_top3': weeks_in_top3,
+        'biggest_climb': biggest_climb,
+        'total_weeks_tracked': len(ranks),
+    }
 
 
 def get_user_season_stats(user):
@@ -158,20 +204,24 @@ def get_user_season_stats(user):
         return {
             'best_week_points': s.best_week_points,
             'best_week_number': s.best_week_number,
-            'highest_rank': s.highest_rank,
+            'best_rank': s.best_rank,
             'weeks_in_top_3': s.weeks_in_top_3,
             'weeks_in_top_5': s.weeks_in_top_5,
-            'weeks_as_leader': s.weeks_as_leader,
+            'weeks_at_rank_1': s.weeks_at_rank_1,
+            'consecutive_weeks_at_1': s.consecutive_weeks_at_1,
+            'biggest_rank_climb': s.biggest_rank_climb,
             'trending_direction': s.trending_direction,
         }
     except SeasonStats.DoesNotExist:
         return {
             'best_week_points': 0,
             'best_week_number': None,
-            'highest_rank': None,
+            'best_rank': None,
             'weeks_in_top_3': 0,
             'weeks_in_top_5': 0,
-            'weeks_as_leader': 0,
+            'weeks_at_rank_1': 0,
+            'consecutive_weeks_at_1': 0,
+            'biggest_rank_climb': 0,
             'trending_direction': 'stable',
         }
 
@@ -195,19 +245,47 @@ def get_recent_games_data(user, limit=3):
 
 
 def get_user_insights_realtime(user):
+    """Updated to use rank-based insights instead of game streaks."""
     insights = []
+    
     if TREND_UTILS_AVAILABLE:
         try:
             insights.extend(get_user_weekly_insights(user))
         except Exception as e:
             print(f"weekly insights error: {e}")
-    s = get_user_streak_info(user)
-    if s['current_streak'] >= 3:
-        kind = "winning" if s['streak_type'] == 'win' else 'losing'
-        insights.append({'type': 'info', 'message': f"You're on a {s['current_streak']}-game {kind} streak!"})
+    
+    # Get rank-based achievements instead of streaks
+    achievements = get_user_rank_achievements(user)
+    
+    # Rank-based insights (much better than game streaks)
+    if achievements['consecutive_weeks_at_1'] >= 2:
+        weeks = achievements['consecutive_weeks_at_1']
+        insights.append({
+            'type': 'positive', 
+            'message': f"🏆 Dominant! You've been #1 for {weeks} consecutive weeks!"
+        })
+    elif achievements['consecutive_weeks_in_top3'] >= 3:
+        weeks = achievements['consecutive_weeks_in_top3']
+        insights.append({
+            'type': 'positive',
+            'message': f"🔥 Consistent! Top 3 for {weeks} straight weeks!"
+        })
+    
+    if achievements['biggest_climb'] >= 5:
+        climb = achievements['biggest_climb']
+        insights.append({
+            'type': 'achievement',
+            'message': f"🚀 Epic comeback! Climbed {climb} spots in a single week!"
+        })
+    
+    # Season-based insights
     season = get_user_season_stats(user)
-    if season['weeks_as_leader'] > 0:
-        insights.append({'type': 'positive', 'message': f"You've led the league for {season['weeks_as_leader']} week(s)!"})
+    if season['weeks_at_rank_1'] > 0:
+        insights.append({
+            'type': 'positive', 
+            'message': f"👑 You've led the league {season['weeks_at_rank_1']} time(s) this season!"
+        })
+    
     return insights
 
 
@@ -235,7 +313,7 @@ def calculate_user_dashboard_data_realtime(user):
     total_points = completed_total + live['weekly_points']
 
     best_cat, best_acc = get_best_category_realtime(user)
-    streak = get_user_streak_info(user)
+    achievements = get_user_rank_achievements(user)  # Rank achievements instead of streaks
     season = get_user_season_stats(user)
     recent = get_recent_games_data(user, limit=3)
 
@@ -251,10 +329,15 @@ def calculate_user_dashboard_data_realtime(user):
         'overallAccuracy': calculate_current_accuracy(user, 'overall'),
         'moneylineAccuracy': calculate_current_accuracy(user, 'moneyline'),
         'propBetAccuracy': calculate_current_accuracy(user, 'prop'),
-        'streak': streak['current_streak'],
-        'streakType': streak['streak_type'],
-        'longestWinStreak': streak['longest_win_streak'],
-        'longestLossStreak': streak['longest_loss_streak'],
+        
+        # Rank-based achievements instead of game streaks
+        'currentRank': achievements['current_rank'],
+        'consecutiveWeeksAt1': achievements['consecutive_weeks_at_1'],
+        'consecutiveWeeksInTop3': achievements['consecutive_weeks_in_top3'],
+        'bestRank': achievements['best_rank'],
+        'weeksAt1': achievements['weeks_at_1'],
+        'biggestClimb': achievements['biggest_climb'],
+        
         'pendingPicks': calculate_pending_picks(user, current_week),
         'pointsFromLeader': rank_info['points_from_leader'],
         'bestCategory': best_cat,
@@ -297,7 +380,7 @@ def calculate_current_user_rank(user, current_week):
 
 def get_user_rank_trends(user, current_week):
     current = calculate_current_user_rank(user, current_week)
-    recent = RankHistory.objects.filter(user=user).order_by('-week')[:2]
+    recent = UserStatHistory.objects.filter(user=user).order_by('-week')[:2]  # Updated model name
     change, trend = "—", "same"
     if recent:
         change, trend = recent[0].rank_change_display, recent[0].trend_direction
@@ -328,7 +411,7 @@ def get_weekly_performance_trends(user, weeks=5):
     snaps = WeeklySnapshot.objects.filter(user=user).order_by('-week')[:weeks]
     out = []
     for s in snaps:
-        rh = RankHistory.objects.filter(user=user, week=s.week).first()
+        rh = UserStatHistory.objects.filter(user=user, week=s.week).first()  # Updated model name
         out.append({
             'week': s.week,
             'points': s.weekly_points,
@@ -404,3 +487,119 @@ def calculate_pending_picks(user, current_week):
             if not PropBetPrediction.objects.filter(user=user, prop_bet=pb).exists():
                 pending_props += 1
     return pending_games + pending_props
+
+
+# Snapshot-based functions (updated for UserStatHistory)
+
+def calculate_user_dashboard_data(user):
+    """
+    Snapshot-based dashboard calculation using UserStatHistory
+    """
+    current_week = get_current_week()
+    
+    # Get the most recent rank history for this user
+    latest_stat = UserStatHistory.objects.filter(user=user).order_by('-week').first()
+    
+    if latest_stat:
+        # Use snapshot-based data when available
+        rank = latest_stat.rank
+        rank_change = latest_stat.rank_change_display
+        rank_trend = latest_stat.trend_direction
+        total_points = latest_stat.total_points
+        
+        # Add current week's live points
+        live = calculate_live_stats(user, current_week)
+        total_points += live['weekly_points']
+    else:
+        # Fallback to realtime if no snapshots exist
+        return calculate_user_dashboard_data_realtime(user)
+    
+    # Get other stats (these don't depend on snapshots)
+    best_cat, best_acc = get_best_category_realtime(user)
+    achievements = get_user_rank_achievements(user)  # Use rank achievements
+    season = get_user_season_stats(user)
+    recent = get_recent_games_data(user, limit=3)
+    
+    # Calculate total users from latest leaderboard snapshot
+    latest_leaderboard = LeaderboardSnapshot.objects.order_by('-week').first()
+    total_users = len(latest_leaderboard.snapshot_data) if latest_leaderboard else User.objects.count()
+    
+    return {
+        'username': user.username,
+        'currentWeek': current_week,
+        'weeklyPoints': live['weekly_points'],
+        'totalPoints': total_points,
+        'rank': rank,
+        'rankChange': rank_change,
+        'rankTrend': rank_trend,
+        'totalUsers': total_users,
+        'overallAccuracy': calculate_current_accuracy(user, 'overall'),
+        'moneylineAccuracy': calculate_current_accuracy(user, 'moneyline'),
+        'propBetAccuracy': calculate_current_accuracy(user, 'prop'),
+        
+        # Rank achievements instead of streaks
+        'currentRank': achievements['current_rank'],
+        'consecutiveWeeksAt1': achievements['consecutive_weeks_at_1'],
+        'consecutiveWeeksInTop3': achievements['consecutive_weeks_in_top3'],
+        'bestRank': achievements['best_rank'],
+        'weeksAt1': achievements['weeks_at_1'],
+        'biggestClimb': achievements['biggest_climb'],
+        
+        'pendingPicks': calculate_pending_picks(user, current_week),
+        'pointsFromLeader': 0,  # Calculate this if needed
+        'bestCategory': best_cat,
+        'bestCategoryAccuracy': best_acc,
+        'recentGames': recent,
+        'seasonStats': season,
+        'performanceTrend': 'stable',  # Could enhance this with UserStatHistory
+        'weeklyTrends': [],  # Could enhance this with UserStatHistory
+    }
+
+
+def get_user_insights(user):
+    """
+    Snapshot-based insights using UserStatHistory and rank achievements
+    """
+    insights = []
+    
+    # Get rank trend insights from UserStatHistory
+    recent_ranks = UserStatHistory.objects.filter(user=user).order_by('-week')[:3]
+    if len(recent_ranks) >= 2:
+        if recent_ranks[0].rank < recent_ranks[1].rank:
+            change = recent_ranks[1].rank - recent_ranks[0].rank
+            insights.append({
+                'type': 'positive', 
+                'message': f"📈 You climbed {change} spots since last week!"
+            })
+        elif recent_ranks[0].rank > recent_ranks[1].rank:
+            change = recent_ranks[0].rank - recent_ranks[1].rank
+            insights.append({
+                'type': 'warning',
+                'message': f"📉 You dropped {change} spots since last week."
+            })
+    
+    # Get rank-based achievements instead of streaks
+    achievements = get_user_rank_achievements(user)
+    
+    if achievements['consecutive_weeks_at_1'] >= 2:
+        weeks = achievements['consecutive_weeks_at_1']
+        insights.append({
+            'type': 'positive',
+            'message': f"🏆 Dominant! {weeks} consecutive weeks at #1!"
+        })
+    elif achievements['consecutive_weeks_in_top3'] >= 3:
+        weeks = achievements['consecutive_weeks_in_top3']
+        insights.append({
+            'type': 'positive',
+            'message': f"🔥 Consistent! Top 3 for {weeks} straight weeks!"
+        })
+    
+    # Add season insights
+    season = get_user_season_stats(user)
+    if season['weeks_at_rank_1'] > 0:
+        insights.append({
+            'type': 'positive', 
+            'message': f"👑 You've led the league {season['weeks_at_rank_1']} time(s)!"
+        })
+    
+    return insights

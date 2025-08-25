@@ -3,111 +3,148 @@ ResultBanner.jsx
 Enhanced progress indicator for WeekPage showing live results tracking
 Displays picks made, points scored, and accuracy breakdowns
 CSS styles are in App.css
-UPDATED: Uses database saved picks instead of current UI state
+
+FIXES:
+- Do NOT count prop-bets as "resolved" unless an actual answer exists (not null/undefined/empty)
+- Robustly reads results from both shapes:
+    moneyline: result.winner OR result.winning_team
+    prop:      result.prop_result OR result.prop_bet_results[0].correct_answer (only if present)
+- Uses only SAVED (submitted) picks to compute correctness
 */
 
 import React from 'react';
 
-export default function ResultBanner({ 
-  games, 
-  originalSubmittedPicks,     // Database saved picks
-  originalSubmittedPropBets,  // Database saved picks
-  gameResults = {}
+// ---- helpers ---------------------------------------------------------------
+
+const normalize = (v) => (typeof v === 'string' ? v.trim() : v);
+
+const extractResults = (game, gameResults) => {
+  const res = gameResults?.[game?.id] || {};
+
+  // moneyline winner (alias + legacy)
+  const winner =
+    res?.winner != null && res.winner !== ''
+      ? res.winner
+      : res?.winning_team != null && res.winning_team !== ''
+      ? res.winning_team
+      : null;
+
+  // prop result can be top-level or in array
+  let prop = null;
+  if (res && Object.prototype.hasOwnProperty.call(res, 'prop_result')) {
+    const pr = res.prop_result;
+    // treat empty string and null as "not resolved"
+    if (pr !== null && pr !== undefined && String(pr).trim() !== '') {
+      prop = pr;
+    }
+  } else if (Array.isArray(res?.prop_bet_results) && res.prop_bet_results.length === 1) {
+    const ans = res.prop_bet_results[0]?.correct_answer;
+    if (ans !== null && ans !== undefined && String(ans).trim() !== '') {
+      prop = ans;
+    }
+  }
+
+  return { winner, prop };
+};
+
+export default function ResultBanner({
+  games,
+  originalSubmittedPicks,    // saved moneyline picks by game.id
+  originalSubmittedPropBets, // saved prop answers by prop_bet.id (first prop per game)
+  gameResults = {},
 }) {
-  // Calculate moneyline progress and results using SAVED picks
+  // Moneyline summary (uses SAVED picks only)
   const calculateMoneyLineResults = () => {
     const totalMoneyLineGames = games.length;
-    const madeMoneyLineSelections = games.filter(game => 
-      originalSubmittedPicks[game.id]
-    ).length;
-    
-    // Games with results (winner field populated)
-    const gamesWithResults = games.filter(game => 
-      gameResults[game.id]?.winner
-    );
-    
-    // Correct moneyline picks - only count saved picks
-    const correctMoneyLinePicks = gamesWithResults.filter(game => {
-      const userPick = originalSubmittedPicks[game.id];
-      const actualWinner = gameResults[game.id]?.winner;
-      return userPick && actualWinner && userPick === actualWinner;
-    }).length;
-    
-    return { 
-      made: madeMoneyLineSelections, 
+
+    const madeMoneyLineSelections = games.reduce((acc, g) => {
+      return acc + (originalSubmittedPicks?.[g.id] ? 1 : 0);
+    }, 0);
+
+    // consider "with results" only when a winner exists
+    const gamesWithResults = games.filter((g) => {
+      const { winner } = extractResults(g, gameResults);
+      return winner !== null && winner !== undefined && String(winner).trim() !== '';
+    });
+
+    const correctMoneyLinePicks = gamesWithResults.reduce((acc, g) => {
+      const userPick = originalSubmittedPicks?.[g.id];
+      const { winner } = extractResults(g, gameResults);
+      if (!userPick || winner == null) return acc;
+      return acc + (normalize(userPick) === normalize(winner) ? 1 : 0);
+    }, 0);
+
+    return {
+      made: madeMoneyLineSelections,
       total: totalMoneyLineGames,
       correct: correctMoneyLinePicks,
       withResults: gamesWithResults.length,
-      points: correctMoneyLinePicks * 1
+      points: correctMoneyLinePicks * 1,
     };
   };
 
-  // Calculate prop bet progress and results using SAVED picks
+  // Prop summary (uses SAVED picks only; counts denominator ONLY when resolved)
   const calculatePropBetResults = () => {
-    const gamesWithProps = games.filter(game => 
-      game.prop_bets && game.prop_bets.length > 0
-    );
-    const totalPropBets = gamesWithProps.length;
-    const madePropBetSelections = gamesWithProps.filter(game => 
-      originalSubmittedPropBets[game.prop_bets[0]?.id]
-    ).length;
-    
-    // Prop bets with results
-    const propBetsWithResults = gamesWithProps.filter(game =>
-      gameResults[game.id]?.prop_result !== undefined
-    );
-    
-    // Correct prop picks - only count saved picks
-    const correctPropPicks = propBetsWithResults.filter(game => {
-      const userPick = originalSubmittedPropBets[game.prop_bets[0]?.id];
-      const actualResult = gameResults[game.id]?.prop_result;
-      return userPick && actualResult !== undefined && userPick === actualResult;
-    }).length;
-    
-    return { 
-      made: madePropBetSelections, 
-      total: totalPropBets,
+    const gamesWithProps = games.filter((g) => Array.isArray(g.prop_bets) && g.prop_bets.length > 0);
+    const totalPropSlots = gamesWithProps.length; // how many props were offered this week (first prop per game)
+
+    const madePropSelections = gamesWithProps.reduce((acc, g) => {
+      const firstPropId = g.prop_bets?.[0]?.id;
+      return acc + (firstPropId && originalSubmittedPropBets?.[firstPropId] ? 1 : 0);
+    }, 0);
+
+    // count a prop "with result" ONLY when we have an actual answer value
+    const propsWithResults = gamesWithProps.filter((g) => {
+      const { prop } = extractResults(g, gameResults);
+      return prop !== null && prop !== undefined && String(prop).trim() !== '';
+    });
+
+    const correctPropPicks = propsWithResults.reduce((acc, g) => {
+      const firstPropId = g.prop_bets?.[0]?.id;
+      if (!firstPropId) return acc;
+
+      const userAnswer = originalSubmittedPropBets?.[firstPropId];
+      const { prop } = extractResults(g, gameResults);
+
+      if (!userAnswer || prop == null) return acc;
+      return acc + (normalize(userAnswer) === normalize(prop) ? 1 : 0);
+    }, 0);
+
+    return {
+      made: madePropSelections,
+      total: totalPropSlots,          // total props offered (first-prop per game)
       correct: correctPropPicks,
-      withResults: propBetsWithResults.length,
-      points: correctPropPicks * 2
+      withResults: propsWithResults.length, // only resolved props
+      points: correctPropPicks * 2,
     };
   };
 
-  // Calculate overall progress using SAVED picks
   const calculateOverallProgress = () => {
-    const moneyLineResults = calculateMoneyLineResults();
-    const propBetResults = calculatePropBetResults();
-    
-    const totalPossiblePicks = moneyLineResults.total + propBetResults.total;
-    const totalMadePicks = moneyLineResults.made + propBetResults.made;
-    const totalGamesWithResults = moneyLineResults.withResults + propBetResults.withResults;
-    const totalEarnedPoints = moneyLineResults.points + propBetResults.points;
-    
-    return { 
-      made: totalMadePicks, 
+    const ml = calculateMoneyLineResults();
+    const pb = calculatePropBetResults();
+
+    const totalPossiblePicks = ml.total + pb.total; // how many choices offered this week
+    const totalMadePicks = ml.made + pb.made;
+    const totalResolved = ml.withResults + pb.withResults;
+    const totalPoints = ml.points + pb.points;
+
+    return {
+      made: totalMadePicks,
       total: totalPossiblePicks,
-      gamesFinished: totalGamesWithResults,
-      points: totalEarnedPoints
+      gamesFinished: totalResolved,
+      points: totalPoints,
     };
   };
 
-  const moneyLineResults = calculateMoneyLineResults();
-  const propBetResults = calculatePropBetResults();
-  const overallProgress = calculateOverallProgress();
+  const ml = calculateMoneyLineResults();
+  const pb = calculatePropBetResults();
+  const overall = calculateOverallProgress();
 
-  // Calculate percentages (rounded to nearest whole number)
-  const moneyLinePercentage = moneyLineResults.withResults > 0 
-    ? Math.round((moneyLineResults.correct / moneyLineResults.withResults) * 100)
-    : 0;
-    
-  const propBetPercentage = propBetResults.withResults > 0 
-    ? Math.round((propBetResults.correct / propBetResults.withResults) * 100)
-    : 0;
+  // Percentages (rounded to nearest whole)
+  const mlPct = ml.withResults > 0 ? Math.round((ml.correct / ml.withResults) * 100) : 0;
+  const pbPct = pb.withResults > 0 ? Math.round((pb.correct / pb.withResults) * 100) : 0;
 
-  // Don't render if no games available
-  if (games.length === 0) {
-    return null;
-  }
+  if (!Array.isArray(games) || games.length === 0) return null;
 
   return (
     <div className="result-banner">
@@ -115,11 +152,13 @@ export default function ResultBanner({
       <div className="result-stats-row">
         <div className="stat-group">
           <span className="stat-label">Total Picks</span>
-          <span className="stat-value">{overallProgress.made}/{overallProgress.total}</span>
+          <span className="stat-value">
+            {overall.made}/{overall.total}
+          </span>
         </div>
         <div className="stat-group">
           <span className="stat-label">Points Scored</span>
-          <span className="stat-value points-value">{overallProgress.points}</span>
+          <span className="stat-value points-value">{overall.points}</span>
         </div>
       </div>
 
@@ -130,15 +169,12 @@ export default function ResultBanner({
           <div className="result-section-header">
             <span>Money Line Correct</span>
             <span className="correct-fraction">
-              {moneyLineResults.correct}/{moneyLineResults.withResults}
-              {moneyLineResults.withResults > 0 && ` (${moneyLinePercentage}%)`}
+              {ml.correct}/{ml.withResults}
+              {ml.withResults > 0 && ` (${mlPct}%)`}
             </span>
           </div>
           <div className="result-progress-bar">
-            <div 
-              className="result-progress-fill moneyline-fill" 
-              style={{ width: `${moneyLinePercentage}%` }}
-            />
+            <div className="result-progress-fill moneyline-fill" style={{ width: `${mlPct}%` }} />
           </div>
         </div>
 
@@ -147,15 +183,12 @@ export default function ResultBanner({
           <div className="result-section-header">
             <span>Prop Bets Correct</span>
             <span className="correct-fraction">
-              {propBetResults.correct}/{propBetResults.withResults}
-              {propBetResults.withResults > 0 && ` (${propBetPercentage}%)`}
+              {pb.correct}/{pb.withResults}
+              {pb.withResults > 0 && ` (${pbPct}%)`}
             </span>
           </div>
           <div className="result-progress-bar">
-            <div 
-              className="result-progress-fill propbet-fill" 
-              style={{ width: `${propBetPercentage}%` }}
-            />
+            <div className="result-progress-fill propbet-fill" style={{ width: `${pbPct}%` }} />
           </div>
         </div>
       </div>

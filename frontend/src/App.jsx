@@ -21,7 +21,7 @@ import WeekPage from './pages/WeekPage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import Standings from './pages/Standings';
-import WeekSelector from "./pages/WeekSelector"; 
+import WeekSelector from "./pages/WeekSelector";
 import PrivateRoute from './components/common/PrivateRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import NavigationManager from './components/navigation/NavigationManager';
@@ -31,11 +31,7 @@ import { getCookie } from './utils/cookies';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 }
 
@@ -48,7 +44,7 @@ export default function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 🆕 DRAFT SYSTEM: Local draft state + original submitted state
+  // Draft system
   const [draftPicks, setDraftPicks] = useState({});
   const [draftPropBets, setDraftPropBets] = useState({});
   const [originalSubmittedPicks, setOriginalSubmittedPicks] = useState({});
@@ -67,21 +63,16 @@ export default function App() {
     }
   }, []);
 
-  // 🆕 NAVIGATION PROTECTION: Clear drafts function for NavigationManager
+  // Clear drafts for NavigationManager
   const clearDrafts = useCallback(() => {
-    console.log('🗑️ Clearing all draft picks (preventing memory leaks)');
-    
-    // Reset draft state
     setDraftPicks({});
     setDraftPropBets({});
     setHasUnsavedChanges(false);
-    
-    // Reset UI selections to original submitted state
     setMoneyLineSelections(originalSubmittedPicks);
     setPropBetSelections(originalSubmittedPropBets);
   }, [originalSubmittedPicks, originalSubmittedPropBets]);
 
-  // 🆕 BASIC BROWSER PROTECTION: Warn on page refresh/close
+  // Warn on page refresh/close
   useEffect(() => {
     const handleBeforeUnload = (event) => {
       if (hasUnsavedChanges) {
@@ -90,43 +81,32 @@ export default function App() {
         return event.returnValue;
       }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Calculate ACTUAL changes (not just drafts) for UI
+  // Compute actual changes for submit
   const actualChanges = useMemo(() => {
     const changedPicks = {};
     const changedPropBets = {};
-
-    // Check moneyline picks - only count if different from original
     Object.entries(draftPicks).forEach(([gameId, team]) => {
-      if (originalSubmittedPicks[gameId] !== team) {
-        changedPicks[gameId] = team;
-      }
+      if (originalSubmittedPicks[gameId] !== team) changedPicks[gameId] = team;
     });
-
-    // Check prop bet picks - only count if different from original  
     Object.entries(draftPropBets).forEach(([propBetId, answer]) => {
-      if (originalSubmittedPropBets[propBetId] !== answer) {
-        changedPropBets[propBetId] = answer;
-      }
+      if (originalSubmittedPropBets[propBetId] !== answer) changedPropBets[propBetId] = answer;
     });
-
     return { changedPicks, changedPropBets };
   }, [draftPicks, draftPropBets, originalSubmittedPicks, originalSubmittedPropBets]);
 
   const draftCount = Object.keys(actualChanges.changedPicks).length + Object.keys(actualChanges.changedPropBets).length;
 
-  // ✅ OPTIMIZED: Memoize data fetching functions to prevent recreation
+  // ======== FETCHERS ========
+
   const fetchGameData = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/games/api/games/`, {
         credentials: 'include',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-        },
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
       });
       if (!res.ok) throw new Error('Failed to fetch games');
       const data = await res.json();
@@ -141,9 +121,7 @@ export default function App() {
     try {
       const res = await fetch(`${API_BASE}/predictions/api/get-user-predictions/`, {
         credentials: 'include',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-        },
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
       });
       if (!res.ok) throw new Error('Failed to fetch predictions');
       const data = await res.json();
@@ -157,7 +135,6 @@ export default function App() {
         return acc;
       }, {});
 
-      // Store current predictions as both UI state and original submitted state
       setMoneyLineSelections(moneyLine);
       setPropBetSelections(propBets);
       setOriginalSubmittedPicks(moneyLine);
@@ -173,28 +150,37 @@ export default function App() {
 
   const fetchGameResults = useCallback(async () => {
     try {
-      console.log('🔄 Fetching game results...');
       const res = await fetch(`${API_BASE}/predictions/api/game-results/`, {
         credentials: 'include',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-        },
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
       });
       if (!res.ok) throw new Error('Failed to fetch game results');
+
       const data = await res.json();
-      
-      console.log('📊 Raw game results from API:', data);
-      
-      // Transform the results into the expected format
+      // Accept either { results: [...] } or bare [...]
+      const payload = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : []);
       const resultsMap = {};
-      data.forEach(result => {
-        resultsMap[result.game_id] = {
-          winner: result.winning_team,
-          prop_result: result.prop_bet_result
+
+      for (const r of payload) {
+        const winner = r?.winner ?? r?.winning_team ?? null;
+
+        // Prefer top-level prop_result; else if exactly one prop exists, use its correct_answer
+        const prop_result =
+          (r && Object.prototype.hasOwnProperty.call(r, 'prop_result'))
+            ? r.prop_result
+            : (Array.isArray(r?.prop_bet_results) && r.prop_bet_results.length === 1
+                ? r.prop_bet_results[0]?.correct_answer
+                : null);
+
+        resultsMap[r.game_id] = {
+          winner,
+          prop_result,
+          // keep legacy/raw fields around (optional)
+          winning_team: r?.winning_team ?? winner,
+          prop_bet_results: Array.isArray(r?.prop_bet_results) ? r.prop_bet_results : undefined,
         };
-      });
-      
-      console.log('🎯 Transformed results map:', resultsMap);
+      }
+
       setGameResults(resultsMap);
     } catch (err) {
       console.error('Error fetching game results:', err);
@@ -202,166 +188,103 @@ export default function App() {
     }
   }, [API_BASE]);
 
-  // ✅ OPTIMIZED: Memoize refresh function to prevent recreation
+  // Combine refresh
   const refreshAllData = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([
-        fetchGameData(),
-        fetchUserPredictions(),
-        fetchGameResults()
-      ]);
+      await Promise.all([fetchGameData(), fetchUserPredictions(), fetchGameResults()]);
     } finally {
       setIsRefreshing(false);
     }
   }, [fetchGameData, fetchUserPredictions, fetchGameResults]);
 
-  // 🆕 ENHANCED: Submit only actual changes to database
+  // ======== SUBMIT ========
+
   const submitPicks = useCallback(async () => {
     if (draftCount === 0) return { success: false, error: "No changes to submit" };
-
     try {
-      console.log('🚀 Submitting actual changes:', actualChanges);
-
-      // Submit only changed moneyline picks
       for (const [gameId, team] of Object.entries(actualChanges.changedPicks)) {
         const response = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken'),
-          },
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
           body: JSON.stringify({ game_id: parseInt(gameId), predicted_winner: team }),
           credentials: 'include',
         });
-
-        if (!response.ok) {
-          throw new Error(`Failed to submit pick for game ${gameId}`);
-        }
+        if (!response.ok) throw new Error(`Failed to submit pick for game ${gameId}`);
       }
-
-      // Submit only changed prop bet picks
       for (const [propBetId, answer] of Object.entries(actualChanges.changedPropBets)) {
         const response = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken'),
-          },
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
           body: JSON.stringify({ prop_bet_id: parseInt(propBetId), answer }),
           credentials: 'include',
         });
-
-        if (!response.ok) {
-          throw new Error(`Failed to submit prop bet ${propBetId}`);
-        }
+        if (!response.ok) throw new Error(`Failed to submit prop bet ${propBetId}`);
       }
 
-      // Update original submitted state to current state
       const newOriginalPicks = { ...originalSubmittedPicks, ...actualChanges.changedPicks };
       const newOriginalPropBets = { ...originalSubmittedPropBets, ...actualChanges.changedPropBets };
-      
       setOriginalSubmittedPicks(newOriginalPicks);
       setOriginalSubmittedPropBets(newOriginalPropBets);
 
-      // Clear drafts and update state
       setDraftPicks({});
       setDraftPropBets({});
       setHasUnsavedChanges(false);
-      
-      console.log('✅ All changes submitted successfully!');
       return { success: true };
-
     } catch (err) {
       console.error("Failed to submit picks:", err);
       return { success: false, error: err.message };
     }
   }, [draftCount, actualChanges, API_BASE, originalSubmittedPicks, originalSubmittedPropBets]);
 
-  // 🆕 ENHANCED: Check if pick is actually different from original before setting unsaved changes
+  // ======== CLICK HANDLERS ========
+
   const handleMoneyLineClick = useCallback(async (game, team) => {
     if (game.locked) return;
-
-    console.log('💾 Storing draft pick:', { gameId: game.id, team });
-
-    // Store as draft locally
     setDraftPicks(prev => ({ ...prev, [game.id]: team }));
-    
-    // Check if we have any actual changes from original submitted picks
+
     const updatedDrafts = { ...draftPicks, [game.id]: team };
-    const hasChanges = Object.entries(updatedDrafts).some(([gameId, draftTeam]) => 
-      originalSubmittedPicks[gameId] !== draftTeam
-    ) || Object.entries(draftPropBets).some(([propBetId, draftAnswer]) => 
-      originalSubmittedPropBets[propBetId] !== draftAnswer
-    );
-    
+    const hasChanges =
+      Object.entries(updatedDrafts).some(([gid, draftTeam]) => originalSubmittedPicks[gid] !== draftTeam) ||
+      Object.entries(draftPropBets).some(([pid, draftAnswer]) => originalSubmittedPropBets[pid] !== draftAnswer);
     setHasUnsavedChanges(hasChanges);
 
-    // Update UI immediately (same visual experience as before)
     setMoneyLineSelections(prev => ({ ...prev, [game.id]: team }));
-
     return { success: true };
   }, [draftPicks, draftPropBets, originalSubmittedPicks, originalSubmittedPropBets]);
 
-  // 🆕 ENHANCED: Check if prop bet is actually different from original before setting unsaved changes
   const handlePropBetClick = useCallback(async (game, answer) => {
     if (game.locked) return;
     const propBetId = game.prop_bets?.[0]?.id;
     if (!propBetId) return;
 
-    console.log('💾 Storing draft prop bet:', { propBetId, answer });
-
-    // Store as draft locally
     setDraftPropBets(prev => ({ ...prev, [propBetId]: answer }));
-    
-    // Check if we have any actual changes from original submitted picks
+
     const updatedDraftPropBets = { ...draftPropBets, [propBetId]: answer };
-    const hasChanges = Object.entries(draftPicks).some(([gameId, draftTeam]) => 
-      originalSubmittedPicks[gameId] !== draftTeam
-    ) || Object.entries(updatedDraftPropBets).some(([propId, draftAnswer]) => 
-      originalSubmittedPropBets[propId] !== draftAnswer
-    );
-    
+    const hasChanges =
+      Object.entries(draftPicks).some(([gid, draftTeam]) => originalSubmittedPicks[gid] !== draftTeam) ||
+      Object.entries(updatedDraftPropBets).some(([pid, draftAnswer]) => originalSubmittedPropBets[pid] !== draftAnswer);
     setHasUnsavedChanges(hasChanges);
 
-    // Update UI immediately (same visual experience as before)
     setPropBetSelections(prev => ({ ...prev, [propBetId]: answer }));
-
     return { success: true };
   }, [draftPicks, draftPropBets, originalSubmittedPicks, originalSubmittedPropBets]);
 
-  // ✅ HUGE OPTIMIZATION: Memoize sortedGames to prevent recreation on every render
+  // ======== SORT + LOAD ========
+
   const sortedGames = useMemo(() => {
     if (!Array.isArray(games)) return [];
-    
-    console.log('🔄 Recalculating sortedGames (should only happen when games change)');
-    
-    // Pre-calculate dates to avoid repeated Date parsing
-    const gamesWithDates = games.map(game => ({
-      ...game,
-      _sortDate: new Date(game.start_time).getTime() // Cache parsed date as timestamp
-    }));
-    
+    const gamesWithDates = games.map(game => ({ ...game, _sortDate: new Date(game.start_time).getTime() }));
     return gamesWithDates.sort((a, b) => a._sortDate - b._sortDate);
-  }, [games]); // Only recalculate when games array actually changes
+  }, [games]);
 
-  // Initial data loading - only when user info is available
   useEffect(() => {
-    if (userInfo && !isLoading) {
-      refreshAllData();
-    }
+    if (userInfo && !isLoading) refreshAllData();
   }, [userInfo, isLoading, refreshAllData]);
 
   if (isLoading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        backgroundColor: '#1f1f1f',
-        color: 'white'
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#1f1f1f', color: 'white' }}>
         Loading...
       </div>
     );
@@ -370,17 +293,11 @@ export default function App() {
   return (
     <ThemeProvider>
       <Router>
-        {/* 🆕 NAVIGATION MANAGER: Handles navigation blocking inside Router context */}
-        <NavigationManager
-          hasUnsavedChanges={hasUnsavedChanges}
-          draftCount={draftCount}
-          onClearDrafts={clearDrafts}
-        />
-        
+        <NavigationManager hasUnsavedChanges={hasUnsavedChanges} draftCount={draftCount} onClearDrafts={clearDrafts} />
         <ScrollToTop />
         <Navbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-transform duration-300 ${isOpen ? "-translate-x-[40vw]" : "translate-x-0"}`}>
-          <Routes>  
+          <Routes>
             <Route
               path="/"
               element={
@@ -391,13 +308,13 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
-            <Route 
-              path="/week/:weekNumber" 
+            <Route
+              path="/week/:weekNumber"
               element={
                 <ErrorBoundary level="page" customMessage="Week page failed to load">
                   <PrivateRoute>
-                    <WeekPage 
-                      games={sortedGames} 
+                    <WeekPage
+                      games={sortedGames}
                       moneyLineSelections={moneyLineSelections}
                       propBetSelections={propBetSelections}
                       handleMoneyLineClick={handleMoneyLineClick}
@@ -415,7 +332,7 @@ export default function App() {
                     />
                   </PrivateRoute>
                 </ErrorBoundary>
-              } 
+              }
             />
             <Route
               path="/login"
@@ -448,7 +365,7 @@ export default function App() {
               element={
                 <ErrorBoundary level="page" customMessage="Week selector failed to load">
                   <PrivateRoute>
-                    <WeekSelector 
+                    <WeekSelector
                       games={sortedGames}
                       gameResults={gameResults}
                       moneyLineSelections={moneyLineSelections}
@@ -460,28 +377,26 @@ export default function App() {
                 </ErrorBoundary>
               }
             />
-            <Route path="/settings" element={
-              <PrivateRoute>
-                <div style={{padding: '80px 20px 20px', color: 'white', textAlign: 'center'}}>
-                  <h1>Coming Soon!</h1>
-                </div>
-              </PrivateRoute>
-            } />
+            <Route
+              path="/settings"
+              element={
+                <PrivateRoute>
+                  <div style={{ padding: '80px 20px 20px', color: 'white', textAlign: 'center' }}>
+                    <h1>Coming Soon!</h1>
+                  </div>
+                </PrivateRoute>
+              }
+            />
           </Routes>
         </div>
-        
-        {/* Simple Toaster with minimal config - styles moved to CSS */}
+
         <Toaster
           position="top-center"
           toastOptions={{
             duration: 4000,
             className: 'custom-toast',
-            success: {
-              className: 'custom-toast-success',
-            },
-            error: {
-              className: 'custom-toast-error',
-            },
+            success: { className: 'custom-toast-success' },
+            error: { className: 'custom-toast-error' },
           }}
           containerClassName="toast-container"
         />
