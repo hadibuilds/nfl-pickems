@@ -108,18 +108,13 @@ export default function UserStatsDisplay({ userInfo }) {
       const accuracyData = await accuracyResponse.json();
       console.log('✅ User accuracy data:', accuracyData);
       
-      const { correct_predictions, total_predictions_with_results } = accuracyData;
-
-      if (total_predictions_with_results === 0) {
-        console.log('📝 No predictions with results yet');
+      const overall = accuracyData?.overall_accuracy;
+      if (!overall || typeof overall.percentage !== 'number') {
+        console.log('📝 No overall_accuracy in response');
         return 0;
       }
 
-      // Calculate accuracy percentage
-      const accuracy = (correct_predictions / total_predictions_with_results) * 100;
-      console.log(`🎯 Calculated accuracy: ${correct_predictions}/${total_predictions_with_results} = ${accuracy}%`);
-      
-      return Math.round(accuracy);
+      return Math.round(overall.percentage);
 
     } catch (error) {
       console.error('❌ Error calculating accuracy:', error);
@@ -138,7 +133,7 @@ export default function UserStatsDisplay({ userInfo }) {
   // Format rank display (remove # symbol)
   const formatRank = (rank) => {
     if (rank === '—' || rank === null) return '—';
-    return rank; // Just return the rank as-is (T1, T2, 3, 4, etc.)
+    return rank; // Just return the rank as-is (T-1, 2, 3, etc.)
   };
 
   // Format accuracy display
