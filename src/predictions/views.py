@@ -172,7 +172,13 @@ def get_standings(request):
             all_weeks.add(w)
 
         total = weekly_scores[int(selected_week)] if selected_week else sum(weekly_scores.values())
-        standings.append({'username': user.username, 'weekly_scores': dict(weekly_scores), 'total_points': total})
+        standings.append({
+            'username': user.username,
+            'first_name': user.first_name,   # 👈 added
+            'last_name': user.last_name,     # 👈 added
+            'weekly_scores': dict(weekly_scores),
+            'total_points': total
+        })
 
     standings.sort(key=lambda x: (-x['total_points'], x['username'].lower()))
     all_weeks = sorted(all_weeks)
