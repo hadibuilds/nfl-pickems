@@ -68,8 +68,8 @@ sed -i '1s;^;{% load static %}\n;' src/templates/index.html
 
 # Replace asset paths with {% static %} template tags for common extensions
 for ext in js css png svg jpg jpeg gif webp ico mp4 webm; do
-  sed -i -E "s|/static/assets/([^"]+\.${ext})|{% static 'assets/\1' %}|g" src/templates/index.html || true
-  sed -i -E "s|/assets/([^"]+\.${ext})|{% static 'assets/\1' %}|g" src/templates/index.html || true
+  sed -i -E "s|/static/assets/([^\"']+\.${ext})|{% static 'assets/\1' %}|g" src/templates/index.html || true
+  sed -i -E "s|/assets/([^\"']+\.${ext})|{% static 'assets/\1' %}|g" src/templates/index.html || true
 done
 
 # -----------------------------------------------------------------------------
