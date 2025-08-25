@@ -160,8 +160,9 @@ class CustomPasswordResetView(PasswordResetView):
     Custom password reset view that sends HTML emails - DEBUG VERSION
     """
     template_name = 'registration/password_reset_form.html'
-    email_template_name = 'registration/password_reset_email.html'
     subject_template_name = 'registration/password_reset_subject.txt'
+    email_template_name = 'registration/password_reset_email.txt'  # plain text
+    html_email_template_name = 'registration/password_reset_email.html'  # HTML
     
     def __init__(self, *args, **kwargs):
         print("DEBUG: CustomPasswordResetView __init__ called")
