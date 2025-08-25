@@ -1,0 +1,22 @@
+# Ensure shell scripts always use LF (Unix) endings
+*.sh text eol=lf
+
+# Ensure Python files always use LF endings
+*.py text eol=lf
+
+# Ensure JS/TS/JSON/etc use LF endings
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+
+# Images and other binaries should not be touched
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.ico binary
+*.mp4 binary
+*.webm binary
