@@ -122,7 +122,7 @@ _ORIG_CLASS_GET_APP_LIST = admin.AdminSite.get_app_list
 def _custom_get_app_list(adminsite, request):
     """
     Build a custom app list with five ordered pseudo sections first:
-      Users → Groups → Non‑User Data → User Data → Snapshot Data
+      Users → Groups → Non-User Data → User Data → Snapshot Data
     Then append all remaining apps/models as Django would normally display.
     """
     # Call Django's original class method (not super()), then reshape

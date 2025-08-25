@@ -238,15 +238,26 @@ def user_accuracy(request):
         }
     })
 
+# ===== Tiny endpoint for current week (and available weeks) =====
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_current_week_only(request):
+    try:
+        current = int(get_current_week())
+        weeks = list(
+            Game.objects.values_list('week', flat=True)
+            .distinct()
+            .order_by('week')
+        )
+        return Response({"currentWeek": current, "weeks": weeks})
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
 # ===== NEW GRANULAR DASHBOARD ENDPOINTS =====
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_stats_only(request):
-    """
-    FAST: Get only current user's basic stats
-    Perfect for header/navbar display
-    """
     try:
         user = request.user
         current_week = get_current_week()
