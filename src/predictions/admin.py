@@ -1,204 +1,200 @@
 # predictions/admin.py
 from django.contrib import admin
+from django.contrib.auth.models import User, Group
+from django.conf import settings
+
 from .models import (
-    Prediction, PropBet, PropBetPrediction, 
-    WeeklySnapshot, RankHistory, UserStreak, 
+    Prediction, PropBet, PropBetPrediction,
+    WeeklySnapshot, RankHistory, UserStreak,
     LeaderboardSnapshot, SeasonStats
 )
 
-# ✅ Admin for game predictions (money-line picks)
-class PredictionAdmin(admin.ModelAdmin):
-    list_display = ('user', 'game', 'predicted_winner', 'is_correct')
-    list_filter = ('is_correct', 'game__week')
-    search_fields = ('user__username', 'game__home_team', 'game__away_team', 'predicted_winner')
-    ordering = ('-game__week', '-game__start_time')
+# Try to import Game so we can show it under “Non‑User Data”
+try:
+    from games.models import Game
+    HAS_GAME = True
+except Exception:
+    HAS_GAME = False
 
-# ✅ Admin for prop bets
+
+# ===========================
+#   ModelAdmin definitions
+#   (no model/class renames)
+# ===========================
+
+class PredictionAdmin(admin.ModelAdmin):
+    list_display = ("user", "game", "predicted_winner", "is_correct")
+    list_filter = ("is_correct", "game__week")
+    search_fields = ("user__username", "game__home_team", "game__away_team", "predicted_winner")
+    ordering = ("-game__week", "-game__start_time")
+
+
 class PropBetAdmin(admin.ModelAdmin):
-    list_display = ('get_week', 'game', 'category', 'question', 'correct_answer')
-    ordering = ('game__week',)
-    search_fields = ('question',)
-    list_filter = ('category', 'game__week')
+    list_display = ("get_week", "game", "category", "question", "correct_answer")
+    list_filter = ("category", "game__week")
+    search_fields = ("question",)
+    ordering = ("game__week",)
 
     def get_week(self, obj):
         return obj.game.week
-    get_week.short_description = 'Week'
-    get_week.admin_order_field = 'game__week'
+    get_week.short_description = "Week"
+    get_week.admin_order_field = "game__week"
 
-# ✅ Admin for user prop bet predictions
+
 class PropBetPredictionAdmin(admin.ModelAdmin):
-    list_display = ('user', 'prop_bet', 'answer', 'is_correct')
-    list_filter = ('is_correct', 'prop_bet__category', 'prop_bet__game__week')
-    search_fields = ('user__username', 'prop_bet__question', 'answer')
-    ordering = ('-prop_bet__game__week',)
+    list_display = ("user", "prop_bet", "answer", "is_correct")
+    list_filter = ("is_correct", "prop_bet__category", "prop_bet__game__week")
+    search_fields = ("user__username", "prop_bet__question", "answer")
+    ordering = ("-prop_bet__game__week",)
 
-# 📊 Admin for weekly snapshots
-class WeeklySnapshotAdmin(admin.ModelAdmin):
-    list_display = (
-        'user', 'week', 'rank', 'total_points', 'weekly_points', 
-        'overall_accuracy', 'created_at'
-    )
-    list_filter = ('week', 'rank')
-    search_fields = ('user__username',)
-    ordering = ('week', 'rank')
-    readonly_fields = ('created_at',)
-    
-    fieldsets = (
-        ('Basic Info', {
-            'fields': ('user', 'week', 'rank', 'total_users', 'points_from_leader')
-        }),
-        ('Weekly Stats', {
-            'fields': (
-                'weekly_points', 'weekly_game_correct', 'weekly_game_total',
-                'weekly_prop_correct', 'weekly_prop_total', 'weekly_accuracy'
-            )
-        }),
-        ('Cumulative Stats', {
-            'fields': (
-                'total_points', 'total_game_correct', 'total_game_total',
-                'total_prop_correct', 'total_prop_total'
-            )
-        }),
-        ('Accuracies', {
-            'fields': ('overall_accuracy', 'moneyline_accuracy', 'prop_accuracy')
-        }),
-        ('Metadata', {
-            'fields': ('created_at',)
-        }),
-    )
 
-# 📈 Admin for rank history
-class RankHistoryAdmin(admin.ModelAdmin):
-    list_display = (
-        'user', 'week', 'rank', 'previous_rank', 'rank_change_display', 
-        'total_points', 'trend_direction'
-    )
-    list_filter = ('week', 'rank_change')
-    search_fields = ('user__username',)
-    ordering = ('week', 'rank')
-    readonly_fields = ('created_at', 'trend_direction', 'rank_change_display')
-    
-    def rank_change_display(self, obj):
-        return obj.rank_change_display
-    rank_change_display.short_description = 'Rank Change'
-    
-    def trend_direction(self, obj):
-        return obj.trend_direction
-    trend_direction.short_description = 'Trend'
-
-# 🔥 Admin for user streaks
 class UserStreakAdmin(admin.ModelAdmin):
-    list_display = (
-        'user', 'current_streak', 'streak_type', 'longest_win_streak', 
-        'longest_loss_streak', 'last_updated'
-    )
-    list_filter = ('streak_type', 'current_streak')
-    search_fields = ('user__username',)
-    ordering = ('-current_streak',)
-    readonly_fields = ('last_updated',)
-    
-    fieldsets = (
-        ('Current Streak', {
-            'fields': ('user', 'current_streak', 'streak_type')
-        }),
-        ('Record Streaks', {
-            'fields': ('longest_win_streak', 'longest_loss_streak')
-        }),
-        ('Metadata', {
-            'fields': ('last_updated',)
-        }),
-    )
+    list_display = ("user", "current_streak", "streak_type", "longest_win_streak", "longest_loss_streak", "last_updated")
+    list_filter = ("streak_type", "current_streak")
+    search_fields = ("user__username",)
+    ordering = ("-current_streak",)
+    readonly_fields = ("last_updated",)
 
-# 🏆 Admin for leaderboard snapshots
-class LeaderboardSnapshotAdmin(admin.ModelAdmin):
-    list_display = ('week', 'get_leader', 'get_total_users', 'created_at')
-    list_filter = ('week',)
-    ordering = ('-week',)
-    readonly_fields = ('created_at', 'get_leader', 'get_total_users', 'formatted_snapshot')
-    
-    def get_leader(self, obj):
-        """Show who was leading that week"""
-        if obj.snapshot_data:
-            leader = next((user for user in obj.snapshot_data if user.get('rank') == 1), None)
-            return f"{leader['username']} ({leader['points']} pts)" if leader else 'N/A'
-        return 'N/A'
-    get_leader.short_description = 'Week Leader'
-    
-    def get_total_users(self, obj):
-        """Show total users that week"""
-        return len(obj.snapshot_data) if obj.snapshot_data else 0
-    get_total_users.short_description = 'Total Users'
-    
-    def formatted_snapshot(self, obj):
-        """Pretty print the JSON data"""
-        if obj.snapshot_data:
-            formatted = ""
-            for user in obj.snapshot_data[:5]:  # Show top 5
-                formatted += f"#{user.get('rank', '?')} {user.get('username', 'Unknown')} - {user.get('points', 0)} pts\n"
-            if len(obj.snapshot_data) > 5:
-                formatted += f"... and {len(obj.snapshot_data) - 5} more users"
-            return formatted
-        return 'No data'
-    formatted_snapshot.short_description = 'Top 5 Leaderboard'
-    
-    fieldsets = (
-        ('Basic Info', {
-            'fields': ('week', 'get_leader', 'get_total_users', 'created_at')
-        }),
-        ('Leaderboard Data', {
-            'fields': ('formatted_snapshot',),
-            'description': 'Top 5 users from this week\'s leaderboard'
-        }),
-    )
 
-# 🌟 Admin for season stats
 class SeasonStatsAdmin(admin.ModelAdmin):
-    list_display = (
-        'user', 'best_week_points', 'best_week_number', 'highest_rank',
-        'weeks_in_top_3', 'weeks_as_leader', 'trending_direction'
-    )
-    list_filter = ('trending_direction', 'weeks_as_leader', 'weeks_in_top_3')
-    search_fields = ('user__username', 'favorite_team_picked')
-    ordering = ('-weeks_as_leader', '-weeks_in_top_3', 'highest_rank')
-    readonly_fields = ('last_updated',)
-    
-    fieldsets = (
-        ('User', {
-            'fields': ('user',)
-        }),
-        ('Best Performances', {
-            'fields': (
-                'best_week_points', 'best_week_number', 
-                'highest_rank', 'highest_rank_week'
-            )
-        }),
-        ('Consistency Metrics', {
-            'fields': (
-                'weeks_in_top_3', 'weeks_in_top_5', 'weeks_as_leader'
-            )
-        }),
-        ('Prediction Patterns', {
-            'fields': (
-                'favorite_team_picked', 'favorite_team_pick_count',
-                'most_successful_category'
-            )
-        }),
-        ('Trends', {
-            'fields': ('trending_direction',)
-        }),
-        ('Metadata', {
-            'fields': ('last_updated',)
-        }),
-    )
+    list_display = ("user", "best_week_points", "best_week_number", "highest_rank", "weeks_in_top_3", "weeks_as_leader", "trending_direction")
+    list_filter = ("trending_direction", "weeks_as_leader", "weeks_in_top_3")
+    search_fields = ("user__username", "favorite_team_picked")
+    ordering = ("-weeks_as_leader", "-weeks_in_top_3", "highest_rank")
+    readonly_fields = ("last_updated",)
 
-# Register all models
+
+class WeeklySnapshotAdmin(admin.ModelAdmin):
+    list_display = ("user", "week", "rank", "total_points", "weekly_points", "overall_accuracy", "created_at")
+    list_filter = ("week", "rank")
+    search_fields = ("user__username",)
+    ordering = ("week", "rank")
+    readonly_fields = ("created_at",)
+
+
+class RankHistoryAdmin(admin.ModelAdmin):
+    list_display = ("user", "week", "rank", "previous_rank", "rank_change", "total_points")
+    list_filter = ("week", "rank_change")
+    search_fields = ("user__username",)
+    ordering = ("week", "rank")
+    readonly_fields = ("created_at",)
+
+
+class LeaderboardSnapshotAdmin(admin.ModelAdmin):
+    list_display = ("week",)
+    list_filter = ("week",)
+    ordering = ("-week",)
+    readonly_fields = ("created_at",)
+
+
+# ===========================
+#   Register models as usual
+# ===========================
+
 admin.site.register(Prediction, PredictionAdmin)
 admin.site.register(PropBet, PropBetAdmin)
 admin.site.register(PropBetPrediction, PropBetPredictionAdmin)
-
-# Register new historical models
-admin.site.register(WeeklySnapshot, WeeklySnapshotAdmin)
-admin.site.register(RankHistory, RankHistoryAdmin)
 admin.site.register(UserStreak, UserStreakAdmin)
-admin.site.register(LeaderboardSnapshot, LeaderboardSnapshotAdmin)
 admin.site.register(SeasonStats, SeasonStatsAdmin)
+
+# Show snapshot models under “Snapshot Data” (toggle with settings)
+if getattr(settings, "SNAPSHOTS_ENABLED", True):
+    admin.site.register(WeeklySnapshot, WeeklySnapshotAdmin)
+    admin.site.register(RankHistory, RankHistoryAdmin)
+    admin.site.register(LeaderboardSnapshot, LeaderboardSnapshotAdmin)
+
+
+# ============================================
+#   Single-dashboard grouping & custom order
+#   Users → Groups → Non‑User Data → User Data → Snapshot Data
+# ============================================
+
+# Buckets (by Django admin model "object_name", i.e., class name)
+USER_MODEL_NAMES = {"User"}
+GROUP_MODEL_NAMES = {"Group"}
+NONUSER_MODEL_NAMES = {"PropBet"} | ({"Game"} if HAS_GAME else set())
+USERDATA_MODEL_NAMES = {"Prediction", "PropBetPrediction"}
+SNAPSHOT_MODEL_NAMES = {"UserStreak", "SeasonStats", "WeeklySnapshot", "RankHistory", "LeaderboardSnapshot"} if getattr(settings, "SNAPSHOTS_ENABLED", True) else set()
+
+# Save the *original class method* so we can call it safely
+_ORIG_CLASS_GET_APP_LIST = admin.AdminSite.get_app_list
+
+def _custom_get_app_list(adminsite, request):
+    """
+    Build a custom app list with five ordered pseudo sections first:
+      Users → Groups → Non‑User Data → User Data → Snapshot Data
+    Then append all remaining apps/models as Django would normally display.
+    """
+    # Call Django's original class method (not super()), then reshape
+    apps = list(_ORIG_CLASS_GET_APP_LIST(adminsite, request))
+
+    # Flatten all models (keep original dict structure for each model row)
+    flat = []
+    for app in apps:
+        for m in app["models"]:
+            flat.append({
+                "app_label": app["app_label"],
+                "app_name": app["name"],
+                "app_url": app["app_url"],
+                "model": m,
+            })
+
+    def pluck(names, pool):
+        picked, rest = [], []
+        ns = set(names)
+        for row in pool:
+            if row["model"]["object_name"] in ns:
+                picked.append(row)
+            else:
+                rest.append(row)
+        return picked, rest
+
+    # Build the five sections in exact order
+    users_rows, rest = pluck(USER_MODEL_NAMES, flat)
+    groups_rows, rest = pluck(GROUP_MODEL_NAMES, rest)
+    nonuser_rows, rest = pluck(NONUSER_MODEL_NAMES, rest)
+    userdata_rows, rest = pluck(USERDATA_MODEL_NAMES, rest)
+    snapshot_rows, rest = pluck(SNAPSHOT_MODEL_NAMES, rest)
+
+    def make_app(name, rows, label):
+        return {
+            "name": name,
+            "app_label": label,
+            "app_url": "",
+            "has_module_perms": True,
+            "models": sorted([r["model"] for r in rows], key=lambda m: m["name"].lower()),
+        }
+
+    pseudo = []
+    if users_rows:    pseudo.append(make_app("Users", users_rows, "z_users"))
+    if groups_rows:   pseudo.append(make_app("Groups", groups_rows, "z_groups"))
+    if nonuser_rows:  pseudo.append(make_app("Non-User Data", nonuser_rows, "z_nonuser"))
+    if userdata_rows: pseudo.append(make_app("User Data", userdata_rows, "z_user"))
+    if snapshot_rows: pseudo.append(make_app("Snapshot Data", snapshot_rows, "z_snapshot"))
+
+    # Rebuild remaining real apps (auth, admin, etc.)
+    by_app = {}
+    for row in rest:
+        key = (row["app_label"], row["app_name"], row["app_url"])
+        by_app.setdefault(key, []).append(row["model"])
+
+    remaining = []
+    for (app_label, app_name, app_url), models in by_app.items():
+        remaining.append({
+            "name": app_name,
+            "app_label": app_label,
+            "app_url": app_url,
+            "has_module_perms": True,
+            "models": sorted(models, key=lambda m: m["name"].lower()),
+        })
+
+    # Our five pseudo sections FIRST, then the rest alphabetically by app name
+    return pseudo + sorted(remaining, key=lambda a: a["name"].lower())
+
+# Patch the AdminSite *class* so all admin sites use this ordering
+admin.AdminSite.get_app_list = _custom_get_app_list
+
+# Optional: header branding
+admin.site.site_header = "Pickems Admin"
+admin.site.site_title = "Pickems Admin"
+admin.site.index_title = "Site administration"
