@@ -9,6 +9,10 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.contrib.auth.views import PasswordResetView
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 User = get_user_model()
 
@@ -26,6 +30,8 @@ def whoami(request):
         return Response({
             "username": user.username,
             "email": user.email,
+            "first_name": user.first_name,  # Add first name
+            "last_name": user.last_name,    # Add last name
         })
     else:
         return Response({"user": None})
@@ -55,6 +61,8 @@ class LoginAPIView(APIView):
         return Response({
             "username": user.username,
             "email": user.email,
+            "first_name": user.first_name,  # Add first name
+            "last_name": user.last_name,    # Add last name
         })
 
 
@@ -63,16 +71,23 @@ class RegisterView(APIView):
 
     def post(self, request):
         try:
-            username = request.data.get("username", "").lower()
-            email = request.data.get("email", "").lower()
+            username = request.data.get("username", "").strip().lower()
+            email = request.data.get("email", "").strip().lower()
             password = request.data.get("password")
+            first_name = request.data.get("first_name", "").strip().title()  # Capitalize first letter
+            last_name = request.data.get("last_name", "").strip().title()    # Capitalize first letter
             invite_code = request.data.get("inviteCode")
 
+            # Validation
             if invite_code != settings.INVITE_CODE:
                 return Response({"detail": "Invalid invite code"}, status=400)
 
             if not username or not email or not password:
-                return Response({"detail": "All fields are required."}, status=400)
+                return Response({"detail": "Username, email, and password are required"}, status=400)
+            
+            # First name is required, last name is optional
+            if not first_name:
+                return Response({"detail": "First name is required"}, status=400)
 
             if User.objects.filter(username__iexact=username).exists():
                 return Response({"detail": "Username already taken"}, status=400)
@@ -85,10 +100,13 @@ class RegisterView(APIView):
             except DjangoValidationError as e:
                 return Response({"detail": list(e.messages)}, status=400)
 
+            # Create user with first/last names
             user = User.objects.create_user(
                 username=username,
                 email=email,
-                password=password
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
             )
 
             login(request, user)
@@ -96,6 +114,8 @@ class RegisterView(APIView):
             return Response({
                 "username": user.username,
                 "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
             }, status=201)
 
         except Exception as e:
@@ -134,3 +154,41 @@ def logout_view(request):
         # Log error details for debugging
         print(f"Error during logout: {e}")
         return JsonResponse({"detail": "Internal server error"}, status=500)
+
+
+class CustomPasswordResetView(PasswordResetView):
+    """
+    Custom password reset view that sends HTML emails
+    """
+    template_name = 'registration/password_reset_form.html'
+    email_template_name = 'registration/password_reset_email.html'
+    subject_template_name = 'registration/password_reset_subject.txt'
+    
+    def send_mail(self, subject_template_name, email_template_name,
+                  context, from_email, to_email, html_email_template_name=None):
+        """
+        Send a Django email with both HTML and plain text versions
+        """
+        subject = render_to_string(subject_template_name, context)
+        # Remove newlines from subject
+        subject = ''.join(subject.splitlines())
+        
+        # Render HTML email
+        html_content = render_to_string(email_template_name, context)
+        
+        # Create plain text version by stripping HTML tags
+        text_content = strip_tags(html_content)
+        
+        # Create email with both HTML and text versions
+        email_message = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,  # Plain text version
+            from_email=from_email,
+            to=[to_email]
+        )
+        
+        # Attach HTML version
+        email_message.attach_alternative(html_content, "text/html")
+        
+        # Send the email
+        email_message.send()

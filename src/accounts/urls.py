@@ -6,6 +6,7 @@ from .views import (
     RegisterView,
     logout_view,
     get_csrf_token,
+    CustomPasswordResetView,  # Add this import
 )
 
 urlpatterns = [
@@ -15,11 +16,8 @@ urlpatterns = [
     path('api/register/', RegisterView.as_view(), name='api-register'),
     path('api/logout/', logout_view, name='logout'),
 
-    path('api/password-reset/', auth_views.PasswordResetView.as_view(
-        template_name='registration/password_reset_form.html',
-        email_template_name='registration/password_reset_email.html',
-        subject_template_name='registration/password_reset_subject.txt',
-    ), name='password_reset'),
+    # Use the custom view instead of the default one
+    path('api/password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),
 
     path('api/password-reset/done/', auth_views.PasswordResetDoneView.as_view(
         template_name='registration/reset_link_sent.html',
