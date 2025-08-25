@@ -10,6 +10,7 @@
 *.json text eol=lf
 *.css text eol=lf
 *.html text eol=lf
+*.lock text eol=lf
 
 # Images and other binaries should not be touched
 *.png binary
