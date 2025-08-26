@@ -9,6 +9,7 @@ export default function SignUpPage() {
 
   const [isVisible, setIsVisible] = useState(false);
   const [isConfirmVisible, setIsConfirmVisible] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false); // ✅ prevent double submit + drive UI
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,19 +24,15 @@ export default function SignUpPage() {
   const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    fetch(`${API_BASE}/accounts/api/csrf/`, {
-      credentials: "include",
-    });
+    fetch(`${API_BASE}/accounts/api/csrf/`, { credentials: "include" });
   }, []);
 
-  const toggleVisibility = () => setIsVisible(!isVisible);
-  const toggleConfirmVisibility = () => setIsConfirmVisible(!isConfirmVisible);
+  const toggleVisibility = () => !isSigningUp && setIsVisible(!isVisible);
+  const toggleConfirmVisibility = () => !isSigningUp && setIsConfirmVisible(!isConfirmVisible);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    // Clear error when user starts typing
     if (error) setError("");
   };
 
@@ -44,49 +41,41 @@ export default function SignUpPage() {
       setError("First name is required");
       return false;
     }
-
     if (!formData.username.trim()) {
       setError("Username is required");
       return false;
     }
-
     if (!formData.email.trim()) {
       setError("Email is required");
       return false;
     }
-
     if (formData.password.length < 5) {
       setError("Password must be at least 5 characters long");
       return false;
     }
-
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return false;
     }
-
     if (!formData.inviteCode.trim()) {
       setError("Invite code is required");
       return false;
     }
-
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSigningUp) return; // ✅ guard: ignore double submit
     setError("");
 
-    // Client-side validation
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
+      setIsSigningUp(true); // ✅ lock UI
+
       // Ensure fresh CSRF token before POST
-      await fetch(`${API_BASE}/accounts/api/csrf/`, {
-        credentials: "include",
-      });
+      await fetch(`${API_BASE}/accounts/api/csrf/`, { credentials: "include" });
 
       const res = await fetch(`${API_BASE}/accounts/api/register/`, {
         method: "POST",
@@ -116,6 +105,8 @@ export default function SignUpPage() {
     } catch (err) {
       console.error("Network error:", err);
       setError("Network error. Please try again.");
+    } finally {
+      setIsSigningUp(false); // ✅ release UI on completion/error
     }
   };
 
@@ -123,9 +114,7 @@ export default function SignUpPage() {
     <div className="w-full flex items-start justify-center px-6 pt-20 pb-12" style={{ backgroundColor: '#1E1E20' }}>
       <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] p-8 sm:p-10 rounded-xl shadow-md text-base" style={{ backgroundColor: '#2d2d2d' }}>
         <div className="text-center mb-6">
-          <h2 className="text-4xl font-bold text-white">
-            Sign Up
-          </h2>
+          <h2 className="text-4xl font-bold text-white">Sign Up</h2>
           <p className="mt-2 text-base" style={{ color: '#9ca3af' }}>
             Join the Pickems.fun community!
           </p>
@@ -148,13 +137,13 @@ export default function SignUpPage() {
               name="firstName"
               type="text"
               required
+              disabled={isSigningUp} // ✅ disable while pending
               value={formData.firstName}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
-              style={{ 
-                backgroundColor: '#1f1f1f',
-                border: '1px solid #4b5563'
-              }}
+              className={`w-full px-4 py-3 rounded-md focus:ring-2 outline-none text-base text-white ${
+                isSigningUp ? 'opacity-50 cursor-not-allowed' : 'focus:ring-violet-500'
+              }`}
+              style={{ backgroundColor: '#1f1f1f', border: '1px solid #4b5563' }}
             />
           </div>
 
@@ -167,13 +156,13 @@ export default function SignUpPage() {
               id="lastName"
               name="lastName"
               type="text"
+              disabled={isSigningUp}
               value={formData.lastName}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
-              style={{ 
-                backgroundColor: '#1f1f1f',
-                border: '1px solid #4b5563'
-              }}
+              className={`w-full px-4 py-3 rounded-md focus:ring-2 outline-none text-base text-white ${
+                isSigningUp ? 'opacity-50 cursor-not-allowed' : 'focus:ring-violet-500'
+              }`}
+              style={{ backgroundColor: '#1f1f1f', border: '1px solid #4b5563' }}
             />
           </div>
 
@@ -187,13 +176,13 @@ export default function SignUpPage() {
               name="username"
               type="text"
               required
+              disabled={isSigningUp}
               value={formData.username}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
-              style={{ 
-                backgroundColor: '#1f1f1f',
-                border: '1px solid #4b5563'
-              }}
+              className={`w-full px-4 py-3 rounded-md focus:ring-2 outline-none text-base text-white ${
+                isSigningUp ? 'opacity-50 cursor-not-allowed' : 'focus:ring-violet-500'
+              }`}
+              style={{ backgroundColor: '#1f1f1f', border: '1px solid #4b5563' }}
             />
           </div>
 
@@ -207,13 +196,13 @@ export default function SignUpPage() {
               name="email"
               type="email"
               required
+              disabled={isSigningUp}
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
-              style={{ 
-                backgroundColor: '#1f1f1f',
-                border: '1px solid #4b5563'
-              }}
+              className={`w-full px-4 py-3 rounded-md focus:ring-2 outline-none text-base text-white ${
+                isSigningUp ? 'opacity-50 cursor-not-allowed' : 'focus:ring-violet-500'
+              }`}
+              style={{ backgroundColor: '#1f1f1f', border: '1px solid #4b5563' }}
             />
           </div>
 
@@ -228,17 +217,19 @@ export default function SignUpPage() {
                 name="password"
                 type={isVisible ? "text" : "password"}
                 required
+                disabled={isSigningUp}
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-3 pr-10 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
-                style={{ 
-                  backgroundColor: '#1f1f1f',
-                  border: '1px solid #4b5563'
-                }}
+                className={`w-full px-4 py-3 pr-10 rounded-md focus:ring-2 outline-none text-base text-white ${
+                  isSigningUp ? 'opacity-50 cursor-not-allowed' : 'focus:ring-violet-500'
+                }`}
+                style={{ backgroundColor: '#1f1f1f', border: '1px solid #4b5563' }}
               />
               <div
                 onClick={toggleVisibility}
-                className="absolute inset-y-0 right-3 flex items-center cursor-pointer hover:text-gray-300"
+                className={`absolute inset-y-0 right-3 flex items-center ${
+                  isSigningUp ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:text-gray-300'
+                }`}
                 style={{ color: '#9ca3af' }}
               >
                 {isVisible ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
@@ -257,23 +248,27 @@ export default function SignUpPage() {
                 name="confirmPassword"
                 type={isConfirmVisible ? "text" : "password"}
                 required
+                disabled={isSigningUp}
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 pr-10 rounded-md focus:ring-2 outline-none text-base text-white ${
-                  formData.confirmPassword && formData.password !== formData.confirmPassword 
-                    ? 'focus:ring-red-500 border-red-500' 
+                  formData.confirmPassword && formData.password !== formData.confirmPassword
+                    ? 'focus:ring-red-500 border-red-500'
                     : 'focus:ring-violet-500'
-                }`}
-                style={{ 
+                } ${isSigningUp ? 'opacity-50 cursor-not-allowed' : ''}`}
+                style={{
                   backgroundColor: '#1f1f1f',
-                  border: formData.confirmPassword && formData.password !== formData.confirmPassword 
-                    ? '1px solid #dc2626' 
-                    : '1px solid #4b5563'
+                  border:
+                    formData.confirmPassword && formData.password !== formData.confirmPassword
+                      ? '1px solid #dc2626'
+                      : '1px solid #4b5563',
                 }}
               />
               <div
                 onClick={toggleConfirmVisibility}
-                className="absolute inset-y-0 right-3 flex items-center cursor-pointer hover:text-gray-300"
+                className={`absolute inset-y-0 right-3 flex items-center ${
+                  isSigningUp ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:text-gray-300'
+                }`}
                 style={{ color: '#9ca3af' }}
               >
                 {isConfirmVisible ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
@@ -296,28 +291,46 @@ export default function SignUpPage() {
               name="inviteCode"
               type="text"
               required
+              disabled={isSigningUp}
               value={formData.inviteCode}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white"
-              style={{ 
-                backgroundColor: '#1f1f1f',
-                border: '1px solid #4b5563'
-              }}
+              className={`w-full px-4 py-3 rounded-md focus:ring-2 outline-none text-base text-white ${
+                isSigningUp ? 'opacity-50 cursor-not-allowed' : 'focus:ring-violet-500'
+              }`}
+              style={{ backgroundColor: '#1f1f1f', border: '1px solid #4b5563' }}
             />
           </div>
 
           <button
             type="submit"
-            className="w-full font-semibold py-3 rounded-md text-base text-white hover:bg-violet-700 transition"
+            disabled={isSigningUp} // ✅ main protection
+            className={`w-full font-semibold py-3 rounded-md text-base text-white transition ${
+              isSigningUp ? 'opacity-50 cursor-not-allowed bg-violet-500' : 'hover:bg-violet-700 bg-violet-600'
+            }`}
             style={{ backgroundColor: '#8B5CF6' }}
           >
-            Sign Up
+            {isSigningUp ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8"></path>
+                </svg>
+                Creating account…
+              </span>
+            ) : (
+              'Sign Up'
+            )}
           </button>
         </form>
 
-        <p className="text-center text-sm mt-4" style={{ color: '#9ca3af' }}>
+        <p className={`text-center text-sm mt-4 ${isSigningUp ? 'opacity-50' : ''}`} style={{ color: '#9ca3af' }}>
           Already have an account?{" "}
-          <Link to="/login" className="hover:underline" style={{ color: '#8B5CF6' }}>
+          <Link
+            to="/login"
+            className={`hover:underline ${isSigningUp ? 'cursor-not-allowed' : ''}`}
+            style={{ color: '#8B5CF6' }}
+            onClick={isSigningUp ? (e) => e.preventDefault() : undefined} // ✅ avoid navigation during submit
+          >
             Log In
           </Link>
         </p>
