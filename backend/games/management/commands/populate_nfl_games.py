@@ -1,7 +1,7 @@
 """
 Django management command to populate NFL game schedules from ESPN API
 Scrapes: week, home_team, away_team, start_time
-Place this file in: src/games/management/commands/populate_nfl_games.py
+Place this file in:backend/games/management/commands/populate_nfl_games.py
 """
 
 import requests

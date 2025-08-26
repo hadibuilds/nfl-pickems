@@ -6,9 +6,9 @@ echo "🔄 [RENDER] Syncing React → Django..."
 # Clean old builds
 echo "🧼 Cleaning previous builds..."
 rm -rf frontend/dist/
-rm -rf src/static/assets/
+rm -rf backend/static/assets/
 rm -rf staticfiles/
-rm -f src/templates/index.html
+rm -f backend/templates/index.html
 
 echo "📦 Installing Python packages..."
 pip install -r requirements.txt
@@ -22,33 +22,33 @@ cd ..
 
 # Copy assets to Django
 echo "📁 Copying built assets..."
-mkdir -p src/static/assets/
-cp -R frontend/dist/assets/* src/static/assets/
-cp frontend/dist/index.html src/templates/index.html
+mkdir -p backend/static/assets/
+cp -R frontend/dist/assets/* backend/static/assets/
+cp frontend/dist/index.html backend/templates/index.html
 
 # Patch index.html for Django using Linux-compatible sed
 echo "🧠 Patching index.html (Linux sed)..."
-sed -i '1s;^;{% load static %}\n;' src/templates/index.html
-sed -i -E "s|/static/assets/([^\"]+\.js)|{% static 'assets/\1' %}|g" src/templates/index.html
-sed -i -E "s|/static/assets/([^\"]+\.css)|{% static 'assets/\1' %}|g" src/templates/index.html
-sed -i -E "s|/static/assets/([^\"]+\.png)|{% static 'assets/\1' %}|g" src/templates/index.html
-sed -i -E "s|/static/assets/([^\"]+\.svg)|{% static 'assets/\1' %}|g" src/templates/index.html
+sed -i '1s;^;{% load static %}\n;' backend/templates/index.html
+sed -i -E "s|/static/assets/([^\"]+\.js)|{% static 'assets/\1' %}|g" backend/templates/index.html
+sed -i -E "s|/static/assets/([^\"]+\.css)|{% static 'assets/\1' %}|g" backend/templates/index.html
+sed -i -E "s|/static/assets/([^\"]+\.png)|{% static 'assets/\1' %}|g" backend/templates/index.html
+sed -i -E "s|/static/assets/([^\"]+\.svg)|{% static 'assets/\1' %}|g" backend/templates/index.html
 
 # Collect static files
 echo "📦 Running collectstatic (prod)..."
-python src/manage.py collectstatic --noinput --settings=nfl_pickems.settings.prod
+python backend/manage.py collectstatic --noinput --settings=nfl_pickems.settings.prod
 
 # Make migrations before applying
 echo "🧬 Making migrations..."
-python src/manage.py makemigrations --settings=nfl_pickems.settings.prod
+python backend/manage.py makemigrations --settings=nfl_pickems.settings.prod
 
 # Run migrations
 echo "🧱 Running migrations..."
-python src/manage.py migrate --settings=nfl_pickems.settings.prod
+python backend/manage.py migrate --settings=nfl_pickems.settings.prod
 
 # Create superuser (if env vars are set)
 echo "👤 Creating superuser..."
-python src/manage.py shell --settings=nfl_pickems.settings.prod << END
+python backend/manage.py shell --settings=nfl_pickems.settings.prod << END
 from django.contrib.auth import get_user_model
 User = get_user_model()
 username = "${DJANGO_ADMIN_USERNAME}"
