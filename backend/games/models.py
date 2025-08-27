@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils import timezone
 
-
 class Game(models.Model):
     week = models.IntegerField()
     home_team = models.CharField(max_length=50)
@@ -9,6 +8,7 @@ class Game(models.Model):
     start_time = models.DateTimeField()
     locked = models.BooleanField(default=False)  # Manual override
     winner = models.CharField(max_length=50, null=True, blank=True)
+    window_key = models.CharField(max_length=64, db_index=True, blank=True, null=True)
 
     class Meta:
         unique_together = ('week', 'home_team', 'away_team')

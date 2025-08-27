@@ -22,8 +22,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'accounts',
     'games',
-    'predictions',
+    'predictions.apps.PredictionsConfig',
     'frontend',
+    'insights',
 ]
 
 MIDDLEWARE = [
@@ -83,7 +84,7 @@ REST_FRAMEWORK = {
 LOGIN_REDIRECT_URL = '/accounts/dashboard/'
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Los_Angeles'
 USE_I18N = True
 USE_TZ = True
 

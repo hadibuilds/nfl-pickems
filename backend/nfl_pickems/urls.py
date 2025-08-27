@@ -28,6 +28,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),  # Includes the accounts URLs
     path('predictions/', include('predictions.urls')),
     path('games/', include('games.urls')),
+    path('insights/', include(('insights.urls'))),
     path('', include('frontend.urls')),
 ]
 

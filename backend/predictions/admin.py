@@ -2,6 +2,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
 from django.conf import settings
+from django import forms
 
 from .models import (
     Prediction, PropBet, PropBetPrediction,
@@ -27,8 +28,57 @@ class PredictionAdmin(admin.ModelAdmin):
     search_fields = ("user__username", "game__home_team", "game__away_team", "predicted_winner")
     ordering = ("-game__week", "-game__start_time")
 
+class PropBetAdminForm(forms.ModelForm):
+    class Meta:
+        model = PropBet
+        fields = "__all__"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = getattr(self.instance, "options", None)
+        if isinstance(options, str):
+            import json
+            try:
+                options = json.loads(options)
+            except Exception:
+                pass
+        def _choices_from_options(options):
+            if not options: return []
+            out = []
+            for item in options:
+                if isinstance(item, dict):
+                    key = item.get("key") or item.get("value") or item.get("id") or item.get("label")
+                    label = item.get("label") or item.get("text") or item.get("name") or str(key)
+                else:
+                    key = str(item); label = str(item)
+                if key not in (None, ""):
+                    out.append((str(key), str(label)))
+            # de-dupe, preserve order
+            seen, deduped = set(), []
+            for k, v in out:
+                if k in seen: continue
+                seen.add(k); deduped.append((k, v))
+            return deduped
+
+        if "correct_answer" in self.fields:
+            self.fields["correct_answer"].required = False
+            self.fields["correct_answer"].widget = forms.Select(
+                choices=[("", "— Select —")] + _choices_from_options(options)
+            )
+
+    def clean_correct_answer(self):
+        ans = self.cleaned_data.get("correct_answer")
+        options = self.cleaned_data.get("options", getattr(self.instance, "options", None))
+        valid = {k for k, _ in (self.fields["correct_answer"].widget.choices or [])}
+        valid.discard("")  # remove the blank choice
+        if ans in (None, ""):
+            return ans
+        if ans not in valid:
+            raise forms.ValidationError("Correct answer must be one of the defined options.")
+        return ans
+@admin.register(PropBet)
 class PropBetAdmin(admin.ModelAdmin):
+    form = PropBetAdminForm
     list_display = ("get_week", "game", "category", "question", "correct_answer")
     list_filter = ("category", "game__week")
     search_fields = ("question",)
@@ -235,7 +285,6 @@ class LeaderboardSnapshotAdmin(admin.ModelAdmin):
 # Remove UserStreak registration and update model groupings
 
 admin.site.register(Prediction, PredictionAdmin)
-admin.site.register(PropBet, PropBetAdmin)
 admin.site.register(PropBetPrediction, PropBetPredictionAdmin)
 admin.site.register(SeasonStats, SeasonStatsAdmin)  # Keep but moved to User Data section
 

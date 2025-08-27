@@ -2,14 +2,14 @@
  * HomePage: season rings + trend arrows everywhere
  * - Season rings: /predictions/api/user-season-stats-fast/
  * - Rank trend card: /predictions/api/user-trends-fast/?weeks=2
- * - Leaderboard WITH arrows: /predictions/api/season-leaderboard-fast/?limit=3
+ * - Leaderboard WITH arrows: now uses /predictions/api/home-top3/ (dense ties + snapshot trend)
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
-import useDashboardData from '../hooks/useDashboardData';
-import PageLayout from '../components/common/PageLayout';
-import UserAvatar from '../components/common/UserAvatar';
+import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation.js';
+import useDashboardData from '../hooks/useDashboardData.js';
+import PageLayout from '../components/common/PageLayout.jsx';
+import UserAvatar from '../components/common/UserAvatar.jsx';
 import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Zap } from 'lucide-react';
 import {
   GoldMedal,
@@ -19,7 +19,7 @@ import {
   calculateRankWithTies,
   getMedalTier,
 } from '../components/standings/rankingUtils.jsx';
-import { getCookie } from '../utils/cookies';
+import { getCookie } from '../utils/cookies.js';
 import confetti from 'canvas-confetti';
 
 const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage = true, fontSize = 'text-2xl' }) => {
@@ -102,7 +102,6 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
         </div>
       </div>
       <div className="flex items-center text-sm">
-        {/* exact same snippet you pointed out, but using the derived trend */}
         {derivedTrend !== 'same' && (
           <div className={`flex items-center text-sm ${derivedTrend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
             {derivedTrend === 'up'
@@ -128,9 +127,10 @@ function HomePage() {
   // Weekly rank trend for the stat card
   const [rankMeta, setRankMeta] = useState({ trend: 'same', rankChange: 0 });
 
-  // Leaderboard (with trend)
-  const [standings, setStandings] = useState([]);
-  const [standingsLoaded, setStandingsLoaded] = useState(false);
+  // Top-3 leaderboard from /predictions/api/home-top3/
+  const [items, setItems] = useState([]);
+  const [top3Loading, setTop3Loading] = useState(true);
+  const [top3Err, setTop3Err] = useState(null);
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -188,27 +188,34 @@ function HomePage() {
     })();
   }, [userInfo, API_BASE]);
 
-  // Leaderboard with trend
+  // Fetch Top-3 live leaderboard (dense ties)
   useEffect(() => {
     if (!userInfo) return;
+    let alive = true;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/season-leaderboard-dynamic/?limit=3`, {
-          credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') }
-        });
-        if (!res.ok) throw new Error('season-leaderboard-dynamic failed');
+        setTop3Err(null);
+        setTop3Loading(true);
+        const res = await fetch(`${API_BASE}/api/insights/home-top3/`, { credentials: 'include' });
+        if (!res.ok) throw new Error('home-top3 failed');
         const data = await res.json();
-        const rows = Array.isArray(data?.standings) ? data.standings : [];
-        // mark current user; preserve trend
-        const marked = rows.map(r => ({ ...r, isCurrentUser: String(r.username) === String(userInfo?.username) }));
-        setStandings(marked);
+        const list = Array.isArray(data?.items) ? data.items : [];
+        const marked = list.map(r => ({
+          ...r,
+          isCurrentUser: String(r.username) === String(userInfo?.username),
+        }));
+        if (alive) setItems(marked);
       } catch (e) {
         console.warn(e);
-        setStandings([]);
+        if (alive) {
+          setItems([]);
+          setTop3Err(e.message || 'Failed to load Top-3');
+        }
       } finally {
-        setStandingsLoaded(true);
+        if (alive) setTop3Loading(false);
       }
     })();
+    return () => { alive = false; };
   }, [userInfo, API_BASE]);
 
   if (!userInfo) {
@@ -236,9 +243,9 @@ function HomePage() {
 
   // Build a medal/rank list for helpers, preserving trend
   const standingsForMedals = useMemo(() => {
-    const sorted = [...standings].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
+    const sorted = [...items].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
     return sorted.map(s => ({ username: s.username, total_points: s.total_points }));
-  }, [standings]);
+  }, [items]);
 
   const goToWeeks = () => {
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -271,7 +278,7 @@ function HomePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
         {/* Season Performance Rings */}
         <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6">
-          <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
+          <h3 className="text-lg font-semibold">Season Performance</h3>
           <div className="flex space-x-4 items-center">
             <div className="flex flex-col items-center">
               <ProgressRing percentage={seasonPerf.overall || 0} size={80} strokeWidth={6} fontSize="text-base" />
@@ -301,14 +308,22 @@ function HomePage() {
             <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
           <div className="space-y-0">
-            {!standingsLoaded ? (
+            {top3Loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
               </div>
+            ) : top3Err ? (
+              <div className="text-center py-4" style={{ color: '#ef4444' }}>
+                Couldn’t load Top-3. Try again.
+              </div>
+            ) : items.length === 0 ? (
+              <div className="text-center py-4" style={{ color: '#9ca3af' }}>
+                No results yet.
+              </div>
             ) : (
               <>
-                {standings.map((entry, idx) => (
-                  <LeaderboardRow key={entry.username || idx} entry={entry} standingsForMedals={standingsForMedals} />
+                {items.map((entry, idx) => (
+                  <LeaderboardRow key={entry.user_id ?? entry.username ?? idx} entry={entry} standingsForMedals={standingsForMedals} />
                 ))}
               </>
             )}

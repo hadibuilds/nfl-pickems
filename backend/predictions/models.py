@@ -59,6 +59,7 @@ class PropBet(models.Model):
     question = models.CharField(max_length=255)
     options = models.JSONField(default=list)
     correct_answer = models.CharField(max_length=50, blank=True, null=True)
+    window_key = models.CharField(max_length=64, db_index=True, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -334,3 +335,62 @@ class SeasonStats(models.Model):
             summary.append(f"Biggest comeback: +{self.biggest_rank_climb} spots")
             
         return " | ".join(summary) if summary else "Building achievements..."
+
+# map the view + add snapshots
+class UserSeasonTotals(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        primary_key=True,
+        db_column="user_id",
+        on_delete=models.DO_NOTHING,
+        related_name="+",
+    )
+    ml_points = models.IntegerField()
+    prop_points = models.IntegerField()
+    total_points = models.IntegerField()
+
+    class Meta:
+        managed = False
+        db_table = "user_season_totals_mv"
+
+
+class Top3Snapshot(models.Model):
+    # e.g. "2025-10-12:morning" (date in PT + slot)
+    window_key = models.CharField(max_length=128, db_index=True)
+    version = models.PositiveIntegerField()
+    payload = models.JSONField()  # [{user_id, ml_points, prop_points, total_points, rank}, ...]
+    created_at = models.DateTimeField(auto_now_add=True)
+    correction_applied = models.BooleanField(default=False)
+    correction_event = models.ForeignKey(
+        "predictions.CorrectionEvent", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="snapshots"
+    )
+
+    class Meta:
+        unique_together = (("window_key", "version"),)
+        ordering = ["-created_at"]
+
+class CorrectionEvent(models.Model):
+    """
+    Append-only audit record for historical corrections that impact a window.
+    Example changes payload:
+      [
+        {"type": "game", "id": 123, "field": "winner", "old": "SEA", "new": "LAR"},
+        {"type": "prop", "id": 456, "field": "correct_answer", "old": "Over", "new": "Under"}
+      ]
+    """
+    window_key = models.CharField(max_length=64, db_index=True)
+    affected_game_ids = models.JSONField(default=list, blank=True)  # portable (ArrayField if you prefer PG-only)
+    changes = models.JSONField(default=list, blank=True)            # list of {type,id,field,old,new}
+    reason = models.CharField(max_length=255, blank=True, default="")
+    actor = models.ForeignKey(
+        getattr(settings, "AUTH_USER_MODEL", "auth.User"),
+        null=True, blank=True, on_delete=models.SET_NULL, related_name="correction_events"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"CorrectionEvent({self.window_key} @ {self.created_at:%Y-%m-%d %H:%M:%S})"

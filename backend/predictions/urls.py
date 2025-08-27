@@ -29,6 +29,7 @@ from .views import (
     user_weekly_trends_fast_view,
     season_leaderboard_fast_view,
     season_leaderboard_dynamic_trend_view,
+    home_top3_api,
 )
 
 urlpatterns = [
@@ -62,4 +63,6 @@ urlpatterns = [
     path('api/user-trends-fast/', user_weekly_trends_fast_view, name='user-trends-fast'),
     path('api/season-leaderboard-fast/', season_leaderboard_fast_view, name='season-leaderboard-fast'),
     path('api/season-leaderboard-dynamic/', season_leaderboard_dynamic_trend_view, name='season-leaderboard-dynamic'),
+
+    path("api/home-top3/", home_top3_api, name="home_top3"),
 ]

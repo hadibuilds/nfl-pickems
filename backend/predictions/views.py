@@ -1,6 +1,7 @@
 # predictions/views.py — SLIMMED: delegates compute to utils
 from collections import defaultdict
-
+from django.http import JsonResponse
+from django.db.models import F, Window, Max
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.shortcuts import get_object_or_404
@@ -11,7 +12,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from games.models import Game
-from .models import Prediction, PropBet, PropBetPrediction
+from .models import Prediction, PropBet, PropBetPrediction, Top3Snapshot, CorrectionEvent
+
+from .services.top3_sql import publish_top3_from_db
+from .services.snapshots import publish_after_snapshot
 
 
 # Primary realtime helpers
@@ -539,3 +543,40 @@ def season_leaderboard_dynamic_trend_view(request):
     limit = parse_int(request.GET.get('limit'), default=10, minimum=1, maximum=50)
     data = build_season_leaderboard_dynamic(limit=limit)
     return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def home_top3_api(request):
+    # Live Top-3 direct from DB
+    top3 = publish_top3_from_db()
+
+    # Compare last two snapshots (same window) for trend arrows
+    latest = Top3Snapshot.objects.order_by("-created_at").first()
+    prev = (
+        Top3Snapshot.objects
+        .filter(window_key=getattr(latest, "window_key", None))
+        .exclude(pk=getattr(latest, "pk", None))
+        .order_by("-created_at")
+        .first()
+    ) if latest else None
+
+    prev_rank = {row["user_id"]: row["rank"] for row in (prev.payload if prev else [])}
+    enriched = []
+    for row in top3:
+        uid, new = row["user_id"], row["rank"]
+        old = prev_rank.get(uid)
+        if old is None:
+            trend, rank_change = "up", None
+        elif new < old:
+            trend, rank_change = "up", old - new
+        elif new > old:
+            trend, rank_change = "down", new - old
+        else:
+            trend, rank_change = "same", 0
+        enriched.append({**row, "trend": trend, "rank_change": rank_change})
+
+    return JsonResponse({
+        "items": enriched,
+        "last_updated": latest.created_at.isoformat() if latest else None,
+        "trend_basis_window": latest.window_key if latest else None,
+    })
