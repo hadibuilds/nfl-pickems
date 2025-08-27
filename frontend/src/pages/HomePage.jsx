@@ -196,7 +196,7 @@ function HomePage() {
       try {
         setTop3Err(null);
         setTop3Loading(true);
-        const res = await fetch(`${API_BASE}/api/insights/home-top3/`, { credentials: 'include' });
+        const res = await fetch(`${API_BASE}/insights/api/home-top3/`, { credentials: 'include' });
         if (!res.ok) throw new Error('home-top3 failed');
         const data = await res.json();
         const list = Array.isArray(data?.items) ? data.items : [];
