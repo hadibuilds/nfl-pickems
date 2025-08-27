@@ -62,4 +62,8 @@ else:
     print("ℹ️ Superuser already exists.")
 END
 
+# Populate NFL games
+echo "🏈 Populating NFL games (prod)..."
+python backend/manage.py populate_nfl_games --limit 0 --settings=nfl_pickems.settings.prod
+
 echo "✅ [RENDER] Sync complete."
