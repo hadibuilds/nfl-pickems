@@ -5,7 +5,7 @@
  * FIXED: Prevents recreating objects/functions on every render
  * ADDED: Error boundaries around all routes for crash protection
  * ENHANCED: Added minimal draft system for picks
- * CLEANED: Removed floating button logic - now handled by WeekPage via Portal
+ * CLEANED: Removed floating button logic - now handled by GamePage via Portal
  * TOAST: Clean react-hot-toast implementation - styles moved to CSS
  * 🆕 FULL NAVIGATION PROTECTION: NavigationManager prevents navigation with unsaved picks
  * FIXED: iOS double tap issue by removing global touch handlers
@@ -17,7 +17,7 @@ import { Toaster } from 'react-hot-toast';
 import './App.css';
 import Navbar from './components/common/Navbar';
 import HomePage from './pages/HomePage';
-import WeekPage from './pages/WeekPage';
+import GamePage from './pages/GamePage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import Standings from './pages/Standings';
@@ -313,7 +313,7 @@ export default function App() {
               element={
                 <ErrorBoundary level="page" customMessage="Week page failed to load">
                   <PrivateRoute>
-                    <WeekPage
+                    <GamePage
                       games={sortedGames}
                       moneyLineSelections={moneyLineSelections}
                       propBetSelections={propBetSelections}

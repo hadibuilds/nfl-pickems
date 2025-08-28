@@ -1,7 +1,7 @@
 /*
  * Updated Navbar Component 
  * 🔒 NAVIGATION PROTECTED: All links use navigateWithConfirmation
- * Prevents navigation away from WeekPage with unsaved picks
+ * Prevents navigation away from GamePage with unsaved picks
  * Replaced hamburger menu with ProfileDropdown
  * Maintains all existing functionality and styling
  */

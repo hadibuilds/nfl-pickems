@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from games.models import Game
+from games.models import Game, PropBet
 import inspect
 
 class Prediction(models.Model):
@@ -45,32 +45,6 @@ class Prediction(models.Model):
             status = "✅" if self.is_correct else "❌"
             return f"{self.user.username} - Week {self.game.week}: {self.predicted_winner} ({status})"
         return f"{self.user.username} - Week {self.game.week}: {self.predicted_winner}"
-
-
-class PropBet(models.Model):
-    CATEGORY_CHOICES = [
-        ('over_under', 'Over/Under'),
-        ('point_spread', 'Point Spread'),
-        ('take_the_bait', 'Take-the-Bait')
-    ]
-
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="prop_bets")
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-    question = models.CharField(max_length=255)
-    options = models.JSONField(default=list)
-    correct_answer = models.CharField(max_length=50, blank=True, null=True)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        if self.correct_answer:
-            for prediction in self.propbetprediction_set.all():
-                prediction.is_correct = (prediction.answer == self.correct_answer)
-                prediction.save()
-
-    def __str__(self):
-        return f"Week {self.game.week} ({self.category}): {self.question}"
-
 
 class PropBetPrediction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
