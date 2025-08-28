@@ -1,130 +1,86 @@
-from django.db import models
-from django.conf import settings
-from games.models import Game, PropBet
-import inspect
+from __future__ import annotations
 
-class Prediction(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import UniqueConstraint, Index
+from django.contrib.auth import get_user_model
+
+from games.models import Game, PropBet
+
+User = get_user_model()
+
+class MoneyLinePrediction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="moneyline_predictions")
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="moneyline_predictions")
     predicted_winner = models.CharField(max_length=50, default="N/A")
     is_correct = models.BooleanField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Money-line prediction"
         verbose_name_plural = "Money-line predictions"
-        unique_together = ('user', 'game')
+        constraints = [
+            UniqueConstraint(fields=["user", "game"], name="uniq_ml_user_game"),
+        ]
         indexes = [
-            models.Index(fields=["user", "is_correct"]),
-            models.Index(fields=["game", "is_correct"]),
+            Index(fields=["user", "is_correct"]),
+            Index(fields=["game", "is_correct"]),
         ]
 
-    def save(self, *args, **kwargs):
-        # Allow updates to correctness even when locked
+    def clean(self):
+        # must be a valid team (or "N/A")
+        valid = {self.game.home_team, self.game.away_team, "N/A"}
+        if self.predicted_winner not in valid:
+            raise ValidationError("Pick must be home, away, or 'N/A'.")
+        # no edits after lock
         if self.pk:
-            old = Prediction.objects.get(pk=self.pk)
-            updating_correctness_only = (
-                self.predicted_winner == old.predicted_winner and
-                self.game == old.game and
-                self.user == old.user
-            )
+            old = type(self).objects.get(pk=self.pk)
+            if old.predicted_winner != self.predicted_winner and self.game.is_locked:
+                raise ValidationError("Cannot change pick after the game is locked.")
         else:
-            updating_correctness_only = False
-
-        if self.game.is_locked and not updating_correctness_only:
-            # Allow saving from admin
-            if not any('django/contrib/admin' in frame.filename for frame in inspect.stack()):
-                raise ValueError("This game is locked. Predictions cannot be changed.")
-
-        if self.predicted_winner not in [self.game.home_team, self.game.away_team]:
-            raise ValueError("Invalid prediction: Team not in this game")
-
-        super().save(*args, **kwargs)
+            if self.game.is_locked:
+                raise ValidationError("Cannot create a pick after the game is locked.")
 
     def __str__(self):
-        if self.game.winner is not None:
-            status = "✅" if self.is_correct else "❌"
-            return f"{self.user.username} - Week {self.game.week}: {self.predicted_winner} ({status})"
-        return f"{self.user.username} - Week {self.game.week}: {self.predicted_winner}"
+        return f"{self.user} → {self.game}: {self.predicted_winner}"
+
 
 class PropBetPrediction(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    prop_bet = models.ForeignKey(PropBet, on_delete=models.CASCADE)
-    answer = models.CharField(max_length=50)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="prop_bet_predictions")
+    prop_bet = models.ForeignKey(PropBet, on_delete=models.CASCADE, related_name="prop_bet_predictions")
+    answer = models.CharField(max_length=100)
     is_correct = models.BooleanField(null=True, blank=True)
 
     class Meta:
-        unique_together = ('user', 'prop_bet')
+        constraints = [
+            UniqueConstraint(fields=["user", "prop_bet"], name="uniq_pb_user_prop"),
+        ]
         indexes = [
-            models.Index(fields=["user", "is_correct"]),
-            models.Index(fields=["prop_bet", "is_correct"]),
+            Index(fields=["user", "is_correct"]),
+            Index(fields=["prop_bet", "is_correct"]),
         ]
 
-    def save(self, *args, **kwargs):
-        # Allow updates to correctness even when locked
+    def clean(self):
+        opts = self.prop_bet.options or []
+        if opts and self.answer not in opts:
+            raise ValidationError("Answer must be one of the defined options.")
+        game = self.prop_bet.game
         if self.pk:
-            old = PropBetPrediction.objects.get(pk=self.pk)
-            updating_correctness_only = (
-                self.user == old.user and
-                self.prop_bet == old.prop_bet and
-                self.answer == old.answer
-            )
+            old = type(self).objects.get(pk=self.pk)
+            if old.answer != self.answer and game.is_locked:
+                raise ValidationError("Cannot change answer after the game is locked.")
         else:
-            updating_correctness_only = False
-
-        if hasattr(self, 'prop_bet') and hasattr(self.prop_bet, 'game') \
-           and self.prop_bet.game.is_locked and not updating_correctness_only:
-            if not any('django/contrib/admin' in frame.filename for frame in inspect.stack()):
-                raise ValueError("This prop bet is locked. You cannot change your prediction.")
-
-        super().save(*args, **kwargs)
+            if game.is_locked:
+                raise ValidationError("Cannot create an answer after the game is locked.")
 
     def __str__(self):
-        if self.prop_bet.correct_answer:
-            status = "✅" if self.is_correct else "❌"
-            return f"{self.user.username} - {self.prop_bet.question} ({status})"
-        return f"{self.user.username} - {self.prop_bet.question}"
-
-
-# NOTE: Keeping these small tables for audit/frozen weekly views only
-class WeeklySnapshot(models.Model):
-    """Deprecated as a source of truth. (Kept only for back-compat reads.)"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    week = models.IntegerField()
-    weekly_points = models.IntegerField(default=0)
-    weekly_game_correct = models.IntegerField(default=0)
-    weekly_game_total = models.IntegerField(default=0)
-    weekly_prop_correct = models.IntegerField(default=0)
-    weekly_prop_total = models.IntegerField(default=0)
-    total_points = models.IntegerField(default=0)
-    total_game_correct = models.IntegerField(default=0)
-    total_game_total = models.IntegerField(default=0)
-    total_prop_correct = models.IntegerField(default=0)
-    total_prop_total = models.IntegerField(default=0)
-    rank = models.IntegerField()
-    total_users = models.IntegerField()
-    points_from_leader = models.IntegerField(default=0)
-    weekly_accuracy = models.FloatField(null=True, blank=True)
-    overall_accuracy = models.FloatField(null=True, blank=True)
-    moneyline_accuracy = models.FloatField(null=True, blank=True)
-    prop_accuracy = models.FloatField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'week')
-        ordering = ['week', 'rank']
-
-    def __str__(self):
-        return f"{self.user.username} - Week {self.week} (#{self.rank})"
-
-
-# Updated models.py - Rename RankHistory to UserStatHistory
+        return f"{self.user} → PB#{self.prop_bet_id}: {self.answer}"
 
 class UserStatHistory(models.Model):
     """
     Weekly snapshot of user statistics and performance data.
     Contains both weekly stats and cumulative season data for fast calculations.
     """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, editable=False)
     week = models.IntegerField(editable=False)
     
     # Ranking information
@@ -236,7 +192,7 @@ class LeaderboardSnapshot(models.Model):
 
 
 class SeasonStats(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     
     # Performance records
     best_week_points = models.IntegerField(default=0)

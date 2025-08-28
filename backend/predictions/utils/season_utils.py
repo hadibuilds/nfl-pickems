@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Max
 from rest_framework.response import Response
 
-from ..models import Prediction, PropBet, PropBetPrediction, UserStatHistory
+from ..models import MoneyLinePrediction, PropBet, PropBetPrediction, UserStatHistory
 from games.models import Game
 
 from .dashboard_utils import (
@@ -25,7 +25,7 @@ def compute_user_season_rings(user, through_week=None):
     ml_den = games_qs.count()
     prop_den = props_qs.count()
 
-    correct_ml = Prediction.objects.filter(user=user, is_correct=True, game__in=games_qs).count()
+    correct_ml = MoneyLinePrediction.objects.filter(user=user, is_correct=True, game__in=games_qs).count()
     correct_prop = PropBetPrediction.objects.filter(user=user, is_correct=True, prop_bet__in=props_qs).count()
 
     def pct(n, d): return round((n / d) * 100, 1) if d > 0 else 0.0

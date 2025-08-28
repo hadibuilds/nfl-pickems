@@ -1,10 +1,10 @@
 from django import forms
-from .models import Prediction
+from .models import MoneyLinePrediction
 from games.models import Game
 
 class PredictionForm(forms.ModelForm):
     class Meta:
-        model = Prediction
+        model = MoneyLinePrediction
         fields = ['predicted_winner']
 
     def __init__(self, *args, **kwargs):
