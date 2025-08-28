@@ -46,6 +46,9 @@ python backend/manage.py makemigrations --settings=nfl_pickems.settings.prod
 echo "🧱 Running migrations..."
 python backend/manage.py migrate --settings=nfl_pickems.settings.prod
 
+echo "🧱 Populating NFL games HOE..."
+python backend/manage.py populate_nfl_games --limit 0 --settings=nfl_pickems.settings.prod
+
 # Create superuser (if env vars are set)
 echo "👤 Creating superuser..."
 python backend/manage.py shell --settings=nfl_pickems.settings.prod << END
