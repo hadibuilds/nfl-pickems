@@ -1,207 +1,211 @@
-# backend/games/admin.py
-from django.contrib import admin
-from django.utils.html import format_html
-from django.utils import timezone
-from django.db.models import Count, Case, When, Value, BooleanField  # <- use ORM, not admin.models
+from django import forms
+from django.contrib import admin, messages
+from django.db import transaction
 
-from .models import Game, PropBet, Window
+from .models import Window, Game, PropBet
+from analytics.services.window_stats import recompute_window
 
 
-# --- helpers ---------------------------------------------------------------
+# ---------- Forms with safe, dynamic dropdowns ----------
 
-def _related_query_name(model_cls, related_model_name: str, fallback: str) -> str:
+class GameAdminForm(forms.ModelForm):
     """
-    Return the reverse related *query* name from model_cls to a related model
-    (e.g., Game <- Prediction). Works with or without explicit related_name.
+    Winner must be either home_team or away_team (or cleared).
+    We render a <select> and also validate in clean_winner.
     """
-    for f in model_cls._meta.get_fields():
-        if getattr(f, "is_relation", False) and getattr(f, "auto_created", False) and not getattr(f, "concrete", True):
-            rel = getattr(f, "related_model", None)
-            if rel is not None and rel.__name__ == related_model_name:
-                # Django 5 exposes get_related_query_name(); fall back to attrs if needed
-                if hasattr(f, "get_related_query_name"):
-                    return f.get_related_query_name()
-                rqn = getattr(f, "related_query_name", None)
-                if rqn:
-                    return rqn
-                rn = getattr(f, "related_name", None)
-                if rn:
-                    # related_name (accessor) is not the query name, but Count() can still use it
-                    return rn
-                # f.name is typically the base (e.g., "prediction"), which works for Count()
-                return f.name
-    return fallback
+    winner = forms.ChoiceField(choices=[], required=False)
+
+    class Meta:
+        model = Game
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        home = self.instance.home_team if self.instance and self.instance.pk else (self.data.get("home_team") or self.initial.get("home_team"))
+        away = self.instance.away_team if self.instance and self.instance.pk else (self.data.get("away_team") or self.initial.get("away_team"))
+
+        choices = [("", "— Clear —")]
+        if home:
+            choices.append((home, home))
+        if away and away != home:
+            choices.append((away, away))
+        self.fields["winner"].choices = choices
+        self.fields["winner"].widget = forms.Select(choices=choices)
+
+    def clean_winner(self):
+        win = self.cleaned_data.get("winner")
+        home = self.cleaned_data.get("home_team") or (self.instance.home_team if self.instance else None)
+        away = self.cleaned_data.get("away_team") or (self.instance.away_team if self.instance else None)
+        if win in ("", None):
+            return None
+        if win not in {home, away}:
+            raise forms.ValidationError("Winner must match the home or away team.")
+        return win
 
 
-# Resolve reverse query names safely (works with/without explicit related_name)
-_PREDICTION_RQN = _related_query_name(Game, "Prediction", "prediction")
-_PB_PREDICTION_RQN = _related_query_name(PropBet, "PropBetPrediction", "propbetprediction")
+class PropBetAdminForm(forms.ModelForm):
+    """
+    Correct answer must be one of options (JSON array) or cleared.
+    We render a <select> and also validate in clean_correct_answer.
+    """
+    correct_answer = forms.ChoiceField(choices=[], required=False)
+
+    class Meta:
+        model = PropBet
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        opts = []
+        # Use instance options if editing existing object
+        if self.instance and getattr(self.instance, "options", None):
+            if isinstance(self.instance.options, list):
+                opts = self.instance.options
+
+        # Base choices; JS will keep these in sync when options field changes
+        choices = [("", "— Clear —")] + [(o, o) for o in opts]
+        self.fields["correct_answer"].choices = choices
+        self.fields["correct_answer"].widget = forms.Select(choices=choices)
+
+    def clean_correct_answer(self):
+        ans = self.cleaned_data.get("correct_answer")
+        opts = self.cleaned_data.get("options") or []
+        if ans in ("", None):
+            return None
+        if isinstance(opts, list) and ans not in opts:
+            raise forms.ValidationError("Correct answer must be one of the defined options.")
+        return ans
 
 
-# -----------------
-# Inlines
-# -----------------
-class PropBetInline(admin.TabularInline):
-    model = PropBet
-    extra = 0
-    fields = ("category", "question", "options", "correct_answer", "is_locked_display")
-    readonly_fields = ("is_locked_display",)
-    show_change_link = True
+# ---------- Admin registrations ----------
 
-    def is_locked_display(self, obj):
-        return "🔒" if obj and obj.is_locked else "—"
-    is_locked_display.short_description = "Locked?"
+@admin.register(Window)
+class WindowAdmin(admin.ModelAdmin):
+    list_display = ("season", "date", "slot", "is_complete", "completed_at", "updated_at")
+    list_filter = ("season", "slot", "is_complete")
+    search_fields = ("date",)
+    actions = ["refresh_status"]
 
-
-# -----------------
-# Actions
-# -----------------
-@admin.action(description="Recompute money-line correctness for selected games (uses current winner)")
-def recompute_moneyline_correctness(modeladmin, request, queryset):
-    from predictions.models import Prediction  # adapt if/when you rename
-
-    # 1) reset where winner is NULL
-    null_winner_ids = list(queryset.filter(winner__isnull=True).values_list("id", flat=True))
-    if null_winner_ids:
-        Prediction.objects.filter(game_id__in=null_winner_ids).update(is_correct=None)
-
-    # 2) set correctness where winner is chosen
-    for game_id, winner in queryset.exclude(winner__isnull=True).values_list("id", "winner"):
-        Prediction.objects.filter(game_id=game_id).update(
-            is_correct=Case(
-                When(predicted_winner=winner, then=Value(True)),
-                default=Value(False),
-                output_field=BooleanField(),
-            )
-        )
+    @admin.action(description="Refresh status (recompute window stats)")
+    def refresh_status(self, request, queryset):
+        affected = {w.id for w in queryset}
+        def _do():
+            for wid in affected:
+                recompute_window(wid)
+        transaction.on_commit(_do)
+        self.message_user(request, f"Scheduled recompute for {len(affected)} window(s).", messages.SUCCESS)
 
 
-@admin.action(description="Clear winner on selected games (and reset money-line correctness)")
-def clear_winner(modeladmin, request, queryset):
-    from predictions.models import Prediction
-    updated = queryset.update(winner=None)
-    if updated:
-        Prediction.objects.filter(game__in=queryset).update(is_correct=None)
-
-
-# -----------------
-# ModelAdmins
-# -----------------
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    date_hierarchy = "start_time"
-    inlines = [PropBetInline]
-
+    form = GameAdminForm
     list_display = (
-        "season",
-        "week",
-        "matchup",
-        "start_time",
-        "is_locked_display",
-        "winner",
-        "predictions_count",
-        "propbets_count",
-        "window",
+        "season", "week", "home_team", "away_team", "start_time",
+        "is_locked_display", "winner", "window",
     )
-    list_filter = ("season", "week", "winner", "locked")
+    list_filter = ("season", "week", "locked", "winner")
     search_fields = ("home_team", "away_team")
-    ordering = ("season", "week", "start_time")
-    readonly_fields = ("is_locked_display", "created_updated_display")
+    actions = ["finalize_selected"]
+    # IMPORTANT: Do NOT use list_editable for 'winner'—it bypasses our safe form.
+    # list_editable = ("winner",)
 
-    fieldsets = (
-        (None, {"fields": ("season", "week", ("home_team", "away_team"), "start_time")}),
-        ("Locking", {"fields": ("locked", "is_locked_display")}),
-        ("Result", {"fields": ("winner",)}),
-        ("Meta", {"fields": ("created_updated_display",)}),
-        ("Window", {"fields": ("window",)}),
-    )
+    class Media:
+        # Dynamic dropdowns (as-you-type) on the change form
+        js = ("games/admin_winner_choices.js",)
 
-    actions = [recompute_moneyline_correctness, clear_winner]
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.annotate(
-            _predictions_count=Count(_PREDICTION_RQN, distinct=True),  # robust to related_name/no-related_name
-            _propbets_count=Count("prop_bets", distinct=True),         # you have related_name="prop_bets"
-        )
-
-    def matchup(self, obj: Game):
-        return f"{obj.away_team} @ {obj.home_team}"
-
+    @admin.display(boolean=True, description="Locked?")
     def is_locked_display(self, obj: Game):
-        return "🔒" if obj.is_locked else "—"
-    is_locked_display.short_description = "Locked?"
+        return obj.is_locked
 
-    def predictions_count(self, obj):
-        return getattr(obj, "_predictions_count", 0)
-    predictions_count.short_description = "# Picks"
+    def save_model(self, request, obj: Game, form, change):
+        prev_winner = None
+        prev_window_id = None
+        if change:
+            old = type(obj).objects.only("winner", "window_id").get(pk=obj.pk)
+            prev_winner = old.winner
+            prev_window_id = old.window_id
 
-    def propbets_count(self, obj):
-        return getattr(obj, "_propbets_count", 0)
-    propbets_count.short_description = "# PropBets"
+        super().save_model(request, obj, form, change)
 
-    def created_updated_display(self, obj):
-        created = getattr(obj, "created_at", None)
-        updated = getattr(obj, "updated_at", None)
+        # Grade & recompute via finalize()
+        winner_changed = (not change) or (prev_winner != obj.winner)
+        window_changed = change and prev_window_id and (prev_window_id != obj.window_id)
 
-        def fmt(dt):
-            return timezone.localtime(dt).strftime("%Y-%m-%d %H:%M") if dt else "—"
+        affected_window_ids = set()
+        if winner_changed:
+            obj.finalize(obj.winner)  # grades ML + recompute
+            affected_window_ids.add(obj.window_id)
+        if window_changed:
+            affected_window_ids.add(prev_window_id)
 
-        if created or updated:
-            return format_html("<div>Created: {}<br/>Updated: {}</div>", fmt(created), fmt(updated))
-        return "—"
-    created_updated_display.short_description = "Timestamps"
+        if affected_window_ids:
+            def _do():
+                for wid in affected_window_ids:
+                    recompute_window(wid)
+            transaction.on_commit(_do)
+            self.message_user(request, "Window stats updated.", messages.SUCCESS)
+
+    @admin.action(description="Finalize selected games (grade & recompute)")
+    def finalize_selected(self, request, queryset):
+        affected = set()
+        for g in queryset.select_related("window"):
+            with transaction.atomic():
+                g.finalize(g.winner)
+                affected.add(g.window_id)
+        def _do():
+            for wid in affected:
+                recompute_window(wid)
+        transaction.on_commit(_do)
+        self.message_user(request, f"Finalized {len(affected)} window(s).", messages.SUCCESS)
 
 
 @admin.register(PropBet)
 class PropBetAdmin(admin.ModelAdmin):
-    list_display = (
-        "season",
-        "week",
-        "category",
-        "short_question",
-        "game",
-        "correct_answer",
-        "is_locked_display",
-        "predictions_count",
-    )
-    list_filter = ("season", "week", "category", "correct_answer")
-    search_fields = ("question", "game__home_team", "game__away_team")
-    autocomplete_fields = ("game",)
-    ordering = ("season", "week", "category", "id")
-    readonly_fields = ("is_locked_display",)
+    form = PropBetAdminForm
+    list_display = ("game", "category", "question", "correct_answer")
+    list_filter = ("category", "game__season", "game__week")
+    search_fields = ("question",)
+    actions = ["grade_selected"]
 
-    actions = ["recompute_propbet_correctness"]
+    class Media:
+        js = ("games/admin_propbet_choices.js",)
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.select_related("game").annotate(
-            _predictions_count=Count(_PB_PREDICTION_RQN, distinct=True)
-        )
+    def save_model(self, request, obj: PropBet, form, change):
+        prev_correct = None
+        prev_window_id = None
+        if change:
+            old = type(obj).objects.select_related("game").only("correct_answer", "game__window_id").get(pk=obj.pk)
+            prev_correct = old.correct_answer
+            prev_window_id = old.game.window_id
 
-    def short_question(self, obj):
-        return (obj.question or "")[:80]
-    short_question.short_description = "Question"
+        super().save_model(request, obj, form, change)
 
-    def is_locked_display(self, obj: PropBet):
-        return "🔒" if obj.is_locked else "—"
-    is_locked_display.short_description = "Locked?"
+        answer_changed = (not change) or (prev_correct != obj.correct_answer)
+        window_changed = change and prev_window_id and (prev_window_id != obj.game.window_id)
 
-    def predictions_count(self, obj):
-        return getattr(obj, "_predictions_count", 0)
-    predictions_count.short_description = "# Answers"
+        affected_window_ids = set()
+        if answer_changed:
+            obj.grade(obj.correct_answer)  # grade + recompute
+            affected_window_ids.add(obj.game.window_id)
+        if window_changed:
+            affected_window_ids.add(prev_window_id)
 
-    @admin.action(description="Recompute prop-bet correctness for selected (uses current correct_answer)")
-    def recompute_propbet_correctness(self, request, queryset):
-        from predictions.models import PropBetPrediction
-        for pb in queryset:
-            if pb.correct_answer:
-                PropBetPrediction.objects.filter(prop_bet=pb).update(
-                    is_correct=Case(
-                        When(answer=pb.correct_answer, then=Value(True)),
-                        default=Value(False),
-                        output_field=BooleanField(),
-                    )
-                )
-            else:
-                PropBetPrediction.objects.filter(prop_bet=pb).update(is_correct=None)
+        if affected_window_ids:
+            def _do():
+                for wid in affected_window_ids:
+                    recompute_window(wid)
+            transaction.on_commit(_do)
+            self.message_user(request, "Window stats updated.", messages.SUCCESS)
+
+    @admin.action(description="Grade selected prop bets (recompute)")
+    def grade_selected(self, request, queryset):
+        affected = set()
+        for pb in queryset.select_related("game__window"):
+            with transaction.atomic():
+                pb.grade(pb.correct_answer)
+                affected.add(pb.game.window_id)
+        def _do():
+            for wid in affected:
+                recompute_window(wid)
+        transaction.on_commit(_do)
+        self.message_user(request, f"Graded props across {len(affected)} window(s).", messages.SUCCESS)

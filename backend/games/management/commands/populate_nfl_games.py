@@ -10,7 +10,10 @@ from zoneinfo import ZoneInfo
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from games.models import Game
+from games.models import Game, Window  # ⬅️ add Window
+
+
+PACIFIC = ZoneInfo("America/Los_Angeles")  # ⬅️ PT for windowing
 
 
 class Command(BaseCommand):
@@ -77,6 +80,32 @@ class Command(BaseCommand):
             help='Timezone for printing times in dry-run (default: America/New_York)'
         )
 
+    # ---------- Window helpers (new) ----------
+
+    def _slot_for(self, dt_utc: datetime) -> str:
+        """Return window slot based on *Pacific* local time."""
+        dt_pt = timezone.localtime(dt_utc, PACIFIC)
+        h = dt_pt.hour
+        if h < 13:          # before 1pm PT
+            return "morning"
+        elif h < 17:        # 1–4:59pm PT
+            return "afternoon"
+        return "late"       # 5pm+ PT
+
+    def _ensure_window(self, season: int, start_time_utc: datetime) -> Window:
+        """Create or get the Window (PT date + slot) for a given game."""
+        dt_pt = timezone.localtime(start_time_utc, PACIFIC)
+        slot = self._slot_for(start_time_utc)
+        window, _ = Window.objects.get_or_create(
+            season=season,
+            date=dt_pt.date(),  # PT calendar date
+            slot=slot,
+            defaults={},        # flags are computed later by grading/recompute
+        )
+        return window
+
+    # ---------- Main flow ----------
+
     def handle(self, *args, **options):
         season = options['season']
         limit = options['limit']
@@ -135,7 +164,7 @@ class Command(BaseCommand):
                             f"{disp_dt.strftime('%m/%d %I:%M%p')} {tz_label}"
                         )
                     else:
-                        created = self.create_or_update_game(game_info)
+                        created = self.create_or_update_game(game_info)  # ⬅️ now attaches/moves Window
                         if created is True:
                             created_count += 1
                             self.stdout.write(
@@ -261,26 +290,51 @@ class Command(BaseCommand):
         Upsert by unique key: (season, week, home_team, away_team).
         Returns:
           True  -> created
-          False -> updated (start_time changed)
+          False -> updated (start_time and/or window changed)
           None  -> error/no change
         """
         try:
-            # IMPORTANT: include season in the lookup to match your UniqueConstraint
+            # Compute the correct Window for this start time (PT date + slot)
+            win = self._ensure_window(
+                season=game_info['season'],
+                start_time_utc=game_info['start_time'],
+            )
+
+            # Create or get the game, attaching window on create
             game, created = Game.objects.get_or_create(
                 season=game_info['season'],
                 week=game_info['week'],
                 home_team=game_info['home_team'],
                 away_team=game_info['away_team'],
-                defaults={'start_time': game_info['start_time']}
+                defaults={
+                    'start_time': game_info['start_time'],  # UTC
+                    'window': win,                          # ⬅️ attach window
+                }
             )
 
             if created:
                 return True
 
-            # Update start_time if changed (reschedules)
+            # Existing → update start_time and window if they changed
+            changed = False
             if game.start_time != game_info['start_time']:
                 game.start_time = game_info['start_time']
-                game.save(update_fields=['start_time', 'updated_at'] if hasattr(game, 'updated_at') else ['start_time'])
+                changed = True
+
+            # If the start time changed, or if the window is simply incorrect, move it
+            new_win = self._ensure_window(
+                season=game_info['season'],
+                start_time_utc=game_info['start_time'],
+            )
+            if game.window_id != new_win.id:
+                game.window = new_win
+                changed = True
+
+            if changed:
+                update_fields = ['start_time', 'window']
+                if hasattr(game, 'updated_at'):
+                    update_fields.append('updated_at')
+                game.save(update_fields=update_fields)
                 return False
 
             # No changes

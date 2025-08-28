@@ -2,7 +2,7 @@
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
-from ..models import Prediction, PropBetPrediction
+from ..models import MoneyLinePrediction, PropBetPrediction
 from games.models import Game
 from collections import defaultdict
 
@@ -34,7 +34,7 @@ def calculate_user_points_by_week(user):
         week_games = Game.objects.filter(week=week, winner__isnull=False)
         
         # Count correct predictions for this week
-        correct_game_preds = Prediction.objects.filter(
+        correct_game_preds = MoneyLinePrediction.objects.filter(
             user=user,
             game__in=week_games,
             is_correct=True

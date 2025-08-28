@@ -1,7 +1,7 @@
 # predictions/utils/dashboard_utils.py — updated without UserStreak, focus on rank-based insights
 from django.contrib.auth import get_user_model
 from ..models import (
-    Prediction, PropBetPrediction, WeeklySnapshot,
+    MoneyLinePrediction, PropBetPrediction,
     UserStatHistory, LeaderboardSnapshot, SeasonStats
 )
 from games.models import Game
@@ -40,7 +40,7 @@ def calculate_live_stats(user, current_week):
     current_week_games = Game.objects.filter(week=current_week)
     completed_current = current_week_games.filter(winner__isnull=False)
 
-    week_preds = Prediction.objects.filter(user=user, game__in=completed_current)
+    week_preds = MoneyLinePrediction.objects.filter(user=user, game__in=completed_current)
     week_props = PropBetPrediction.objects.filter(
         user=user, prop_bet__game__in=completed_current, is_correct__isnull=False
     )
@@ -57,12 +57,12 @@ def calculate_live_stats(user, current_week):
 def calculate_current_accuracy(user, kind):
     completed = Game.objects.filter(winner__isnull=False)
     if kind == 'overall':
-        gp = Prediction.objects.filter(user=user, game__in=completed)
+        gp = MoneyLinePrediction.objects.filter(user=user, game__in=completed)
         pp = PropBetPrediction.objects.filter(user=user, prop_bet__game__in=completed, is_correct__isnull=False)
         correct = gp.filter(is_correct=True).count() + pp.filter(is_correct=True).count()
         total = gp.count() + pp.count()
     elif kind == 'moneyline':
-        gp = Prediction.objects.filter(user=user, game__in=completed)
+        gp = MoneyLinePrediction.objects.filter(user=user, game__in=completed)
         correct, total = gp.filter(is_correct=True).count(), gp.count()
     else:  # 'prop'
         pp = PropBetPrediction.objects.filter(user=user, prop_bet__game__in=completed, is_correct__isnull=False)
@@ -72,7 +72,7 @@ def calculate_current_accuracy(user, kind):
 
 def calculate_total_points_simple(user):
     completed = Game.objects.filter(winner__isnull=False)
-    cg = Prediction.objects.filter(user=user, game__in=completed, is_correct=True).count()
+    cg = MoneyLinePrediction.objects.filter(user=user, game__in=completed, is_correct=True).count()
     cp = PropBetPrediction.objects.filter(user=user, prop_bet__game__in=completed, is_correct=True).count()
     return cg + (cp * 2)
 
@@ -118,7 +118,7 @@ def get_weekly_performance_trends_realtime(user, weeks=5):
     trends = []
     for wk in recent:
         week_games = Game.objects.filter(week=wk, winner__isnull=False)
-        gp = Prediction.objects.filter(user=user, game__in=week_games)
+        gp = MoneyLinePrediction.objects.filter(user=user, game__in=week_games)
         pp = PropBetPrediction.objects.filter(user=user, prop_bet__game__in=week_games, is_correct__isnull=False)
         total = gp.count() + pp.count()
         correct = gp.filter(is_correct=True).count() + pp.filter(is_correct=True).count()
@@ -227,7 +227,7 @@ def get_user_season_stats(user):
 
 
 def get_recent_games_data(user, limit=3):
-    recents = Prediction.objects.filter(user=user, game__winner__isnull=False)\
+    recents = MoneyLinePrediction.objects.filter(user=user, game__winner__isnull=False)\
         .select_related('game').order_by('-game__start_time')[:limit]
     out = []
     for p in recents:
@@ -494,7 +494,7 @@ def get_leaderboard_data_with_trends(limit=5):
 
 def calculate_pending_picks(user, current_week):
     games = Game.objects.filter(week=current_week).prefetch_related('prop_bets')
-    made = set(Prediction.objects.filter(user=user, game__week=current_week).values_list('game_id', flat=True))
+    made = set(MoneyLinePrediction.objects.filter(user=user, game__week=current_week).values_list('game_id', flat=True))
     pending_games = games.exclude(id__in=made).count()
     pending_props = 0
     for g in games:

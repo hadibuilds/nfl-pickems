@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from games.models import Game, PropBet
-from .models import Prediction, PropBetPrediction
+from .models import MoneyLinePrediction, PropBetPrediction
 
 
 # Primary realtime helpers
@@ -62,7 +62,7 @@ def make_prediction(request, game_id):
         return Response({'error': 'No team selected'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        prediction, created = Prediction.objects.update_or_create(
+        prediction, created = MoneyLinePrediction.objects.update_or_create(
             user=request.user,
             game=game,
             defaults={'predicted_winner': predicted_winner}
@@ -100,7 +100,7 @@ def save_user_selection(request):
     if data.get('game_id') and data.get('predicted_winner'):
         game = get_object_or_404(Game, pk=data['game_id'])
         try:
-            Prediction.objects.update_or_create(
+            MoneyLinePrediction.objects.update_or_create(
                 user=request.user, game=game, defaults={'predicted_winner': data['predicted_winner']}
             )
             results.append({'type': 'moneyline', 'success': True, 'action': 'upserted'})
@@ -130,7 +130,7 @@ def save_user_selection(request):
 @permission_classes([IsAuthenticated])
 def get_user_predictions(request):
     user = request.user
-    predictions = Prediction.objects.filter(user=user).select_related('game')
+    predictions = MoneyLinePrediction.objects.filter(user=user).select_related('game')
     prop_bet_selections = PropBetPrediction.objects.filter(user=user).select_related('prop_bet__game')
 
     predictions_data = [
@@ -162,7 +162,7 @@ def get_standings(request):
     for user in users:
         weekly_scores = defaultdict(int)
 
-        for pred in Prediction.objects.filter(user=user, is_correct=True).select_related('game'):
+        for pred in MoneyLinePrediction.objects.filter(user=user, is_correct=True).select_related('game'):
             weekly_scores[pred.game.week] += 1
             all_weeks.add(pred.game.week)
 
@@ -220,7 +220,7 @@ def get_game_results(request):
 @permission_classes([IsAuthenticated])
 def user_accuracy(request):
     user = request.user
-    moneyline_with_results = Prediction.objects.filter(user=user, is_correct__isnull=False)
+    moneyline_with_results = MoneyLinePrediction.objects.filter(user=user, is_correct__isnull=False)
     prop_bet_with_results = PropBetPrediction.objects.filter(user=user, is_correct__isnull=False)
 
     correct_ml = moneyline_with_results.filter(is_correct=True).count()

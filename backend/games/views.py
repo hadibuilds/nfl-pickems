@@ -25,7 +25,7 @@ def api_games(request):
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .models import Game
-from predictions.models import Prediction, PropBetPrediction, PropBet
+from predictions.models import MoneyLinePrediction, PropBetPrediction, PropBet
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -33,7 +33,7 @@ def week_games(request, week_number):
     games = Game.objects.filter(week=week_number).order_by('start_time')
 
     # ✅ Get money-line predictions for this user
-    user_predictions = Prediction.objects.filter(user=request.user, game__in=games)
+    user_predictions = MoneyLinePrediction.objects.filter(user=request.user, game__in=games)
     prediction_map = {p.game_id: p.predicted_winner for p in user_predictions}
 
     # ✅ Get prop bets related to these games
