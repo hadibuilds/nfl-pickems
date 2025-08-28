@@ -6,8 +6,26 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { calculateRankWithTies } from './rankingUtils.jsx'; // Import shared utility
 
+
+
+// Local fallback: calculate rank with dense ties (1,2,2,3)
+function calculateRankWithTies(standings, targetUsername) {
+  if (!Array.isArray(standings)) return null;
+  const sorted = [...standings].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
+  let rank = 0;
+  let prevPoints = null;
+  let dense = 0;
+  for (const row of sorted) {
+    dense += (prevPoints === row.total_points) ? 0 : 1;
+    prevPoints = row.total_points;
+    rank = dense;
+    if (String(row.username).toLowerCase() === String(targetUsername).toLowerCase()) {
+      return rank;
+    }
+  }
+  return null;
+}
 export default function UserStatsDisplay({ userInfo }) {
   const [stats, setStats] = useState({
     rank: null,

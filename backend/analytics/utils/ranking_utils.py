@@ -1,4 +1,4 @@
-# predictions/utils/ranking_utils.py
+# analytics/utils/ranking_utils.py
 from typing import List, Dict
 
 def assign_dense_ranks(rows: List[Dict], points_key: str = 'total_points') -> List[Dict]:

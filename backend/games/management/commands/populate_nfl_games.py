@@ -13,6 +13,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+from nfl_pickems.settings.base import NFL_SEASON
 from games.models import Game
 
 
@@ -356,6 +357,7 @@ class Command(BaseCommand):
         """Create or update game in database"""
         try:
             game, created = Game.objects.get_or_create(
+                season=NFL_SEASON,
                 week=game_info["week"],
                 home_team=game_info["home_team"],
                 away_team=game_info["away_team"],

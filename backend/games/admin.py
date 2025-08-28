@@ -4,8 +4,7 @@ from __future__ import annotations
 from django import forms
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
-
-from .models import Game
+from .models import Game, PropBet
 
 # Optional imports for the correction + snapshot republish action
 try:
@@ -75,7 +74,54 @@ class GameAdminForm(forms.ModelForm):
                 raise ValidationError("Winner must be the home or away team for this game.")
         return winner
 
+class PropBetAdminForm(forms.ModelForm):
+    class Meta:
+        model = PropBet
+        fields = "__all__"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = getattr(self.instance, "options", None)
+        if isinstance(options, str):
+            import json
+            try:
+                options = json.loads(options)
+            except Exception:
+                pass
+        def _choices_from_options(options):
+            if not options: return []
+            out = []
+            for item in options:
+                if isinstance(item, dict):
+                    key = item.get("key") or item.get("value") or item.get("id") or item.get("label")
+                    label = item.get("label") or item.get("text") or item.get("name") or str(key)
+                else:
+                    key = str(item); label = str(item)
+                if key not in (None, ""):
+                    out.append((str(key), str(label)))
+            # de-dupe, preserve order
+            seen, deduped = set(), []
+            for k, v in out:
+                if k in seen: continue
+                seen.add(k); deduped.append((k, v))
+            return deduped
+
+        if "correct_answer" in self.fields:
+            self.fields["correct_answer"].required = False
+            self.fields["correct_answer"].widget = forms.Select(
+                choices=[("", "— Select —")] + _choices_from_options(options)
+            )
+
+    def clean_correct_answer(self):
+        ans = self.cleaned_data.get("correct_answer")
+        options = self.cleaned_data.get("options", getattr(self.instance, "options", None))
+        valid = {k for k, _ in (self.fields["correct_answer"].widget.choices or [])}
+        valid.discard("")  # remove the blank choice
+        if ans in (None, ""):
+            return ans
+        if ans not in valid:
+            raise forms.ValidationError("Correct answer must be one of the defined options.")
+        return ans
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
     form = GameAdminForm
@@ -163,3 +209,17 @@ class GameAdmin(admin.ModelAdmin):
     apply_historical_correction.short_description = (
         "Apply Historical Correction → republish AFTER snapshot"
     )
+
+@admin.register(PropBet)
+class PropBetAdmin(admin.ModelAdmin):
+    form = PropBetAdminForm
+    list_display = ("get_week", "game", "category", "question", "correct_answer")
+    list_filter = ("category", "game__week")
+    search_fields = ("question",)
+    ordering = ("game__week",)
+
+    def get_week(self, obj):
+        return obj.game.week
+    get_week.short_description = "Week"
+    get_week.admin_order_field = "game__week"
+

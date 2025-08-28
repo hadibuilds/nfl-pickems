@@ -28,7 +28,8 @@ cp -R frontend/dist/assets/* backend/static/assets/ || { echo "❌ Asset copy fa
 cp frontend/dist/index.html backend/templates/index.html || { echo "❌ index.html copy failed"; exit 1; }
 
 # 4. Patch index.html with Django static tags (safe version for macOS/BSD sed)
-echo "🧠 Patching index.html static asset paths..."
+# Patch index.html for Django using Linux-compatible sed
+echo "🧠 Patching index.html (macOS sed)..."
 sed -i '' '1s;^;{% load static %}\n;' backend/templates/index.html
 sed -i '' -E "s|/static/assets/([^\"]+\.js)|{% static 'assets/\1' %}|g" backend/templates/index.html
 sed -i '' -E "s|/static/assets/([^\"]+\.css)|{% static 'assets/\1' %}|g" backend/templates/index.html

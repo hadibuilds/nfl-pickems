@@ -1,0 +1,87 @@
+✅ What we still need to build (action checklist)
+A) Prop-bet timezone + windowing (critical)
+1. Persist window_key on Game
+    * Compute from start_time in America/Los_Angeles into YYYY-MM-DD:morning|afternoon|late.
+2. Make PropBet inherit the game’s window_key
+    * In a pre_save signal: prop_bet.window_key = prop_bet.game.window_key.
+3. Backfill existing rows
+    * Management command to populate Game.window_key and PropBet.window_key for all historical data.
+4. Indexes
+    * Add BTREE indexes on Game(window_key), PropBet(game_id), and (optionally) PropBet(window_key).
+B) Snapshot discipline + late-change audit (critical)
+1. “AFTER snapshot” gating
+    * Only publish AFTER when both:open_games == 0 and open_props == 0 for that window_key.
+2. CorrectionEvent model (append-only audit)
+    * Fields: id, window_key, affected_game_ids (array/JSON), changes (JSON list of {type: 'game'|'prop', id, field, old, new}), actor, reason, created_at.
+3. Republish AFTER on correction (idempotent)
+    * Refresh MV (PG only) → recompose payload → compare against last AFTER; publish new AFTER only if payload changed.
+    * Link snapshot to correction_event_id + correction_applied=True.
+4. Retention policy
+    * Keep: first BEFORE + latest two snapshots per window; prune older intermediates.
+C) “Chain of trends” foundation (near-term)
+1. Per-window deltas view/MV (user_window_deltas_mv)
+    * user × window: ml_points_delta, prop_points_delta, total_delta, window_seq.
+2. Cumulative standings view/MV (user_window_cume_mv)
+* user × window: cume_*_after, rank_after (dense), rank_before (lag), rank_change, trend.
+* This powers a season timeline + makes downstream recompute trivial after corrections.
+1. Refresh order
+* On window close or correction: refresh deltas → refresh cume (both CONCURRENTLY on PG).
+D) API updates (done/finish)
+1. /predictions/api/home-top3/ (we drafted)
+* Live Top-3 from DB view/MV + trend/rank_change merged from latest snapshot pair for the same window.
+* Supports ?debug=1 and ?window_key=....
+1. debug payload additions
+* Include correction context when applicable: last CorrectionEvent id, timestamp, list of changed entities, and latest_snapshot_version.
+1. Window status helper (optional)
+* /predictions/api/home-top3/window-status?window_key= returns {complete, latest_snapshot_version, counts}.
+E) Admin UX (soon)
+1. “Force Snapshot / Apply Historical Correction” admin action
+* Kicks: refresh MVs → recompute payload → conditional publish (+ CorrectionEvent).
+1. Admin detail view for a window
+* Show BEFORE vs latest AFTER diff (and link to CorrectionEvent).
+F) Frontend (already integrated / small follow-ups)
+1. HomePage.jsx
+* Uses /predictions/api/home-top3/ (done).
+* Optional: show last_updated and a tiny tooltip “Trend compares within {trend_basis_window}”.
+1. Standings.jsx
+* No change required for this work. (Optional later: show per-window trend chain/timeline.)
+G) Tests & QA
+1. Unit/Integration tests
+* Windowing PT boundaries (12:59 → morning, 1:00 → afternoon, 4:59 → afternoon, 5:00 → late).
+* AFTER snapshot gating when props present/absent.
+* CorrectionEvent flow (old→new), idempotent republish, retention pruning.
+1. SQL explain / indexes
+* Verify REFRESH MATERIALIZED VIEW CONCURRENTLY stays sub-second to low-seconds at current volumes.
+
+📦 What files I need from your local environment
+Back end (Django):
+* games/models.py (exact Game fields: start_time, winner, any league keys; confirm window_key presence or add)
+* predictions/models.py (for Prediction, PropBet, PropBetPrediction, Top3Snapshot, UserSeasonTotals mapping; confirm field names)
+* predictions/views.py (your latest; I’ll merge the final home_top3_api + window-status + debug/correction info)
+* predictions/signals.py (I’ll add/adjust the pre_save signals for window_key; or create if missing)
+* predictions/admin.py (to add the “Force Snapshot / Apply Historical Correction” action)
+* predictions/urls.py and project urls.py (to wire endpoints)
+* predictions/services/top3_sql.py (already shared, but the current version you use in prod—I’ll align calls)
+* Migrations folder for predictions and games (so I can add a migration for window_key and indexes if needed)
+* Management commands folder (if present) or I’ll create one for the backfill (backfill_window_keys and optional snapshot prune)
+Materialized views / SQL:
+* The SQL or ORM definition for user_season_totals_mv (source of truth)
+* If you already have any per-window temp views, share those; otherwise I’ll provide new SQL for user_window_deltas_mv and user_window_cume_mv.
+Front end (React):
+* src/pages/HomePage.jsx (already working; keep it handy)
+* src/pages/Standings.jsx (for optional enrichments later)
+* src/hooks/useDashboardData.js (for consistency; nothing required now)
+* If you have a utils/timezone or cookies helper, keep available (we won’t change styling)
+Config / settings:
+* settings.py relevant bits (TIME_ZONE/USE_TZ/REST_FRAMEWORK/auth backends if any)
+* docker-compose or env if you have Postgres vs SQLite toggles (so I can keep PG refresh guarded)
+
+🧭 Order of operations (suggested)
+1. Add window_key fields + indexes → generate migrations.
+2. Signals + backfill (Game → compute; PropBet → copy; run backfill).
+3. Tighten AFTER gating + CorrectionEvent model (migrate).
+4. Finish /home-top3/ debug add-ons (timestamp, correction details).
+5. (Optional) Create the two MVs for deltas + cumulative chain (hooked into correction flow).
+6. Admin action to apply historical correction (refreshes + conditional snapshot publish).
+7. QA with real slates and PT boundary cases.
+

@@ -1,10 +1,10 @@
 # predictions/services/snapshots.py
 from typing import Optional, Tuple
-from django.db import transaction
+from django.db import transaction  
 from django.utils import timezone
 
-from predictions.models import Top3Snapshot, CorrectionEvent
-from predictions.services.top3_sql import publish_top3_from_db
+from ..models import Top3Snapshot, CorrectionEvent
+from .top3_sql import publish_top3_from_db
 
 @transaction.atomic
 def publish_after_snapshot(window_key: str, correction_event: Optional[CorrectionEvent]=None) -> Tuple[Top3Snapshot, bool]:

@@ -1,582 +1,304 @@
-# predictions/views.py — SLIMMED: delegates compute to utils
-from collections import defaultdict
-from django.http import JsonResponse
-from django.db.models import F, Window, Max
+
+# predictions/views.py — Optimized, logic-preserving, and bulk-friendly
+
+from typing import Dict, Any, List, Optional, Tuple
+
 from django.contrib.auth import get_user_model
-from django.core.management import call_command
+from django.db import transaction
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from django.views.decorators.cache import cache_page
+
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from games.models import Game
-from .models import Prediction, PropBet, PropBetPrediction, Top3Snapshot, CorrectionEvent
-
-from .services.top3_sql import publish_top3_from_db
-from .services.snapshots import publish_after_snapshot
-
-
-# Primary realtime helpers
-from .utils.dashboard_utils import (
-    calculate_user_dashboard_data_realtime,
-    calculate_total_points_simple,
-    get_leaderboard_data_realtime,
-    get_user_insights_realtime,
-    get_current_week,
-    calculate_live_stats,
-    calculate_current_user_rank_realtime,
-    get_best_category_realtime,
-    calculate_current_accuracy,
-    calculate_pending_picks,
-    get_recent_games_data,
-    get_user_rank_achievements,
-    get_user_season_stats,
-)
-
-# Snapshot/historical helpers
-from .utils.dashboard_utils import (
-    get_leaderboard_data_with_trends,
-    calculate_user_dashboard_data,
-    get_user_insights,
-)
-
-# New slim utils
-from .utils.param_utils import parse_int
-from .utils.season_utils import (
-    api_user_season_stats_fast,
-    api_user_weekly_trends_fast,
-    build_season_leaderboard_fast,
-    build_season_leaderboard_dynamic,
-)
+from games.models import Game, PropBet
+from .models import Prediction, PropBetPrediction
 
 User = get_user_model()
 
+
 # =============================================================================
-# PREDICTION MANAGEMENT
+# Helpers
 # =============================================================================
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def make_prediction(request, game_id):
-    game = get_object_or_404(Game, pk=game_id)
-    predicted_winner = request.data.get('predicted_winner')
-    if not predicted_winner:
-        return Response({'error': 'No team selected'}, status=status.HTTP_400_BAD_REQUEST)
-
+def parse_int(value, default: int = 0, minimum: Optional[int] = None, maximum: Optional[int] = None) -> int:
     try:
-        prediction, created = Prediction.objects.update_or_create(
-            user=request.user,
-            game=game,
-            defaults={'predicted_winner': predicted_winner}
-        )
-        return Response({'success': True, 'action': 'created' if created else 'updated', 'prediction_id': prediction.id})
-    except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        iv = int(value)
+    except (TypeError, ValueError):
+        iv = default
+    if minimum is not None and iv < minimum:
+        iv = minimum
+    if maximum is not None and iv > maximum:
+        iv = maximum
+    return iv
 
 
-@api_view(['POST'])
+def game_is_locked(game: Game) -> bool:
+    '''True if the game is locked from editing (manual lock or kickoff passed).'''
+    # Prefer model property if present
+    if hasattr(game, "is_locked"):
+        return bool(getattr(game, "is_locked"))
+    # Fallback by time + optional boolean flag
+    now = timezone.now()
+    locked_flag = bool(getattr(game, "locked", False))
+    start = getattr(game, "start_time", None)
+    if start is not None and timezone.is_naive(start):
+        start = timezone.make_aware(start, timezone.utc)
+    time_locked = start is not None and now >= start
+    return locked_flag or time_locked
+
+
+def propbet_is_locked(prop: PropBet) -> bool:
+    '''True if prop bet should be locked (mirrors its game's lock).'''
+    # Prefer model property if present
+    if hasattr(prop, "is_locked"):
+        return bool(getattr(prop, "is_locked"))
+    return game_is_locked(prop.game)
+
+
+def upsert_prediction(user: User, game: Game, predicted_winner: str) -> Tuple[bool, Dict[str, Any]]:
+    '''Create or update a moneyline prediction. Returns (ok, payload).'''
+    if game_is_locked(game):
+        return False, {"error": "locked", "game_id": game.id}
+
+    obj, created = Prediction.objects.update_or_create(
+        user=user,
+        game=game,
+        defaults={"predicted_winner": predicted_winner},
+    )
+    return True, {
+        "game_id": game.id,
+        "predicted_winner": predicted_winner,
+        "created": created,
+        "id": obj.id,
+    }
+
+
+def upsert_prop_prediction(user: User, prop: PropBet, answer: str) -> Tuple[bool, Dict[str, Any]]:
+    '''Create or update a prop bet prediction. Returns (ok, payload).'''
+    if propbet_is_locked(prop):
+        return False, {"error": "locked", "prop_bet_id": prop.id}
+
+    obj, created = PropBetPrediction.objects.update_or_create(
+        user=user,
+        prop_bet=prop,
+        defaults={"answer": answer},
+    )
+    return True, {
+        "prop_bet_id": prop.id,
+        "answer": answer,
+        "created": created,
+        "id": obj.id,
+    }
+
+
+# =============================================================================
+# WRITES
+# =============================================================================
+
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def make_prop_bet(request, prop_bet_id):
-    prop_bet = get_object_or_404(PropBet, pk=prop_bet_id)
-    answer = request.data.get('answer')
-    if not answer:
-        return Response({'error': 'No answer provided'}, status=status.HTTP_400_BAD_REQUEST)
+def save_selection(request):
+    '''
+    Save ONE selection.
+    Accepts either:
+      - { "game_id": <int>, "predicted_winner": "<TEAM>" }
+      - { "prop_bet_id": <int>, "answer": "<OPTION>" }
+    '''
+    user = request.user
+    game_id = request.data.get("game_id")
+    prop_bet_id = request.data.get("prop_bet_id")
 
-    try:
-        prop_prediction, created = PropBetPrediction.objects.update_or_create(
-            user=request.user,
-            prop_bet=prop_bet,
-            defaults={'answer': answer}
+    if game_id:
+        predicted_winner = request.data.get("predicted_winner")
+        if not predicted_winner:
+            return Response({"error": "predicted_winner required"}, status=status.HTTP_400_BAD_REQUEST)
+        game = get_object_or_404(Game.objects.only("id", "locked", "start_time"), pk=game_id)
+        ok, payload = upsert_prediction(user, game, predicted_winner)
+        return Response(payload, status=status.HTTP_200_OK if ok else status.HTTP_409_CONFLICT)
+
+    if prop_bet_id:
+        answer = request.data.get("answer")
+        if not answer:
+            return Response({"error": "answer required"}, status=status.HTTP_400_BAD_REQUEST)
+        prop = get_object_or_404(
+            PropBet.objects.select_related("game").only("id", "game__id", "game__locked", "game__start_time"),
+            pk=prop_bet_id,
         )
-        return Response({'success': True, 'action': 'created' if created else 'updated', 'prediction_id': prop_prediction.id})
-    except ValueError as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        ok, payload = upsert_prop_prediction(user, prop, answer)
+        return Response(payload, status=status.HTTP_200_OK if ok else status.HTTP_409_CONFLICT)
+
+    return Response({"error": "game_id or prop_bet_id required"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def save_user_selection(request):
-    data = request.data
-    results = []
+def save_selections(request):
+    '''
+    Bulk save selections.
+    Body:
+    {
+      "picks": [{ "game_id": 1, "predicted_winner": "SF" }, ...],
+      "props": [{ "prop_bet_id": 10, "answer": "Over" }, ...]
+    }
+    Returns per-item results; never partial-fails the whole request.
+    '''
+    user = request.user
+    picks: List[Dict[str, Any]] = request.data.get("picks") or []
+    props: List[Dict[str, Any]] = request.data.get("props") or []
 
-    if data.get('game_id') and data.get('predicted_winner'):
-        game = get_object_or_404(Game, pk=data['game_id'])
-        try:
-            Prediction.objects.update_or_create(
-                user=request.user, game=game, defaults={'predicted_winner': data['predicted_winner']}
-            )
-            results.append({'type': 'moneyline', 'success': True, 'action': 'upserted'})
-        except ValueError as e:
-            results.append({'type': 'moneyline', 'success': False, 'error': str(e)})
+    # Prefetch targets to cut DB round-trips
+    game_ids = [p.get("game_id") for p in picks if p.get("game_id")]
+    prop_ids = [p.get("prop_bet_id") for p in props if p.get("prop_bet_id")]
 
-    if data.get('prop_bet_id') and data.get('answer'):
-        prop_bet = get_object_or_404(PropBet, pk=data['prop_bet_id'])
-        try:
-            PropBetPrediction.objects.update_or_create(
-                user=request.user, prop_bet=prop_bet, defaults={'answer': data['answer']}
-            )
-            results.append({'type': 'prop_bet', 'success': True, 'action': 'upserted'})
-        except ValueError as e:
-            results.append({'type': 'prop_bet', 'success': False, 'error': str(e)})
+    games_map = {g.id: g for g in Game.objects.filter(id__in=game_ids).only("id", "locked", "start_time")}
+    props_qs = PropBet.objects.filter(id__in=prop_ids).select_related("game").only("id", "game__id", "game__locked", "game__start_time")
+    props_map = {pb.id: pb for pb in props_qs}
 
-    if not results:
-        return Response({'error': 'No valid predictions provided'}, status=status.HTTP_400_BAD_REQUEST)
+    results = {"picks": [], "props": []}
 
-    return Response({'success': True, 'results': results})
+    with transaction.atomic():
+        # Picks
+        for item in picks:
+            gid = item.get("game_id")
+            team = item.get("predicted_winner")
+            if not gid or not team:
+                results["picks"].append({"game_id": gid, "ok": False, "error": "invalid_payload"})
+                continue
+            game = games_map.get(gid)
+            if not game:
+                results["picks"].append({"game_id": gid, "ok": False, "error": "not_found"})
+                continue
+            ok, payload = upsert_prediction(user, game, team)
+            results["picks"].append({"game_id": gid, "ok": ok, **payload})
+
+        # Props
+        for item in props:
+            pid = item.get("prop_bet_id")
+            ans = item.get("answer")
+            if not pid or ans is None:
+                results["props"].append({"prop_bet_id": pid, "ok": False, "error": "invalid_payload"})
+                continue
+            prop = props_map.get(pid)
+            if not prop:
+                results["props"].append({"prop_bet_id": pid, "ok": False, "error": "not_found"})
+                continue
+            ok, payload = upsert_prop_prediction(user, prop, ans)
+            results["props"].append({"prop_bet_id": pid, "ok": ok, **payload})
+
+    # Summaries
+    failed = sum(1 for r in results["picks"] if not r.get("ok")) + sum(1 for r in results["props"] if not r.get("ok"))
+    http_status = status.HTTP_200_OK if failed == 0 else status.HTTP_207_MULTI_STATUS
+    return Response({"success": failed == 0, "failed": failed, "results": results}, status=http_status)
+
 
 # =============================================================================
 # READS
 # =============================================================================
 
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_user_predictions(request):
+    '''
+    Return user's selections in a simple mapping format suitable for the React app:
+      {
+        "picks": { "<game_id>": "<TEAM>" },
+        "props": { "<prop_bet_id>": "<ANSWER>" }
+      }
+    '''
     user = request.user
-    predictions = Prediction.objects.filter(user=user).select_related('game')
-    prop_bet_selections = PropBetPrediction.objects.filter(user=user).select_related('prop_bet__game')
+    predictions = (
+        Prediction.objects.filter(user=user)
+        .select_related("game")
+        .only("id", "predicted_winner", "game__id")
+    )
+    props = (
+        PropBetPrediction.objects.filter(user=user)
+        .select_related("prop_bet")
+        .only("id", "answer", "prop_bet__id")
+    )
 
-    predictions_data = [
-        {'game_id': p.game.id, 'predicted_winner': p.predicted_winner, 'week': p.game.week, 'is_correct': p.is_correct}
-        for p in predictions
-    ]
-    prop_bet_data = [
-        {'prop_bet_id': pb.prop_bet.id, 'answer': pb.answer, 'week': pb.prop_bet.game.week, 'is_correct': pb.is_correct}
-        for pb in prop_bet_selections
-    ]
+    picks_map = {str(p.game_id): p.predicted_winner for p in predictions}
+    props_map = {str(pp.prop_bet_id): pp.answer for pp in props}
 
-    return Response({
-        'predictions': predictions_data,
-        'prop_bets': prop_bet_data,
-        'total_predictions': len(predictions_data) + len(prop_bet_data)
-    })
+    return Response({"picks": picks_map, "props": props_map})
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_standings(request):
-    selected_week = request.GET.get('week')
-    if selected_week and not selected_week.isdigit():
-        return Response({'error': 'Invalid week parameter'}, status=status.HTTP_400_BAD_REQUEST)
 
-    users = User.objects.all()
-    standings = []
-    all_weeks = set()
-
-    for user in users:
-        weekly_scores = defaultdict(int)
-
-        for pred in Prediction.objects.filter(user=user, is_correct=True).select_related('game'):
-            weekly_scores[pred.game.week] += 1
-            all_weeks.add(pred.game.week)
-
-        for prop in PropBetPrediction.objects.filter(user=user, is_correct=True).select_related('prop_bet__game'):
-            w = prop.prop_bet.game.week
-            weekly_scores[w] += 2
-            all_weeks.add(w)
-
-        total = weekly_scores[int(selected_week)] if selected_week else sum(weekly_scores.values())
-        standings.append({
-            'username': user.username,
-            'first_name': user.first_name,   # 👈 added
-            'last_name': user.last_name,     # 👈 added
-            'weekly_scores': dict(weekly_scores),
-            'total_points': total
-        })
-
-    standings.sort(key=lambda x: (-x['total_points'], x['username'].lower()))
-    all_weeks = sorted(all_weeks)
-
-    return Response({
-        'standings': standings,
-        'weeks': all_weeks,
-        'selected_week': int(selected_week) if selected_week else None,
-        'total_users': len(standings)
-    })
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_game_results(request):
-    completed_games = Game.objects.filter(winner__isnull=False).prefetch_related('prop_bets').order_by('-start_time')
-    results = []
-    for game in completed_games:
-        prop_results = []
-        for prop_bet in game.prop_bets.all():
-            if prop_bet.correct_answer:
-                prop_results.append({
-                    'prop_bet_id': prop_bet.id,
-                    'question': prop_bet.question,
-                    'correct_answer': prop_bet.correct_answer
-                })
-        prop_result_alias = prop_results[0]['correct_answer'] if len(prop_results) == 1 else None
-        results.append({
-            'game_id': game.id,
-            'week': game.week,
-            'home_team': game.home_team,
-            'away_team': game.away_team,
-            'winner': game.winner,
-            'prop_bet_results': prop_results,
-            'prop_result': prop_result_alias,
-        })
-    return Response({'results': results, 'total_completed_games': len(results)})
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def user_accuracy(request):
-    user = request.user
-    moneyline_with_results = Prediction.objects.filter(user=user, is_correct__isnull=False)
-    prop_bet_with_results = PropBetPrediction.objects.filter(user=user, is_correct__isnull=False)
-
-    correct_ml = moneyline_with_results.filter(is_correct=True).count()
-    total_ml = moneyline_with_results.count()
-
-    correct_prop = prop_bet_with_results.filter(is_correct=True).count()
-    total_prop = prop_bet_with_results.count()
-
-    total_correct = correct_ml + correct_prop
-    total_preds = total_ml + total_prop
-
-    ml_pct = round((correct_ml / total_ml * 100), 1) if total_ml > 0 else 0
-    prop_pct = round((correct_prop / total_prop * 100), 1) if total_prop > 0 else 0
-    overall_pct = round((total_correct / total_preds * 100), 1) if total_preds > 0 else 0
-
-    return Response({
-        'overall_accuracy': {'percentage': overall_pct, 'correct': total_correct, 'total': total_preds},
-        'moneyline_accuracy': {'percentage': ml_pct, 'correct': correct_ml, 'total': total_ml},
-        'prop_bet_accuracy': {'percentage': prop_pct, 'correct': correct_prop, 'total': total_prop},
-        'correct_predictions': total_correct,
-        'total_predictions_with_results': total_preds,
-    })
-
-# =============================================================================
-# UTILITY
-# =============================================================================
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_current_week_only(request):
-    current = int(get_current_week())
-    weeks = list(Game.objects.values_list('week', flat=True).distinct().order_by('week'))
-    return Response({'currentWeek': current, 'weeks': weeks, 'totalWeeks': len(weeks)})
-
-# =============================================================================
-# GRANULAR DASHBOARD
-# =============================================================================
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_user_stats_only(request):
-    user = request.user
-    current_week = get_current_week()
-    live_stats = calculate_live_stats(user, current_week)
-    current_rank_info = calculate_current_user_rank_realtime(user, current_week)
-    pending_picks = calculate_pending_picks(user, current_week)
-    return Response({
-        'username': user.username,
-        'currentWeek': current_week,
-        'weeklyPoints': live_stats['weekly_points'],
-        'rank': current_rank_info['rank'],
-        'totalUsers': current_rank_info['total_users'],
-        'pointsFromLeader': current_rank_info['points_from_leader'],
-        'pendingPicks': pending_picks
-    })
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_user_accuracy_only(request):
-    user = request.user
-    best_category, best_accuracy = get_best_category_realtime(user)
-    total_points = calculate_total_points_simple(user)
-    return Response({
-        'overallAccuracy': calculate_current_accuracy(user, 'overall'),
-        'moneylineAccuracy': calculate_current_accuracy(user, 'moneyline'),
-        'propBetAccuracy': calculate_current_accuracy(user, 'prop'),
-        'totalPoints': total_points,
-        'bestCategory': best_category,
-        'bestCategoryAccuracy': best_accuracy,
-    })
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_leaderboard_only(request):
-    limit = parse_int(request.GET.get('limit'), default=5, minimum=1, maximum=20)
-    user = request.user
-    leaderboard = get_leaderboard_data_realtime(limit=limit)
-    for row in leaderboard:
-        if row['username'] == user.username:
-            row['isCurrentUser'] = True
-    return Response({
-        'leaderboard': leaderboard,
-        'limit': limit,
-        'currentUserIncluded': any(u.get('isCurrentUser') for u in leaderboard)
-    })
-
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_recent_games_only(request):
+    '''
+    Recent games + user's picks and results.
+    Query params:
+      - limit: number of games (default 3, max 10)
+    '''
     user = request.user
-    limit = parse_int(request.GET.get('limit'), default=3, minimum=1, maximum=10)
-    recent_games = get_recent_games_data(user, limit=limit)
-    return Response({'recentGames': recent_games, 'limit': limit, 'totalGames': len(recent_games)})
+    limit = parse_int(request.GET.get("limit"), default=3, minimum=1, maximum=10)
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_user_insights_only(request):
-    user = request.user
-    insights = get_user_insights_realtime(user)
-    season_stats = get_user_season_stats(user)
-    achievements = get_user_rank_achievements(user)
-    return Response({
-        'insights': insights,
-        'rankAchievements': {
-            'currentRank': achievements.get('current_rank'),
-            'consecutiveWeeksAt1': achievements.get('consecutive_weeks_at_1'),
-            'consecutiveWeeksInTop3': achievements.get('consecutive_weeks_in_top_3'),
-            'bestRank': achievements.get('best_rank'),
-            'weeksAt1': achievements.get('weeks_at_1'),
-            'weeksInTop3': achievements.get('weeks_in_top_3'),
-            'biggestClimb': achievements.get('biggest_climb'),
-            'totalWeeksTracked': achievements.get('total_weeks_tracked'),
-        },
-        'seasonStats': season_stats,
-        'insightCount': len(insights)
-    })
+    # Pull most recent finished games the user predicted on
+    # (Assumes Game.winner is set when finished)
+    qs = (
+        Game.objects.filter(prediction__user=user, winner__isnull=False)
+        .select_related()
+        .only("id", "home_team", "away_team", "winner", "start_time", "season", "week")
+        .order_by("-start_time")[:limit]
+    )
 
-# =============================================================================
-# MAIN DASHBOARD
-# =============================================================================
+    # Batch fetch user's predictions for these games
+    game_ids = list(qs.values_list("id", flat=True))
+    preds = Prediction.objects.filter(user=user, game_id__in=game_ids).only("game_id", "predicted_winner")
+    pred_map = {p.game_id: p.predicted_winner for p in preds}
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_dashboard_data(request):
-    user = request.user
-    mode = (request.GET.get('mode') or 'realtime').lower()
-    sections_param = request.GET.get('sections', '')
-    sections = [s.strip() for s in sections_param.split(',') if s.strip()] if sections_param else []
-    response_data = {}
-
-    if not sections:
-        if mode == 'snapshot':
-            dashboard_data = calculate_user_dashboard_data(user)
-            leaderboard = get_leaderboard_data_with_trends(limit=5)
-            insights = get_user_insights(user)
-            calculation_mode = 'snapshot'
-        else:
-            dashboard_data = calculate_user_dashboard_data_realtime(user)
-            leaderboard = get_leaderboard_data_realtime(limit=5)
-            insights = get_user_insights_realtime(user)
-            calculation_mode = 'realtime'
-
-        for row in leaderboard:
-            if row['username'] == user.username:
-                row['isCurrentUser'] = True
-
-        response_data = {
-            'user_data': dashboard_data,
-            'leaderboard': leaderboard,
-            'insights': insights,
-            'trends': {
-                'performance_trend': dashboard_data.get('performanceTrend', 'stable'),
-                'weekly_trends': dashboard_data.get('weeklyTrends', []),
-                'rank_trend': dashboard_data.get('rankTrend', 'same')
-            },
-            'meta': {
-                'calculation_mode': calculation_mode,
-                'sections': 'all',
-                'timestamp': dashboard_data.get('currentWeek'),
+    recent = []
+    for g in qs:
+        pick = pred_map.get(g.id)
+        recent.append(
+            {
+                "game_id": g.id,
+                "home_team": g.home_team,
+                "away_team": g.away_team,
+                "winner": g.winner,
+                "predicted_winner": pick,
+                "correct": (pick == g.winner) if pick and g.winner else None,
+                "start_time": g.start_time,
+                "season": g.season,
+                "week": getattr(g, "week", None),
             }
+        )
+    return Response({"recentGames": recent, "limit": limit, "totalGames": len(recent)})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def window_completeness(request):
+    '''
+    Utility endpoint: is a given window complete?
+    Query params: window_key (required), season (optional if window_key encodes date).
+    '''
+    window_key = request.GET.get("window_key")
+    if not window_key:
+        return Response({"error": "window_key required"}, status=status.HTTP_400_BAD_REQUEST)
+    season = parse_int(request.GET.get("season"), default=None)
+
+    games = Game.objects.filter(window_key=window_key)
+    if season is not None:
+        games = games.filter(season=season)
+    props = PropBet.objects.filter(game__in=games)
+
+    complete = games.filter(winner__isnull=True).count() == 0 and props.filter(correct_answer__isnull=True).count() == 0
+
+    return Response(
+        {
+            "window_key": window_key,
+            "season": season,
+            "is_complete": complete,
+            "games_total": games.count(),
+            "games_completed": games.filter(winner__isnull=False).count(),
+            "games_incomplete": list(games.filter(winner__isnull=True).values_list("id", flat=True)),
+            "props_total": props.count(),
+            "props_completed": props.filter(correct_answer__isnull=False).count(),
+            "props_incomplete": list(props.filter(correct_answer__isnull=True).values_list("id", flat=True)),
         }
-    else:
-        valid_sections = {'stats', 'accuracy', 'leaderboard', 'recent', 'insights'}
-        invalid_sections = set(sections) - valid_sections
-        if invalid_sections:
-            return Response({'error': f'Invalid sections: {", ".join(invalid_sections)}'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if 'stats' in sections:
-            current_week = get_current_week()
-            live_stats = calculate_live_stats(user, current_week)
-            current_rank_info = calculate_current_user_rank_realtime(user, current_week)
-            response_data.setdefault('user_data', {}).update({
-                'username': user.username,
-                'currentWeek': current_week,
-                'weeklyPoints': live_stats['weekly_points'],
-                'rank': current_rank_info['rank'],
-                'totalUsers': current_rank_info['total_users'],
-                'pointsFromLeader': current_rank_info['points_from_leader'],
-                'pendingPicks': calculate_pending_picks(user, current_week)
-            })
-
-        if 'accuracy' in sections:
-            best_category, best_accuracy = get_best_category_realtime(user)
-            response_data.setdefault('user_data', {}).update({
-                'overallAccuracy': calculate_current_accuracy(user, 'overall'),
-                'moneylineAccuracy': calculate_current_accuracy(user, 'moneyline'),
-                'propBetAccuracy': calculate_current_accuracy(user, 'prop'),
-                'bestCategory': best_category,
-                'bestCategoryAccuracy': best_accuracy,
-            })
-
-        if 'leaderboard' in sections:
-            leaderboard = get_leaderboard_data_realtime(limit=5)
-            for row in leaderboard:
-                if row['username'] == user.username:
-                    row['isCurrentUser'] = True
-            response_data['leaderboard'] = leaderboard
-
-        if 'recent' in sections:
-            response_data.setdefault('user_data', {})['recentGames'] = get_recent_games_data(user, limit=3)
-
-        if 'insights' in sections:
-            response_data['insights'] = get_user_insights_realtime(user)
-
-        response_data['meta'] = {'calculation_mode': 'realtime', 'sections': sections, 'requested_sections': len(sections)}
-
-    return Response(response_data)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_dashboard_data_realtime(request):
-    user = request.user
-    dashboard_data = calculate_user_dashboard_data_realtime(user)
-    leaderboard = get_leaderboard_data_realtime(limit=5)
-    insights = get_user_insights_realtime(user)
-
-    for row in leaderboard:
-        if row['username'] == user.username:
-            row['isCurrentUser'] = True
-
-    return Response({
-        'user_data': dashboard_data,
-        'leaderboard': leaderboard,
-        'insights': insights,
-        'trends': {
-            'performance_trend': dashboard_data.get('performanceTrend', 'stable'),
-            'weekly_trends': dashboard_data.get('weeklyTrends', []),
-            'rank_trend': dashboard_data.get('rankTrend', 'same')
-        },
-        'meta': {
-            'calculation_mode': 'realtime',
-            'guaranteed_realtime': True,
-            'timestamp': dashboard_data.get('currentWeek')
-        }
-    })
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_dashboard_data_snapshot(request):
-    user = request.user
-    dashboard_data = calculate_user_dashboard_data(user)
-    leaderboard = get_leaderboard_data_with_trends(limit=5)
-    insights = get_user_insights(user)
-
-    for row in leaderboard:
-        if row['username'] == user.username:
-            row['isCurrentUser'] = True
-
-    return Response({
-        'user_data': dashboard_data,
-        'leaderboard': leaderboard,
-        'insights': insights,
-        'trends': {
-            'performance_trend': dashboard_data.get('performanceTrend', 'stable'),
-            'weekly_trends': dashboard_data.get('weeklyTrends', []),
-            'rank_trend': dashboard_data.get('rankTrend', 'same')
-        },
-        'meta': {'calculation_mode': 'snapshot', 'requires_snapshots': True, 'uses_historical_data': True}
-    })
-
-# =============================================================================
-# ADMIN
-# =============================================================================
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def trigger_weekly_snapshot(request):
-    if not request.user.is_staff:
-        return Response({'error': 'Staff privileges required'}, status=status.HTTP_403_FORBIDDEN)
-
-    week = request.data.get('week')
-    force = request.data.get('force', False)
-    if week and not isinstance(week, int):
-        return Response({'error': 'Week must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
-
-    if week:
-        call_command('capture_weekly_snapshot', week=week, force=force)
-        message = f"Snapshot captured for week {week}"
-    else:
-        call_command('capture_weekly_snapshot', force=force)
-        message = "Snapshot captured for latest completed week"
-    return Response({'success': True, 'message': message, 'week': week, 'forced': force})
-
-# =============================================================================
-# SNAPSHOT-POWERED READS (delegated)
-# =============================================================================
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def user_season_stats_fast_view(request):
-    user = request.user
-    through_week = parse_int(request.GET.get('through_week'))
-    data = api_user_season_stats_fast(user, through_week=through_week)
-    return Response(data)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def user_weekly_trends_fast_view(request):
-    user = request.user
-    window = parse_int(request.GET.get('weeks'), default=5, minimum=1, maximum=20)
-    data = api_user_weekly_trends_fast(user, window=window)
-    return Response(data)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def season_leaderboard_fast_view(request):
-    through_week = parse_int(request.GET.get('through_week'))
-    limit = parse_int(request.GET.get('limit'), default=10, minimum=1, maximum=50)
-    data = build_season_leaderboard_fast(through_week=through_week, limit=limit)
-    return Response(data)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-@cache_page(15)
-def season_leaderboard_dynamic_trend_view(request):
-    limit = parse_int(request.GET.get('limit'), default=10, minimum=1, maximum=50)
-    data = build_season_leaderboard_dynamic(limit=limit)
-    return Response(data)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def home_top3_api(request):
-    # Live Top-3 direct from DB
-    top3 = publish_top3_from_db()
-
-    # Compare last two snapshots (same window) for trend arrows
-    latest = Top3Snapshot.objects.order_by("-created_at").first()
-    prev = (
-        Top3Snapshot.objects
-        .filter(window_key=getattr(latest, "window_key", None))
-        .exclude(pk=getattr(latest, "pk", None))
-        .order_by("-created_at")
-        .first()
-    ) if latest else None
-
-    prev_rank = {row["user_id"]: row["rank"] for row in (prev.payload if prev else [])}
-    enriched = []
-    for row in top3:
-        uid, new = row["user_id"], row["rank"]
-        old = prev_rank.get(uid)
-        if old is None:
-            trend, rank_change = "up", None
-        elif new < old:
-            trend, rank_change = "up", old - new
-        elif new > old:
-            trend, rank_change = "down", new - old
-        else:
-            trend, rank_change = "same", 0
-        enriched.append({**row, "trend": trend, "rank_change": rank_change})
-
-    return JsonResponse({
-        "items": enriched,
-        "last_updated": latest.created_at.isoformat() if latest else None,
-        "trend_basis_window": latest.window_key if latest else None,
-    })
+    )

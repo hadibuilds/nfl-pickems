@@ -1,23 +1,10 @@
-/*
- * Main App Component - PERFORMANCE OPTIMIZED + ERROR BOUNDARIES
- * Uses useMemo and useCallback to prevent unnecessary re-renders
- * Memoizes expensive operations like sorting and date calculations
- * FIXED: Prevents recreating objects/functions on every render
- * ADDED: Error boundaries around all routes for crash protection
- * ENHANCED: Added minimal draft system for picks
- * CLEANED: Removed floating button logic - now handled by WeekPage via Portal
- * TOAST: Clean react-hot-toast implementation - styles moved to CSS
- * 🆕 FULL NAVIGATION PROTECTION: NavigationManager prevents navigation with unsaved picks
- * FIXED: iOS double tap issue by removing global touch handlers
- */
-
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 import Navbar from './components/common/Navbar';
 import HomePage from './pages/HomePage';
-import WeekPage from './pages/WeekPage';
+import GamePage from './pages/GamePage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import Standings from './pages/Standings';
@@ -52,6 +39,52 @@ export default function App() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_URL;
+
+  // --- Robust fetch helpers (handle HTML/redirects and fallback URLs) ---
+  async function fetchJSONSafe(url, options = {}) {
+    const res = await fetch(url, options);
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if (!ct.includes('application/json')) {
+      const text = await res.text();
+      throw new Error(`Expected JSON ${res.status} but got ${ct || 'unknown'} from ${url}: ${text.slice(0,120)}`);
+    }
+    return res.json();
+  }
+
+  async function fetchJSONWithFallback(paths, options = {}) {
+    let lastErr;
+    for (const path of paths) {
+      try {
+        return await fetchJSONSafe(`${API_BASE}${path}`, options);
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr || new Error('All endpoints failed');
+  }
+
+  async function postJSONWithFallback(paths, bodyObj) {
+    let lastErr;
+    for (const path of paths) {
+      try {
+        const res = await fetch(`${API_BASE}${path}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+          },
+          credentials: 'include',
+          body: JSON.stringify(bodyObj),
+        });
+        if (!res.ok) throw new Error(`POST ${path} failed with ${res.status}`);
+        // some endpoints reply with no body; swallow JSON parsing errors
+        try { return await res.json(); } catch { return { ok: true }; }
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr || new Error('All POST endpoints failed');
+  }
 
   useEffect(() => {
     if (/android/i.test(navigator.userAgent)) {
@@ -100,17 +133,19 @@ export default function App() {
 
   const draftCount = Object.keys(actualChanges.changedPicks).length + Object.keys(actualChanges.changedPropBets).length;
 
-  // ======== FETCHERS ========
+  // ======== FETCHERS (routes fixed with fallbacks) ========
 
   const fetchGameData = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/games/api/games/`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') },
-      });
-      if (!res.ok) throw new Error('Failed to fetch games');
-      const data = await res.json();
-      setGames(data);
+      // primary: games app; fallback: analytics mirror if present
+      const data = await fetchJSONWithFallback(
+        ['/games/api/games/', '/analytics/api/games/'],
+        {
+          credentials: 'include',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        }
+      );
+      setGames(Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : []);
     } catch (err) {
       console.error('Error fetching games:', err);
       setGames([]);
@@ -119,21 +154,39 @@ export default function App() {
 
   const fetchUserPredictions = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/predictions/api/get-user-predictions/`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') },
-      });
-      if (!res.ok) throw new Error('Failed to fetch predictions');
-      const data = await res.json();
+      // prefer your current endpoint; tolerate new name; tolerate map or array shapes
+      const data = await fetchJSONWithFallback(
+        ['/predictions/api/get-user-predictions/', '/predictions/api/user-predictions/'],
+        {
+          credentials: 'include',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        }
+      );
 
-      const moneyLine = data.predictions.reduce((acc, cur) => {
-        acc[cur.game_id] = cur.predicted_winner;
-        return acc;
-      }, {});
-      const propBets = data.prop_bets.reduce((acc, cur) => {
-        acc[cur.prop_bet_id] = cur.answer;
-        return acc;
-      }, {});
+      let moneyLine = {};
+      let propBets = {};
+
+      // NEW: support map shape { picks: { [gameId]: team }, props: { [propBetId]: answer } }
+      if (data && typeof data.picks === 'object' && !Array.isArray(data.picks)) {
+        moneyLine = { ...data.picks };
+      } else if (Array.isArray(data?.predictions)) {
+        moneyLine = data.predictions.reduce((acc, cur) => {
+          const gid = cur.game_id ?? cur.game;
+          acc[gid] = cur.predicted_winner ?? cur.pick ?? null;
+          return acc;
+        }, {});
+      }
+
+      if (data && typeof data.props === 'object' && !Array.isArray(data.props)) {
+        propBets = { ...data.props };
+      } else if (Array.isArray(data?.prop_bets)) {
+        propBets = data.prop_bets.reduce((acc, cur) => {
+          const pid = cur.prop_bet_id ?? cur.prop_bet ?? cur.id;
+          const ans = cur.answer ?? cur.selected_answer ?? cur.choice ?? null;
+          acc[pid] = ans;
+          return acc;
+        }, {});
+      }
 
       setMoneyLineSelections(moneyLine);
       setPropBetSelections(propBets);
@@ -150,21 +203,20 @@ export default function App() {
 
   const fetchGameResults = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/predictions/api/game-results/`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') },
-      });
-      if (!res.ok) throw new Error('Failed to fetch game results');
+      // analytics likely owns read endpoints now; fall back to legacy
+      const data = await fetchJSONWithFallback(
+        ['/analytics/api/game-results/', '/games/api/game-results/', '/predictions/api/game-results/'],
+        {
+          credentials: 'include',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        }
+      );
 
-      const data = await res.json();
-      // Accept either { results: [...] } or bare [...]
       const payload = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : []);
       const resultsMap = {};
 
       for (const r of payload) {
         const winner = r?.winner ?? r?.winning_team ?? null;
-
-        // Prefer top-level prop_result; else if exactly one prop exists, use its correct_answer
         const prop_result =
           (r && Object.prototype.hasOwnProperty.call(r, 'prop_result'))
             ? r.prop_result
@@ -172,10 +224,10 @@ export default function App() {
                 ? r.prop_bet_results[0]?.correct_answer
                 : null);
 
-        resultsMap[r.game_id] = {
+        const gid = r.game_id ?? r.id;
+        resultsMap[gid] = {
           winner,
           prop_result,
-          // keep legacy/raw fields around (optional)
           winning_team: r?.winning_team ?? winner,
           prop_bet_results: Array.isArray(r?.prop_bet_results) ? r.prop_bet_results : undefined,
         };
@@ -203,39 +255,54 @@ export default function App() {
   const submitPicks = useCallback(async () => {
     if (draftCount === 0) return { success: false, error: "No changes to submit" };
     try {
+      // moneyline picks
       for (const [gameId, team] of Object.entries(actualChanges.changedPicks)) {
         const response = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-          body: JSON.stringify({ game_id: parseInt(gameId), predicted_winner: team }),
+          body: JSON.stringify({ game_id: parseInt(gameId, 10), predicted_winner: team }),
           credentials: 'include',
         });
         if (!response.ok) throw new Error(`Failed to submit pick for game ${gameId}`);
       }
+
+      // prop picks
       for (const [propBetId, answer] of Object.entries(actualChanges.changedPropBets)) {
         const response = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-          body: JSON.stringify({ prop_bet_id: parseInt(propBetId), answer }),
+          body: JSON.stringify({ prop_bet_id: parseInt(propBetId, 10), answer }),
           credentials: 'include',
         });
         if (!response.ok) throw new Error(`Failed to submit prop bet ${propBetId}`);
       }
 
+      // Optimistic update (what you already had)
       const newOriginalPicks = { ...originalSubmittedPicks, ...actualChanges.changedPicks };
       const newOriginalPropBets = { ...originalSubmittedPropBets, ...actualChanges.changedPropBets };
       setOriginalSubmittedPicks(newOriginalPicks);
       setOriginalSubmittedPropBets(newOriginalPropBets);
-
       setDraftPicks({});
       setDraftPropBets({});
       setHasUnsavedChanges(false);
+
+      // 🔁 NEW: pull from server so UI reflects persisted answers immediately
+      await Promise.all([fetchUserPredictions(), fetchGameResults()]);
+
       return { success: true };
     } catch (err) {
       console.error("Failed to submit picks:", err);
       return { success: false, error: err.message };
     }
-  }, [draftCount, actualChanges, API_BASE, originalSubmittedPicks, originalSubmittedPropBets]);
+  }, [
+    draftCount,
+    actualChanges,
+    API_BASE,
+    originalSubmittedPicks,
+    originalSubmittedPropBets,
+    fetchUserPredictions,
+    fetchGameResults
+  ]);
 
   // ======== CLICK HANDLERS ========
 
@@ -313,7 +380,7 @@ export default function App() {
               element={
                 <ErrorBoundary level="page" customMessage="Week page failed to load">
                   <PrivateRoute>
-                    <WeekPage
+                    <GamePage
                       games={sortedGames}
                       moneyLineSelections={moneyLineSelections}
                       propBetSelections={propBetSelections}
@@ -381,7 +448,7 @@ export default function App() {
               path="/settings"
               element={
                 <PrivateRoute>
-                  <div style={{ padding: '80px 20px 20px', color: 'white', textAlign: 'center' }}>
+                  <div style={{ padding: '80px 20px 20px,', color: 'white', textAlign: 'center' }}>
                     <h1>Coming Soon!</h1>
                   </div>
                 </PrivateRoute>

@@ -1,4 +1,4 @@
-# predictions/utils/param_utils.py
+# analytics/utils/param_utils.py
 def parse_int(value, default=None, minimum=None, maximum=None):
     try:
         i = int(value)

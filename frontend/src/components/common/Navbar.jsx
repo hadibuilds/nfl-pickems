@@ -1,15 +1,15 @@
 /*
  * Updated Navbar Component 
  * 🔒 NAVIGATION PROTECTED: All links use navigateWithConfirmation
- * Prevents navigation away from WeekPage with unsaved picks
+ * Prevents navigation away from GamePage with unsaved picks
  * Replaced hamburger menu with ProfileDropdown
  * Maintains all existing functionality and styling
  */
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuthWithNavigation } from "../../hooks/useAuthWithNavigation";
-import ProfileDropdown from "../navigation/ProfileDropdown";
+const ProfileDropdown = React.lazy(() => import("../navigation/ProfileDropdown"));
 import whiteLogo from "../../assets/pickem2_white.png";
 
 export default function Navbar({ isOpen, setIsOpen }) {
@@ -86,7 +86,7 @@ export default function Navbar({ isOpen, setIsOpen }) {
           
           {userInfo && (
             <div className="profile-dropdown-container">
-              <ProfileDropdown />
+              <Suspense fallback={null}><ProfileDropdown /></Suspense>
             </div>
           )}
         </div>

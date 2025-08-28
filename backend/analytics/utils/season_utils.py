@@ -1,10 +1,10 @@
-# predictions/utils/season_utils.py
+# analytics/utils/season_utils.py
 from django.contrib.auth import get_user_model
 from django.db.models import Max
 from rest_framework.response import Response
 
-from ..models import Prediction, PropBet, PropBetPrediction, UserStatHistory
-from games.models import Game
+from ..models import Prediction, PropBetPrediction, UserStatHistory
+from games.models import Game, PropBet
 
 from .dashboard_utils import (
     calculate_total_points_simple,

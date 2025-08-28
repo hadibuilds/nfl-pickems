@@ -4,7 +4,7 @@ mv predictions/migrations/0002_* _hold/ 2>/dev/null || true
 mv predictions/migrations/0003_* _hold/ 2>/dev/null || true
 
 # ensure initial migrations exist
-python backend/manage.py makemigrations games predictions insights
+python backend/manage.py makemigrations games predictions analytics
 python backend/manage.py showmigrations
 
 # build schema

@@ -37,11 +37,11 @@ def get_season_leaderboard_fast(through_week=None, limit=20):
     return latest_snapshots[:limit]
 
 
-def get_weekly_insights_fast(user):
+def get_weekly_analytics_fast(user):
     """
-    Generate insights using UserStatHistory snapshot data for speed.
+    Generate analytics using UserStatHistory snapshot data for speed.
     """
-    insights = []
+    analytics = []
     
     # Get recent snapshots
     recent_snapshots = UserStatHistory.objects.filter(user=user).order_by('-week')[:4]
@@ -50,28 +50,28 @@ def get_weekly_insights_fast(user):
         latest = recent_snapshots[0]
         previous = recent_snapshots[1]
         
-        # Rank movement insights
+        # Rank movement analytics
         if latest.rank < previous.rank:
             improvement = previous.rank - latest.rank
-            insights.append({
+            analytics.append({
                 'type': 'positive',
                 'message': f"You climbed {improvement} spots to #{latest.rank} this week!"
             })
         elif latest.rank > previous.rank:
             decline = latest.rank - previous.rank
-            insights.append({
+            analytics.append({
                 'type': 'warning',
                 'message': f"You dropped {decline} spots to #{latest.rank} this week."
             })
         
-        # Performance insights
+        # Performance analytics
         if latest.week_accuracy > 80:
-            insights.append({
+            analytics.append({
                 'type': 'positive',
                 'message': f"Excellent {latest.week_accuracy}% accuracy this week!"
             })
         elif latest.week_accuracy < 40:
-            insights.append({
+            analytics.append({
                 'type': 'warning',
                 'message': f"Tough week with {latest.week_accuracy}% accuracy. Bounce back next week!"
             })
@@ -79,22 +79,22 @@ def get_weekly_insights_fast(user):
         # Points performance
         if latest.week_points > previous.week_points:
             improvement = latest.week_points - previous.week_points
-            insights.append({
+            analytics.append({
                 'type': 'positive',
                 'message': f"Great improvement! +{improvement} more points than last week!"
             })
     
-    # Season-level insights
+    # Season-level analytics
     if len(recent_snapshots) >= 1:
         latest = recent_snapshots[0]
         
         if latest.season_accuracy > 65:
-            insights.append({
+            analytics.append({
                 'type': 'positive',
                 'message': f"Outstanding {latest.season_accuracy}% season accuracy!"
             })
         elif latest.season_accuracy > 55:
-            insights.append({
+            analytics.append({
                 'type': 'positive', 
                 'message': f"Solid {latest.season_accuracy}% season accuracy overall!"
             })
@@ -104,36 +104,36 @@ def get_weekly_insights_fast(user):
             recent_weeks_points = [s.week_points for s in recent_snapshots[:3]]
             avg_points = sum(recent_weeks_points) / len(recent_weeks_points)
             if avg_points >= 8:  # Adjust threshold as needed
-                insights.append({
+                analytics.append({
                     'type': 'positive',
                     'message': f"On fire! Averaging {avg_points:.1f} points over 3 weeks!"
                 })
         
-        # Category strength insights
+        # Category strength analytics
         if latest.moneyline_accuracy > latest.prop_accuracy + 15:
-            insights.append({
+            analytics.append({
                 'type': 'info',
                 'message': f"Moneyline specialist! {latest.moneyline_accuracy}% vs {latest.prop_accuracy}% on props."
             })
         elif latest.prop_accuracy > latest.moneyline_accuracy + 15:
-            insights.append({
+            analytics.append({
                 'type': 'info', 
                 'message': f"Prop bet expert! {latest.prop_accuracy}% vs {latest.moneyline_accuracy}% on games."
             })
         
-        # Leadership insights
+        # Leadership analytics
         if latest.rank == 1:
-            insights.append({
+            analytics.append({
                 'type': 'positive',
                 'message': "👑 You're leading the league! Keep it up!"
             })
         elif latest.rank <= 3:
-            insights.append({
+            analytics.append({
                 'type': 'positive',
                 'message': f"🏆 Top 3 finish! You're #{latest.rank} in the league!"
             })
     
-    return insights
+    return analytics
 
 
 def get_user_week_breakdown_fast(user, week):
@@ -452,11 +452,11 @@ def get_season_leaderboard_fast(through_week=None, limit=20):
     return latest_snapshots[:limit]
 
 
-def get_weekly_insights_fast(user):
+def get_weekly_analytics_fast(user):
     """
-    Generate insights using snapshot data for speed.
+    Generate analytics using snapshot data for speed.
     """
-    insights = []
+    analytics = []
     
     # Get recent snapshots
     recent_snapshots = RankHistory.objects.filter(user=user).order_by('-week')[:4]
@@ -465,38 +465,38 @@ def get_weekly_insights_fast(user):
         latest = recent_snapshots[0]
         previous = recent_snapshots[1]
         
-        # Rank movement insights
+        # Rank movement analytics
         if latest.rank < previous.rank:
             improvement = previous.rank - latest.rank
-            insights.append({
+            analytics.append({
                 'type': 'positive',
                 'message': f"You climbed {improvement} spots to #{latest.rank} this week!"
             })
         elif latest.rank > previous.rank:
             decline = latest.rank - previous.rank
-            insights.append({
+            analytics.append({
                 'type': 'warning',
                 'message': f"You dropped {decline} spots to #{latest.rank} this week."
             })
         
-        # Performance insights
+        # Performance analytics
         if latest.week_accuracy > 80:
-            insights.append({
+            analytics.append({
                 'type': 'positive',
                 'message': f"Excellent {latest.week_accuracy}% accuracy this week!"
             })
         elif latest.week_accuracy < 40:
-            insights.append({
+            analytics.append({
                 'type': 'warning',
                 'message': f"Tough week with {latest.week_accuracy}% accuracy. Bounce back next week!"
             })
     
-    # Season-level insights
+    # Season-level analytics
     if len(recent_snapshots) >= 1:
         latest = recent_snapshots[0]
         
         if latest.season_accuracy > 60:
-            insights.append({
+            analytics.append({
                 'type': 'positive',
                 'message': f"Strong {latest.season_accuracy}% season accuracy overall!"
             })
@@ -505,9 +505,9 @@ def get_weekly_insights_fast(user):
         if len(recent_snapshots) >= 3:
             recent_weeks_points = [s.week_points for s in recent_snapshots[:3]]
             if all(points >= 8 for points in recent_weeks_points):  # Assuming 8+ is good
-                insights.append({
+                analytics.append({
                     'type': 'positive',
                     'message': "You're on fire! 3 strong weeks in a row!"
                 })
     
-    return insights
+    return analytics

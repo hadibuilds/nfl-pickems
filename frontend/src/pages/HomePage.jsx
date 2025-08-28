@@ -1,8 +1,8 @@
 /*
  * HomePage: season rings + trend arrows everywhere
- * - Season rings: /predictions/api/user-season-stats-fast/
- * - Rank trend card: /predictions/api/user-trends-fast/?weeks=2
- * - Leaderboard WITH arrows: now uses /predictions/api/home-top3/ (dense ties + snapshot trend)
+ * - Season rings: /analytics/api/user-season-stats/ (fallback /predictions/api/user-season-stats-fast/)
+ * - Rank trend card: /analytics/api/user-trends/?weeks=2 (fallback /predictions/api/user-trends-fast/?weeks=2)
+ * - Leaderboard WITH arrows: /analytics/api/windowed-top3/
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -21,6 +21,7 @@ import {
 } from '../components/standings/rankingUtils.jsx';
 import { getCookie } from '../utils/cookies.js';
 import confetti from 'canvas-confetti';
+import { fetchTopNLeaderboard, fetchSeasonPerformance } from '../utils/apiFallback.js';
 
 const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage = true, fontSize = 'text-2xl' }) => {
   const radius = (size - strokeWidth) / 2;
@@ -75,7 +76,6 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
   const medalTier = getMedalTier(standingsForMedals, entry.username);
   const rank = calculateRankWithTies(standingsForMedals, entry.username);
 
-  // derive trend if server only sent rank_change
   const derivedTrend =
     entry?.trend ??
     (typeof entry?.rank_change === 'number'
@@ -102,7 +102,7 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
         </div>
       </div>
       <div className="flex items-center text-sm">
-        {derivedTrend !== 'same' && (
+        {(entry.display_trend ?? true) && derivedTrend !== 'same' && (
           <div className={`flex items-center text-sm ${derivedTrend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
             {derivedTrend === 'up'
               ? <TrendingUp className="w-4 h-4 mr-1" />
@@ -116,42 +116,62 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
 
 function HomePage() {
   const { userInfo, navigate } = useAuthWithNavigation();
-  // Weekly/live tiles
   const { dashboardData, error } = useDashboardData(userInfo, {
     loadGranular: true,
     includeLeaderboard: false,
   });
 
-  // Season (snapshot) performance
   const [seasonPerf, setSeasonPerf] = useState({ overall: 0, ml: 0, prop: 0, totalPoints: 0, loaded: false });
-  // Weekly rank trend for the stat card
   const [rankMeta, setRankMeta] = useState({ trend: 'same', rankChange: 0 });
 
-  // Top-3 leaderboard from /predictions/api/home-top3/
   const [items, setItems] = useState([]);
   const [top3Loading, setTop3Loading] = useState(true);
   const [top3Err, setTop3Err] = useState(null);
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
+  async function fetchJSONSafe(url) {
+    const res = await fetch(url, { credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if (!ct.includes('application/json')) {
+      const txt = await res.text();
+      throw new Error(`Expected JSON ${res.status} but got ${ct || 'unknown'} from ${url}: ${txt.slice(0,120)}`);
+    }
+    return res.json();
+  }
+  async function fetchWithFallback(paths) {
+    let lastErr;
+    for (const p of paths) {
+      try { return await fetchJSONSafe(`${API_BASE}${p}`); } catch(e) { lastErr = e; }
+    }
+    throw lastErr || new Error('all endpoints failed');
+  }
+
   // Season performance
   useEffect(() => {
     if (!userInfo) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/user-season-stats-fast/`, {
-          credentials: 'include',
-          headers: { 'X-CSRFToken': getCookie('csrftoken') }
-        });
-        if (!res.ok) throw new Error('user-season-stats-fast failed');
-        const s = await res.json();
+        const s = await fetchWithFallback([
+          '/analytics/api/fallback/season-performance/', // NEW consolidated fallback
+        ]);
+  
         setSeasonPerf({
-          overall: Number(s?.current_season_accuracy ?? 0),
-          ml: Number(s?.current_moneyline_accuracy ?? 0),
-          prop: Number(s?.current_prop_accuracy ?? 0),
-          totalPoints: Number(s?.current_season_points ?? 0),
+          overall: Number(
+            s?.overall_accuracy ?? s?.current_season_accuracy ?? 0
+          ),
+          ml: Number(
+            s?.moneyline_accuracy ?? s?.current_moneyline_accuracy ?? s?.ml_accuracy ?? 0
+          ),
+          prop: Number(
+            s?.prop_accuracy ?? s?.current_prop_accuracy ?? 0
+          ),
+          totalPoints: Number(
+            s?.total_points ?? s?.current_season_points ?? 0
+          ),
           loaded: true
         });
+  
         if (typeof s?.trending_direction === 'string') {
           setRankMeta((prev) => ({ ...prev, trend: s.trending_direction }));
         }
@@ -167,12 +187,11 @@ function HomePage() {
     if (!userInfo) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/user-trends-fast/?weeks=2`, {
-          credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') }
-        });
-        if (!res.ok) throw new Error('user-trends-fast failed');
-        const data = await res.json();
-        const arr = Array.isArray(data?.trends) ? data.trends : [];
+        const data = await fetchWithFallback([
+          '/analytics/api/user-trends/?weeks=2',
+          '/predictions/api/user-trends-fast/?weeks=2'
+        ]);
+        const arr = Array.isArray(data?.trends) ? data.trends : Array.isArray(data) ? data : [];
         if (arr.length >= 2) {
           const latest = arr[arr.length - 1];
           const prev = arr[arr.length - 2];
@@ -196,20 +215,27 @@ function HomePage() {
       try {
         setTop3Err(null);
         setTop3Loading(true);
-        const res = await fetch(`${API_BASE}/insights/api/home-top3/`, { credentials: 'include' });
-        if (!res.ok) throw new Error('home-top3 failed');
+        const res = await fetchJSONSafe(`${API_BASE}/analytics/api/windowed-top3/`);
+        if (!res.ok) throw new Error('No results yet');
         const data = await res.json();
+        const isLive = data?.current_window?.status === 'in_progress';
         const list = Array.isArray(data?.items) ? data.items : [];
-        const marked = list.map(r => ({
-          ...r,
-          isCurrentUser: String(r.username) === String(userInfo?.username),
-        }));
+        const marked = list.map(r => {
+          const points = isLive ? (r.live_total_points ?? r.total_points) : r.total_points;
+          const rank = isLive ? (r.live_rank ?? r.rank) : r.rank;
+          return {
+            ...r,
+            rank,
+            total_points: points,
+            isLive,
+            isCurrentUser: String(r.username) === String(userInfo?.username),
+          };
+        });
         if (alive) setItems(marked);
       } catch (e) {
-        console.warn(e);
         if (alive) {
           setItems([]);
-          setTop3Err(e.message || 'Failed to load Top-3');
+          setTop3Err(e.message || 'No results yet.');
         }
       } finally {
         if (alive) setTop3Loading(false);
@@ -241,7 +267,6 @@ function HomePage() {
     );
   }
 
-  // Build a medal/rank list for helpers, preserving trend
   const standingsForMedals = useMemo(() => {
     const sorted = [...items].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
     return sorted.map(s => ({ username: s.username, total_points: s.total_points }));
@@ -312,9 +337,9 @@ function HomePage() {
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
               </div>
-            ) : top3Err ? (
+            ) : items.length === 0 || top3Err ? (
               <div className="text-center py-4" style={{ color: '#ef4444' }}>
-                Couldn’t load Top-3. Try again.
+                No Results yet, check back after the season opener is done.
               </div>
             ) : items.length === 0 ? (
               <div className="text-center py-4" style={{ color: '#9ca3af' }}>

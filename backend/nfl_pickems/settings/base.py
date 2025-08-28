@@ -21,10 +21,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'accounts',
-    'games',
+    'games.apps.GamesConfig',
     'predictions.apps.PredictionsConfig',
     'frontend',
-    'insights',
+    'analytics',
 ]
 
 MIDDLEWARE = [
@@ -102,3 +102,5 @@ INVITE_CODE = config("INVITE_CODE", default="fallbackcode")
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@pickemleague.com'
+
+NFL_SEASON = 2025

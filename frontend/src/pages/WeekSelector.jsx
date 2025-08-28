@@ -15,31 +15,38 @@ export default function WeekSelector({
   const totalWeeks = 18;
   const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
 
-  // NEW: state for tiny endpoint
   const [serverCurrentWeek, setServerCurrentWeek] = useState(null);
   const [serverWeeks, setServerWeeks] = useState(null);
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-  // NEW: one-time fetch of authoritative week; no styling changes, no spinners
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/current-week/`, { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json(); // { currentWeek, weeks }
-        if (!mounted) return;
+        // prefer analytics, fall back to legacy
+        const tryPaths = ['/analytics/api/current-week/', '/predictions/api/current-week/'];
+        let data = null, lastErr = null;
+        for (const p of tryPaths) {
+          try {
+            const res = await fetch(`${API_BASE}${p}`, { credentials: 'include' });
+            if (!res.ok) continue;
+            const ct = (res.headers.get('content-type') || '').toLowerCase();
+            if (!ct.includes('application/json')) continue;
+            data = await res.json();
+            break;
+          } catch (e) { lastErr = e; }
+        }
+        if (!mounted || !data) return;
+
         if (Number.isInteger(data.currentWeek)) setServerCurrentWeek(data.currentWeek);
         if (Array.isArray(data.weeks)) setServerWeeks(data.weeks);
       } catch (e) {
-        // silent fail; fallback to client date logic
         console.warn('current-week endpoint unavailable; using fallback week calc');
       }
     })();
     return () => { mounted = false; };
   }, [API_BASE]);
 
-  // Existing date-based heuristic (kept as-is for fallback)
   const getCurrentNFLWeekFallback = () => {
     const now = new Date();
     const firstTuesday = new Date('2025-09-02T16:00:00Z'); // Sept 2, 2025 8 AM PST
@@ -57,12 +64,10 @@ export default function WeekSelector({
     return null;
   };
 
-  // RESOLVED current week: prefer server, fallback to heuristic
   const getResolvedCurrentWeek = () => {
     return serverCurrentWeek ?? getCurrentNFLWeekFallback();
   };
 
-  // unchanged helper: computes status/points, but now uses resolved current week
   const getWeekStatus = (weekNumber) => {
     const currentNFLWeek = getResolvedCurrentWeek();
     const weekGames = games.filter(game => game.week === weekNumber);

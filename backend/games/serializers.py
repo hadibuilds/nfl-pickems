@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import Game
-from predictions.models import PropBet
+from games.models import Game, PropBet
 from django.utils.timezone import now
 
 class PropBetSerializer(serializers.ModelSerializer):

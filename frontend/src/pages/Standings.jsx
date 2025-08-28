@@ -23,17 +23,52 @@ export default function Standings() {
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+  async function fetchJSONSafe(url) {
+    const res = await fetch(url, { credentials: 'include' });
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if (!ct.includes('application/json')) {
+      const txt = await res.text();
+      throw new Error(`Expected JSON ${res.status} but got ${ct || 'unknown'} from ${url}: ${txt.slice(0,120)}`);
+    }
+    return res.json();
+  }
+
+  async function fetchWithFallback(paths) {
+    let lastErr;
+    for (const p of paths) {
+      try { return await fetchJSONSafe(`${API_BASE}${p}`); }
+      catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error('all standings endpoints failed');
+  }
+
   useEffect(() => {
     const fetchStandings = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/standings/`, {
-          credentials: 'include',
-        });
-        if (!res.ok) throw new Error('Failed to load standings');
-        const data = await res.json();
-        setStandings(Array.isArray(data.standings) ? data.standings : []);
-        setWeeks(Array.isArray(data.weeks) ? [...data.weeks].sort((a, b) => a - b) : []);
+        // prefer analytics, fall back to legacy predictions endpoint
+        const data = await fetchWithFallback([
+          '/analytics/api/standings/',
+          '/predictions/api/standings/'
+        ]);
+
+        // accept various response shapes
+        const list = Array.isArray(data?.standings)
+          ? data.standings
+          : Array.isArray(data?.results)
+          ? data.results
+          : Array.isArray(data)
+          ? data
+          : [];
+
+        const wk = Array.isArray(data?.weeks)
+          ? data.weeks
+          : Array.isArray(data?.available_weeks)
+          ? data.available_weeks
+          : [];
+
+        setStandings(list);
+        setWeeks([...wk].sort((a, b) => a - b));
       } catch (err) {
         console.error('Failed to load standings:', err);
         setStandings([]);
@@ -179,5 +214,4 @@ export default function Standings() {
       </div>
     </PageLayout>
   );
-
 }

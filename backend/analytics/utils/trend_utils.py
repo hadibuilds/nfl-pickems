@@ -1,4 +1,4 @@
-# predictions/trend_utils.py - Calculate trends without snapshots
+# analytics/utils/trend_utils.py - Calculate trends without snapshots
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
@@ -134,19 +134,19 @@ def get_user_performance_trend(user):
     else:
         return "stable"
 
-def get_user_weekly_insights(user):
-    """Generate insights based on recent performance"""
-    insights = []
+def get_user_weekly_analytics(user):
+    """Generate analytics based on recent performance"""
+    analytics = []
     
     # Rank change insight
     rank_change, trend = get_user_rank_trend(user)
     if trend == "up" and rank_change != "—":
-        insights.append({
+        analytics.append({
             'type': 'positive',
             'message': f"You moved up {rank_change.replace('+', '')} spots this week!"
         })
     elif trend == "down" and rank_change != "—":
-        insights.append({
+        analytics.append({
             'type': 'warning', 
             'message': f"You dropped {rank_change.replace('-', '')} spots this week."
         })
@@ -154,14 +154,14 @@ def get_user_weekly_insights(user):
     # Performance trend insight
     performance_trend = get_user_performance_trend(user)
     if performance_trend == "up":
-        insights.append({
+        analytics.append({
             'type': 'positive',
             'message': "You're on an upward trend over the last few weeks!"
         })
     elif performance_trend == "down":
-        insights.append({
+        analytics.append({
             'type': 'info',
             'message': "Time to turn things around - you can do it!"
         })
     
-    return insights
+    return analytics

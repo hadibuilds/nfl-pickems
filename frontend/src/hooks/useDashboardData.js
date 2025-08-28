@@ -1,204 +1,198 @@
-// hooks/useDashboardData.js — Optimized, robust, and consistent
-// - Parallel granular fetches with AbortController
-// - Safe immutable merges (no invalid spreads)
-// - Fine‑grained loadingStates + single error surface
-// - Idempotent reload() and option flags
-// - Uses server as source of truth for currentWeek
+// useDashboardData.js
+import { useEffect, useMemo, useState } from 'react';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-// Small helper: read Django's CSRF cookie when needed
-function getCookie(name) {
-  const cookie = document.cookie
-    .split('; ')
-    .find(row => row.startsWith(name + '='));
-  return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+/**
+ * Generic helper: try a list of URLs in order; return the first OK JSON.
+ * If all fail (network, 404, non-2xx), return null.
+ */
+async function fetchFirstOk(urls, opts = {}) {
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, opts);
+      if (!res.ok) continue; // move to next candidate
+      const json = await res.json();
+      return json;
+    } catch (_) {
+      // swallow and try next
+    }
+  }
+  return null;
 }
 
 /**
- * useDashboardData
- * Fetches granular dashboard data in parallel and merges into a single object.
- *
- * @param {object} userInfo - expects { username } at minimum when authenticated
- * @param {object} options
- *   - includeLeaderboard (boolean): fetch leaderboard block
- *   - loadGranular (boolean): use granular endpoints (stats/accuracy/leaderboard/recent/insights)
- *   - eager (boolean): if true, start fetching even if userInfo is missing (defaults to false)
+ * Normalizers
+ * Keep your UI props stable by adapting differing API payloads into
+ * a single, predictable shape the components already use.
  */
-export default function useDashboardData(
-  userInfo,
-  { includeLeaderboard = true, loadGranular = true, eager = false } = {}
-) {
-  const [dashboardData, setDashboardData] = useState(() => ({ user_data: {} }));
-  const [loadingStates, setLoadingStates] = useState({
-    stats: !!loadGranular,
-    accuracy: !!loadGranular,
-    leaderboard: !!includeLeaderboard,
-    recent: !!loadGranular,
-    insights: !!loadGranular,
-  });
+
+// Leaderboard: unify "windowed" & "snapshot" formats to [{ user, points, mlPoints, propPoints, rank, trend }, ...]
+function normalizeTop3(payload) {
+  if (!payload) return { list: [], message: 'No results yet. Check back later.' };
+
+  // Common possibilities:
+  // - { top3: [...], meta: {...} }
+  // - { results: [...], window_key: '...' }
+  // - plain array: [...]
+  const list = Array.isArray(payload) ? payload
+    : Array.isArray(payload?.top3) ? payload.top3
+    : Array.isArray(payload?.results) ? payload.results
+    : [];
+
+  const mapped = list.map((row, i) => ({
+    user: row.user ?? row.username ?? row.display_name ?? 'Unknown',
+    points: Number(row.total_points ?? row.points ?? 0),
+    mlPoints: Number(row.ml_points ?? row.ml ?? 0),
+    propPoints: Number(row.prop_points ?? row.prop ?? 0),
+    rank: Number(row.rank ?? i + 1),
+    trend: row.trend ?? row.trending_direction ?? null,
+  }));
+
+  const message = mapped.length ? null : (payload?.message || 'No results yet. Check back later.');
+  return { list: mapped, message };
+}
+
+// Season performance: unify to { overall, ml, prop, totalPoints, loaded }
+function normalizeSeasonPerf(s) {
+  if (!s) return { overall: 0, ml: 0, prop: 0, totalPoints: 0, loaded: true };
+
+  return {
+    overall: Number(s.current_season_accuracy ?? s.overall_accuracy ?? 0),
+    ml: Number(s.current_moneyline_accuracy ?? s.ml_accuracy ?? 0),
+    prop: Number(s.current_prop_accuracy ?? s.prop_accuracy ?? 0),
+    totalPoints: Number(s.current_season_points ?? s.total_points ?? 0),
+    loaded: true,
+  };
+}
+
+// Week/meta: unify to { week, season, windowKey, label }
+function normalizeWeekMeta(m) {
+  if (!m) return { week: null, season: null, windowKey: null, label: null };
+
+  const week = Number(m.week ?? m.current_week ?? m.week_number ?? null);
+  const season = Number(m.season ?? m.season_year ?? null);
+  const windowKey = m.window_key ?? m.windowKey ?? null;
+  const label = m.label ?? (week ? `Week ${week}` : null);
+
+  return { week, season, windowKey, label };
+}
+
+/**
+ * ROUTE CANDIDATES
+ * New analytics first, then legacy fallbacks.
+ * Adjust paths here as you finalize your analytics URLs.
+ */
+function makeRoutes(API_BASE) {
+  return {
+    leaderboardTop3: [
+      // Primary (windowed “new brain”)
+      `${API_BASE}/analytics/api/windowed-top3/`,
+      // Secondary (analytics snapshot, if you kept it)
+      `${API_BASE}/analytics/api/home-top3/`,
+      // Legacy predictions snapshot
+      `${API_BASE}/predictions/api/home-top3/`,
+      // Legacy insights (if still around — harmless if 404)
+      `${API_BASE}/insights/api/home-top3/`,
+    ],
+    seasonStats: [
+      `${API_BASE}/analytics/api/user-season-stats/`,
+      `${API_BASE}/predictions/api/user-season-stats-fast/`,
+    ],
+    weekMeta: [
+      // prefer analytics
+      `${API_BASE}/analytics/api/season-week/`,
+      `${API_BASE}/analytics/api/season-meta/`,
+      // game/predictions legacy fallbacks
+      `${API_BASE}/games/api/current-week/`,
+      `${API_BASE}/predictions/api/current-week/`,
+    ],
+  };
+}
+
+/**
+ * Public hook: signature preserved for drop-in use on the HomePage.
+ *
+ * Exposes:
+ * - top3       : normalized list of top-3 rows
+ * - top3Msg    : friendly message if empty
+ * - top3Loaded : boolean
+ * - seasonPerf : { overall, ml, prop, totalPoints, loaded }
+ * - weekInfo   : { week, season, windowKey, label }
+ * - error      : final non-fatal string (we default to soft success w/ empty data)
+ */
+export default function useDashboardData({ API_BASE, userInfo }) {
+  const ROUTES = useMemo(() => makeRoutes(API_BASE), [API_BASE]);
+
+  const [top3, setTop3] = useState([]);
+  const [top3Msg, setTop3Msg] = useState(null);
+  const [top3Loaded, setTop3Loaded] = useState(false);
+
+  const [seasonPerf, setSeasonPerf] = useState({ overall: 0, ml: 0, prop: 0, totalPoints: 0, loaded: false });
+  const [weekInfo, setWeekInfo] = useState({ week: null, season: null, windowKey: null, label: null });
+
   const [error, setError] = useState(null);
 
-  // Track latest in-flight request to avoid state updates from stale effects
-  const abortRef = useRef(null);
-
-  const updateLoading = useCallback((patch) => {
-    setLoadingStates(prev => ({ ...prev, ...patch }));
-  }, []);
-
-  const mergeUserData = useCallback((patch) => {
-    setDashboardData(prev => ({
-      ...prev,
-      user_data: { ...(prev?.user_data || {}), ...patch },
-    }));
-  }, []);
-
-  const mergeRoot = useCallback((patch) => {
-    setDashboardData(prev => ({ ...prev, ...patch }));
-  }, []);
-
-  const fetchJSON = useCallback(async (path) => {
-    const controller = abortRef.current;
-    const resp = await fetch(`${API_BASE}${path}`, {
-      credentials: 'include',
-      headers: { 'X-CSRFToken': getCookie('csrftoken') || '' },
-      signal: controller?.signal,
-    });
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '');
-      throw new Error(`${resp.status} ${resp.statusText} for ${path}${text ? ` — ${text}` : ''}`);
-    }
-    return resp.json();
-  }, []);
-
-  const startFetch = useCallback(async () => {
-    // Cancel any previous run
-    if (abortRef.current) abortRef.current.abort();
-    abortRef.current = new AbortController();
-
-    setError(null);
-
-    // Reset loading flags only for enabled sections
-    setLoadingStates({
-      stats: loadGranular,
-      accuracy: loadGranular,
-      leaderboard: includeLeaderboard,
-      recent: loadGranular,
-      insights: loadGranular,
-    });
-
-    try {
-      if (!loadGranular) {
-        // Legacy monolithic endpoint fallback if you still keep it around
-        const data = await fetchJSON('/predictions/api/dashboard/realtime/');
-        mergeRoot(data || {});
-        setLoadingStates({ stats: false, accuracy: false, leaderboard: false, recent: false, insights: false });
-        return;
-      }
-
-      // Granular parallel fetches
-      const tasks = [];
-
-      // STATS — includes currentWeek and basic numbers used on Home
-      updateLoading({ stats: true });
-      tasks.push(
-        fetchJSON('/predictions/api/dashboard/stats/')
-          .then((data) => {
-            // Normalize expected fields into user_data
-            const patch = {
-              username: userInfo?.username,
-              currentWeek: data.currentWeek,
-              weeklyPoints: data.weeklyPoints,
-              rank: data.rank,
-              totalUsers: data.totalUsers,
-              pointsFromLeader: data.pointsFromLeader,
-              pendingPicks: data.pendingPicks,
-            };
-            mergeUserData(patch);
-          })
-          .catch((e) => { setError((prev) => prev || e.message); })
-          .finally(() => updateLoading({ stats: false }))
-      );
-
-      // ACCURACY + BEST CATEGORY + TOTAL POINTS
-      updateLoading({ accuracy: true });
-      tasks.push(
-        fetchJSON('/predictions/api/dashboard/accuracy/')
-          .then((data) => {
-            const patch = {
-              overallAccuracy: data.overallAccuracy ?? 0,
-              moneylineAccuracy: data.moneylineAccuracy ?? 0,
-              propBetAccuracy: data.propBetAccuracy ?? 0,
-              bestCategory: data.bestCategory ?? null,
-              bestCategoryAccuracy: data.bestCategoryAccuracy ?? 0,
-              totalPoints: data.totalPoints ?? 0,
-            };
-            mergeUserData(patch);
-          })
-          .catch((e) => { setError((prev) => prev || e.message); })
-          .finally(() => updateLoading({ accuracy: false }))
-      );
-
-      // LEADERBOARD (optional)
-      if (includeLeaderboard) {
-        updateLoading({ leaderboard: true });
-        tasks.push(
-          fetchJSON('/predictions/api/dashboard/leaderboard/')
-            .then((data) => {
-              // Expecting { leaderboard: [...] }
-              mergeRoot({ leaderboard: Array.isArray(data?.leaderboard) ? data.leaderboard : [] });
-            })
-            .catch((e) => { setError((prev) => prev || e.message); })
-            .finally(() => updateLoading({ leaderboard: false }))
-        );
-      }
-
-      // RECENT GAMES
-      updateLoading({ recent: true });
-      tasks.push(
-        fetchJSON('/predictions/api/dashboard/recent/')
-          .then((data) => {
-            const patch = { recentGames: Array.isArray(data?.recentGames) ? data.recentGames : [] };
-            mergeUserData(patch);
-          })
-          .catch((e) => { setError((prev) => prev || e.message); })
-          .finally(() => updateLoading({ recent: false }))
-      );
-
-      // INSIGHTS
-      updateLoading({ insights: true });
-      tasks.push(
-        fetchJSON('/predictions/api/dashboard/insights/')
-          .then((data) => {
-            mergeRoot({ insights: Array.isArray(data?.insights) ? data.insights : [] });
-          })
-          .catch((e) => { setError((prev) => prev || e.message); })
-          .finally(() => updateLoading({ insights: false }))
-      );
-
-      await Promise.all(tasks);
-    } catch (e) {
-      if (e?.name === 'AbortError') return; // ignore aborted runs
-      setError((prev) => prev || e.message);
-    }
-  }, [includeLeaderboard, loadGranular, userInfo?.username, fetchJSON, mergeRoot, mergeUserData, updateLoading]);
-
-  // Kick off loads when user is available (or eager flag is set)
+  // Leaderboard (top-3)
   useEffect(() => {
-    if (!eager && !userInfo?.username) return;
-    startFetch();
-    return () => {
-      if (abortRef.current) abortRef.current.abort();
-    };
-  }, [eager, userInfo?.username, startFetch]);
+    let alive = true;
+    (async () => {
+      const payload = await fetchFirstOk(ROUTES.leaderboardTop3);
+      if (!alive) return;
 
-  // Stable reload reference for buttons/manual retries
-  const reload = useCallback(() => {
-    startFetch();
-  }, [startFetch]);
+      const { list, message } = normalizeTop3(payload);
+      setTop3(list);
+      setTop3Msg(message || null);
+      setTop3Loaded(true);
+      // No hard error; if empty, UI still renders gracefully
+    })().catch((e) => {
+      if (!alive) return;
+      console.warn(e);
+      setTop3([]);
+      setTop3Msg('No results yet. Check back later.');
+      setTop3Loaded(true);
+      setError((prev) => prev ?? 'leaderboard');
+    });
+    return () => { alive = false; };
+  }, [ROUTES.leaderboardTop3]);
 
-  const api = useMemo(() => ({ dashboardData, loadingStates, error, reload }), [dashboardData, loadingStates, error, reload]);
-  return api;
+  // Season performance (requires user)
+  useEffect(() => {
+    if (!userInfo) return;
+    let alive = true;
+    (async () => {
+      const s = await fetchFirstOk(ROUTES.seasonStats);
+      if (!alive) return;
+      setSeasonPerf(normalizeSeasonPerf(s));
+    })().catch((e) => {
+      if (!alive) return;
+      console.warn(e);
+      setSeasonPerf((p) => ({ ...p, loaded: true }));
+      setError((prev) => prev ?? 'season');
+    });
+    return () => { alive = false; };
+  }, [userInfo, ROUTES.seasonStats]);
+
+  // Week/meta
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const m = await fetchFirstOk(ROUTES.weekMeta);
+      if (!alive) return;
+      setWeekInfo(normalizeWeekMeta(m));
+    })().catch((e) => {
+      if (!alive) return;
+      console.warn(e);
+      setWeekInfo({ week: null, season: null, windowKey: null, label: null });
+      setError((prev) => prev ?? 'week');
+    });
+    return () => { alive = false; };
+  }, [ROUTES.weekMeta]);
+
+  return {
+    top3,
+    top3Msg,
+    top3Loaded,
+    seasonPerf,
+    weekInfo,
+    error,
+  };
 }
