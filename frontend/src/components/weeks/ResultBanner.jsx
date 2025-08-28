@@ -1,6 +1,6 @@
 /*
 ResultBanner.jsx
-Enhanced progress indicator for WeekPage showing live results tracking
+Enhanced progress indicator for GamePage showing live results tracking
 Displays picks made, points scored, and accuracy breakdowns
 CSS styles are in App.css
 

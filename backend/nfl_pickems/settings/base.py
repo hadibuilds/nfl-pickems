@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'games',
     'predictions',
     'frontend',
+    'analytics',
 ]
 
 MIDDLEWARE = [

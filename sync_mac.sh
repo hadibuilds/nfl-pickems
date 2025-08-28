@@ -37,7 +37,7 @@ sed -i '' -E "s|/static/assets/([^\"]+\.svg)|{% static 'assets/\1' %}|g" backend
 
 # 5. Collect Django static files
 echo "📦 Running collectstatic..."
-source venv_pickems/Scripts/activate || { echo "❌ Could not activate virtualenv"; exit 1; }
+source venv_pickems/bin/activate || { echo "❌ Could not activate virtualenv"; exit 1; }
 python backend/manage.py collectstatic --noinput --settings=nfl_pickems.settings.dev || { echo "❌ collectstatic failed"; exit 1; }
 
 echo "✅ Done! Restart Django and visit: http://localhost:8000"

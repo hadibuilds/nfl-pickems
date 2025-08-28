@@ -1,5 +1,5 @@
 /*
- * PROTECTED: WeekPage Component with Error Boundaries - CLEANED
+ * PROTECTED: GamePage Component with Error Boundaries - CLEANED
  * Wraps individual GameCards so one broken game doesn't kill the whole week
  * Protects key components like header and ResultBanner
  * ENHANCED: Added warning banner for draft picks + Portal-based floating submit button
@@ -22,7 +22,7 @@ import GameCard from '../components/game/GameCard.jsx';
 import ResultBanner from '../components/weeks/ResultBanner.jsx';
 import ErrorBoundary from '../components/common/ErrorBoundary.jsx';
 
-export default function WeekPage({
+export default function GamePage({
   games,
   moneyLineSelections,
   propBetSelections,
@@ -88,7 +88,7 @@ export default function WeekPage({
 
   return (
     <>
-      {/* Main WeekPage Content */}
+      {/* Main GamePage Content */}
       <div className="pt-16 px-4">
         {/* Header with controls and title - Protected */}
         <ErrorBoundary level="component" customMessage="Header controls failed to load">

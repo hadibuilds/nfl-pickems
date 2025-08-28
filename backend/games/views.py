@@ -1,4 +1,4 @@
-from .models import Game
+from .models import Game, PropBet
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.response import Response

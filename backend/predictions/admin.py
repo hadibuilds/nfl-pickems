@@ -4,10 +4,11 @@ from django.contrib.auth.models import User, Group
 from django.conf import settings
 
 from .models import (
-    Prediction, PropBet, PropBetPrediction,
+    Prediction, PropBetPrediction,
     WeeklySnapshot, UserStatHistory,
     LeaderboardSnapshot, SeasonStats
 )
+from games.models import PropBet
 
 # Try to import Game so we can show it under "Non-User Data"
 try:
@@ -26,19 +27,6 @@ class PredictionAdmin(admin.ModelAdmin):
     list_filter = ("is_correct", "game__week")
     search_fields = ("user__username", "game__home_team", "game__away_team", "predicted_winner")
     ordering = ("-game__week", "-game__start_time")
-
-
-class PropBetAdmin(admin.ModelAdmin):
-    list_display = ("get_week", "game", "category", "question", "correct_answer")
-    list_filter = ("category", "game__week")
-    search_fields = ("question",)
-    ordering = ("game__week",)
-
-    def get_week(self, obj):
-        return obj.game.week
-    get_week.short_description = "Week"
-    get_week.admin_order_field = "game__week"
-
 
 class PropBetPredictionAdmin(admin.ModelAdmin):
     list_display = ("user", "prop_bet", "answer", "is_correct")
@@ -235,7 +223,6 @@ class LeaderboardSnapshotAdmin(admin.ModelAdmin):
 # Remove UserStreak registration and update model groupings
 
 admin.site.register(Prediction, PredictionAdmin)
-admin.site.register(PropBet, PropBetAdmin)
 admin.site.register(PropBetPrediction, PropBetPredictionAdmin)
 admin.site.register(SeasonStats, SeasonStatsAdmin)  # Keep but moved to User Data section
 
