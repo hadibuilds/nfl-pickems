@@ -31,13 +31,6 @@ from .utils.dashboard_utils import (
     get_user_season_stats,
 )
 
-# Snapshot/historical helpers
-from .utils.dashboard_utils import (
-    get_leaderboard_data_with_trends,
-    calculate_user_dashboard_data,
-    get_user_insights,
-)
-
 # New slim utils
 from .utils.param_utils import parse_int
 from .utils.season_utils import (
