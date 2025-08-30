@@ -387,15 +387,14 @@ def stats_summary(request):
     if season == 0:
         return Response({"detail": "No season found."}, status=404)
 
+    # Use the fixed week logic that looks at unfinished games directly
+    from predictions.utils.dashboard_utils import get_current_week
+    current_week = get_current_week(season)
+    
+    # Get a window for display purposes (can be any recent window)
     win = _current_window(season)
     if not win:
         return Response({"detail": "No windows found for season."}, status=404)
-
-    # Derive week from games tied to current window
-    week_vals = list(
-        Game.objects.filter(season=season, window=win).values_list("week", flat=True).distinct()
-    )
-    current_week = week_vals[0] if week_vals else None
 
     if current_week is None:
         # No week detected -> just use this window’s window_points
