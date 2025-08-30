@@ -27,7 +27,7 @@ export default function Standings() {
     const fetchStandings = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/standings/`, {
+        const res = await fetch(`${API_BASE}/analytics/api/standings/`, {
           credentials: 'include',
         });
         if (!res.ok) throw new Error('Failed to load standings');

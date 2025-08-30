@@ -22,6 +22,8 @@ import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import Standings from './pages/Standings';
 import WeekSelector from "./pages/WeekSelector";
+import PasswordResetPage from './pages/PasswordResetPage';
+import PasswordResetConfirmPage from './pages/PasswordResetConfirmPage';
 import PrivateRoute from './components/common/PrivateRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import NavigationManager from './components/navigation/NavigationManager';
@@ -349,6 +351,22 @@ export default function App() {
               element={
                 <ErrorBoundary level="page" customMessage="Sign up page failed to load">
                   {userInfo ? <Navigate to="/" replace /> : <SignUpPage userInfo={userInfo} />}
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/password-reset"
+              element={
+                <ErrorBoundary level="page" customMessage="Password reset page failed to load">
+                  {userInfo ? <Navigate to="/" replace /> : <PasswordResetPage />}
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/password-reset-confirm/:uidb64/:token"
+              element={
+                <ErrorBoundary level="page" customMessage="Password reset confirm page failed to load">
+                  {userInfo ? <Navigate to="/" replace /> : <PasswordResetConfirmPage />}
                 </ErrorBoundary>
               }
             />

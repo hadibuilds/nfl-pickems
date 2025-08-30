@@ -9,10 +9,16 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.shortcuts import redirect
 from django.contrib.auth.views import PasswordResetView
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from rest_framework import status
 
 User = get_user_model()
 
@@ -193,3 +199,113 @@ class CustomPasswordResetView(PasswordResetView):
         # Send the email
         result = email_message.send()
         return result
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_api(request):
+    """
+    API endpoint for password reset requests (replaces template view)
+    """
+    try:
+        email = request.data.get('email', '').strip().lower()
+        
+        if not email:
+            return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Use Django's built-in password reset form for validation and sending
+        form = PasswordResetForm({'email': email})
+        
+        if form.is_valid():
+            # This will send the email if user exists
+            form.save(
+                request=request,
+                use_https=request.is_secure(),
+                email_template_name='registration/password_reset_email.txt',
+                html_email_template_name='registration/password_reset_email.html',
+                subject_template_name='registration/password_reset_subject.txt',
+            )
+            
+            # Always return success for security (don't reveal if email exists)
+            return Response({
+                "detail": "If an account with that email exists, we've sent you a password reset link."
+            })
+        else:
+            return Response({"detail": "Invalid email format"}, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        return Response({"detail": "Failed to send reset email"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_validate_api(request):
+    """
+    API endpoint to validate password reset token
+    """
+    try:
+        uidb64 = request.data.get('uidb64')
+        token = request.data.get('token')
+        
+        if not uidb64 or not token:
+            return Response({"detail": "Invalid parameters"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"detail": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if default_token_generator.check_token(user, token):
+            return Response({"detail": "Valid token"})
+        else:
+            return Response({"detail": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        return Response({"detail": "Validation failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def password_reset_confirm_api(request):
+    """
+    API endpoint to confirm password reset and set new password
+    """
+    try:
+        uidb64 = request.data.get('uidb64')
+        token = request.data.get('token')
+        new_password1 = request.data.get('new_password1')
+        new_password2 = request.data.get('new_password2')
+        
+        if not all([uidb64, token, new_password1, new_password2]):
+            return Response({"detail": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if new_password1 != new_password2:
+            return Response({"detail": "Passwords don't match"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"detail": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not default_token_generator.check_token(user, token):
+            return Response({"detail": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate password strength
+        try:
+            validate_password(new_password1, user)
+        except DjangoValidationError as e:
+            return Response({"detail": list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Set the new password
+        user.set_password(new_password1)
+        user.save()
+        
+        return Response({"detail": "Password updated successfully"})
+        
+    except Exception as e:
+        return Response({"detail": "Failed to update password"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+def password_reset_email_redirect(request, uidb64, token):
+    """
+    Redirect from email links to React frontend with token parameters
+    """
+    return redirect(f'/#/password-reset-confirm/{uidb64}/{token}/')

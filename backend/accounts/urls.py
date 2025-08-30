@@ -6,7 +6,11 @@ from .views import (
     RegisterView,
     logout_view,
     get_csrf_token,
-    CustomPasswordResetView,  # Add this import
+    CustomPasswordResetView,
+    password_reset_api,
+    password_reset_validate_api,
+    password_reset_confirm_api,
+    password_reset_email_redirect,
 )
 
 urlpatterns = [
@@ -16,18 +20,12 @@ urlpatterns = [
     path('api/register/', RegisterView.as_view(), name='api-register'),
     path('api/logout/', logout_view, name='logout'),
 
-    # Use the custom view instead of the default one
-    path('api/password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),  
+    # NEW: API endpoints for React frontend
+    path('api/password-reset/', password_reset_api, name='password_reset_api'),
+    path('api/password-reset-validate/', password_reset_validate_api, name='password_reset_validate_api'),
+    path('api/password-reset-confirm/', password_reset_confirm_api, name='password_reset_confirm_api'),
 
-    path('api/password-reset/done/', auth_views.PasswordResetDoneView.as_view(
-        template_name='registration/reset_link_sent.html',
-    ), name='password_reset_done'),
-
-    path('api/password-reset-confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
-        template_name='registration/reset_password_form.html',
-    ), name='password_reset_confirm'),
-
-    path('api/password-reset-complete/', auth_views.PasswordResetCompleteView.as_view(
-        template_name='registration/password_reset_success.html',
-    ), name='password_reset_complete'),
+    # EMAIL REDIRECT: These URLs are used in emails to redirect to React frontend
+    path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),  
+    path('password-reset-confirm/<uidb64>/<token>/', password_reset_email_redirect, name='password_reset_confirm'),
 ]
