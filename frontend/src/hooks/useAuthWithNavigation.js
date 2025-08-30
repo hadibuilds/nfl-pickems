@@ -22,7 +22,6 @@ export const useAuthWithNavigation = () => {
   const loginAndRedirect = async (credentials, redirectTo = '/') => {
     // ✅ PROTECTION: Don't allow login if already in progress
     if (auth.isLoggingIn) {
-      console.log('Login already in progress, ignoring duplicate loginAndRedirect call');
       return { success: false, error: 'Login already in progress' };
     }
 

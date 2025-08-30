@@ -40,14 +40,11 @@ export const AuthProvider = ({ children }) => {
           },
         });
         
-        console.log('Auth check response:', res.status, res.statusText);
         
         if (res.ok) {
           const userData = await res.json();
-          console.log('Auth check data:', userData);
           setUserInfo(userData?.username ? userData : null);
         } else {
-          console.log('Auth check failed - user not logged in');
           setUserInfo(null);
         }
       } catch (err) {
@@ -65,7 +62,6 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     // ✅ PROTECTION: Don't allow multiple simultaneous login attempts
     if (isLoggingIn) {
-      console.log('Login already in progress, ignoring duplicate request');
       return { success: false, error: 'Login already in progress' };
     }
 

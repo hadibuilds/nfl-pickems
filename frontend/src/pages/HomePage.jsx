@@ -6,6 +6,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
+import '../RecentGamesScrollbar.css';
 import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
 import useDashboardData from '../hooks/useDashboardData';
 import PageLayout from '../components/common/PageLayout';
@@ -20,7 +21,6 @@ import {
   getMedalTier,
 } from '../components/standings/rankingUtils.jsx';
 import { getCookie } from '../utils/cookies';
-import confetti from 'canvas-confetti';
 
 const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage = true, fontSize = 'text-2xl' }) => {
   const radius = (size - strokeWidth) / 2;
@@ -81,6 +81,7 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
     (typeof entry?.rank_change === 'number'
       ? (entry.rank_change > 0 ? 'up' : entry.rank_change < 0 ? 'down' : 'same')
       : 'same');
+
 
   const renderRankBadge = (tier) => {
     if (tier === 1) return <GoldMedal />;
@@ -162,15 +163,15 @@ function HomePage() {
     })();
   }, [userInfo, API_BASE]);
 
-  // Rank trend for stat card
+  // Rank trend for stat card - now using window-based trends
   useEffect(() => {
     if (!userInfo) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/user-trends-fast/?weeks=2`, {
+        const res = await fetch(`${API_BASE}/predictions/api/user-window-trends/?windows=2`, {
           credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') }
         });
-        if (!res.ok) throw new Error('user-trends-fast failed');
+        if (!res.ok) throw new Error('user-window-trends failed');
         const data = await res.json();
         const arr = Array.isArray(data?.trends) ? data.trends : [];
         if (arr.length >= 2) {
@@ -188,15 +189,15 @@ function HomePage() {
     })();
   }, [userInfo, API_BASE]);
 
-  // Leaderboard with trend
+  // Leaderboard with trend - now using window-based trends
   useEffect(() => {
     if (!userInfo) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/season-leaderboard-dynamic/?limit=3`, {
+        const res = await fetch(`${API_BASE}/predictions/api/season-leaderboard-window-trends/?limit=3`, {
           credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') }
         });
-        if (!res.ok) throw new Error('season-leaderboard-dynamic failed');
+        if (!res.ok) throw new Error('season-leaderboard-window-trends failed');
         const data = await res.json();
         const rows = Array.isArray(data?.standings) ? data.standings : [];
         // mark current user; preserve trend
@@ -241,7 +242,6 @@ function HomePage() {
   }, [standings]);
 
   const goToWeeks = () => {
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     navigate('/weeks');
   };
 
@@ -268,7 +268,7 @@ function HomePage() {
       </div>
 
       {/* Season Performance + Leaderboard */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6" style={{ gridTemplateRows: 'minmax(0, 1fr)' }}>
         {/* Season Performance Rings */}
         <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6">
           <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
@@ -319,26 +319,51 @@ function HomePage() {
         </div>
 
         {/* Recent Games */}
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
+        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d', minHeight: '300px', maxHeight: '400px', height: 'auto', display: 'flex', flexDirection: 'column' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Recent Games</h3>
             <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
-          <div className="space-y-3">
-            {(dashboardData?.user_data?.recentGames || []).slice(0, 2).map(game => (
-              <div key={game.id} className={`p-4 rounded-lg border-l-4 transition-all duration-200 ${game.correct ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'}`} style={{ backgroundColor: game.correct ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="text-sm font-medium" style={{ color: '#9ca3af' }}>{game.awayTeam} @ {game.homeTeam}</div>
-                    <div className={`text-xs px-2 py-1 rounded-full ${game.correct ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>{game.correct ? '✓' : '✗'}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-white">+{game.points} pts</div>
-                    <div className="text-xs" style={{ color: '#9ca3af' }}>Pick: {game.userPick}</div>
+          <div 
+            className="space-y-3 recent-games-scrollable" 
+            style={{ 
+              flex: '1 1 0%',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              paddingRight: '4px',
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#4B5563 #2d2d2d',
+              WebkitOverflowScrolling: 'touch',
+              minHeight: '0'
+            }}
+          >
+            {(dashboardData?.user_data?.recentGames || []).map(game => {
+              // Handle the new 3-way color logic
+              const status = game.correctStatus || (game.correct ? 'full' : 'none');
+              const isGreen = status === 'full';
+              const isYellow = status === 'partial';
+              
+              const borderColor = isGreen ? 'border-green-500' : isYellow ? 'border-yellow-500' : 'border-red-500';
+              const bgColor = isGreen ? 'rgba(16, 185, 129, 0.1)' : isYellow ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+              const badgeBg = isGreen ? 'bg-green-500/20' : isYellow ? 'bg-yellow-500/20' : 'bg-red-500/20';
+              const badgeText = isGreen ? 'text-green-300' : isYellow ? 'text-yellow-300' : 'text-red-300';
+              const badge = isGreen ? '✓' : isYellow ? '◐' : '✗';
+              
+              return (
+                <div key={game.id} className={`p-4 rounded-lg border-l-4 transition-all duration-200 ${borderColor}`} style={{ backgroundColor: bgColor }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-sm font-medium" style={{ color: '#9ca3af' }}>{game.awayTeam} @ {game.homeTeam}</div>
+                      <div className={`text-xs px-2 py-1 rounded-full ${badgeBg} ${badgeText}`}>{badge}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-white">+{game.points} pts</div>
+                      <div className="text-xs" style={{ color: '#9ca3af' }}>Pick: {game.userPick}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {(!dashboardData?.user_data?.recentGames || dashboardData.user_data.recentGames.length === 0) && (
               <div className="text-center py-4" style={{ color: '#9ca3af' }}>
                 <p>No recent completed games</p>

@@ -12,6 +12,7 @@
    background-color: #1E1E20 !important;
    color: rgba(255, 255, 255, 0.87) !important;
    overflow-x: hidden !important; /* Prevent horizontal scroll */
+  overflow-y: auto !important; /* Allow vertical scroll */
    width: 100vw !important; /* Never exceed viewport */
    max-width: 100vw !important;
  }
@@ -20,6 +21,7 @@
    background-color: #1E1E20 !important;
    color: rgba(255, 255, 255, 0.87) !important;
    overflow-x: hidden !important; /* Prevent horizontal scroll */
+  overflow-y: auto !important; /* Allow vertical scroll */
    width: 100vw !important; /* Never exceed viewport */
    max-width: 100vw !important;
    /* REMOVED: display: flex, place-items: center - these were causing centering issues */

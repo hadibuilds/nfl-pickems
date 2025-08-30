@@ -10,7 +10,7 @@ class UserWindowStat(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="window_stats")
     ml_correct = models.IntegerField(default=0)
     pb_correct = models.IntegerField(default=0)
-    total_points = models.IntegerField(default=0)
+    season_cume_points = models.IntegerField(default=0)
     rank_dense = models.IntegerField(default=0)
 
     # audit
@@ -25,7 +25,7 @@ class UserWindowStat(models.Model):
             models.Index(fields=["window"]),
             models.Index(fields=["user", "window"]),
         ]
-    ordering = ["window_id", "rank_dense", "-total_points"]
+        ordering = ["window_id", "rank_dense", "-season_cume_points"]
 
     def __str__(self):
-        return f"{self.window} • {self.user} • pts={self.total_points} • r={self.rank_dense}"
+        return f"{self.window} • {self.user} • pts={self.season_cume_points} • r={self.rank_dense}"

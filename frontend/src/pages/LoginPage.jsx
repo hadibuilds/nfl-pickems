@@ -24,10 +24,9 @@ export default function LoginPage() {
   useEffect(() => {
     const fetchCSRF = async () => {
       try {
-        const res = await fetch(`${API_BASE}/accounts/api/csrf/`, {
+        await fetch(`${API_BASE}/accounts/api/csrf/`, {
           credentials: "include",
         });
-        console.log("CSRF prefetched on login:", res.status);
       } catch (err) {
         console.error("Failed to prefetch CSRF on login:", err);
       }
@@ -52,7 +51,6 @@ export default function LoginPage() {
 
     // ✅ PROTECTION: Don't submit if already logging in
     if (isLoggingIn) {
-      console.log('Login already in progress, ignoring form submission');
       return;
     }
 
