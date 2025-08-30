@@ -693,6 +693,189 @@ def calculate_truth_points(user, season=None):
     }
 
 
+# =============================================================================
+# MIGRATED ANALYSIS FUNCTIONS (from predictions app)
+# Using optimized logic from consolidated_dashboard_utils.py
+# =============================================================================
+
+from utils.consolidated_dashboard_utils import (
+    get_current_week_consolidated,
+    get_standings_optimized,
+    calculate_accuracy_optimized,
+    get_user_stats_optimized,
+    get_leaderboard_optimized,
+    get_dashboard_data_consolidated,
+)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_standings_migrated(request):
+    """
+    MIGRATED from predictions/views.py with OPTIMIZED logic.
+    Uses UserWindowStat for 4.6x faster performance.
+    """
+    selected_week = request.GET.get('week')
+    season = request.GET.get('season')
+    
+    # Validate parameters
+    if selected_week and not selected_week.isdigit():
+        return Response({'error': 'Invalid week parameter'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    week_filter = int(selected_week) if selected_week else None
+    season = int(season) if season and season.isdigit() else None
+    
+    try:
+        data = get_standings_optimized(season=season, week_filter=week_filter)
+        return Response(data)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_current_week_migrated(request):
+    """
+    MIGRATED from predictions/views.py with OPTIMIZED logic.
+    Uses fixed week logic that resets immediately when a week completes.
+    """
+    season = request.GET.get('season')
+    season = int(season) if season and season.isdigit() else None
+    
+    try:
+        current_week = get_current_week_consolidated(season)
+        
+        # Get all available weeks (keep for compatibility)
+        all_seasons = Game.objects.values_list('season', flat=True).distinct().order_by('season')
+        weeks = []
+        for s in all_seasons:
+            season_weeks = list(
+                Game.objects.filter(season=s)
+                .values_list('week', flat=True)
+                .distinct()
+                .order_by('week')
+            )
+            weeks.extend(season_weeks)
+        
+        return Response({
+            'currentWeek': current_week,
+            'weeks': sorted(set(weeks)),
+            'totalWeeks': len(set(weeks)),
+            'season': season or _current_season(),
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_accuracy_migrated(request):
+    """
+    MIGRATED from predictions/views.py with OPTIMIZED logic.
+    Returns same format but with better performance.
+    """
+    user = request.user
+    
+    try:
+        accuracy_data = calculate_accuracy_optimized(user, "overall")
+        
+        return Response({
+            'overall_accuracy': accuracy_data['overall_accuracy'],
+            'moneyline_accuracy': accuracy_data['moneyline_accuracy'],
+            'prop_bet_accuracy': accuracy_data['prop_bet_accuracy'],
+            'correct_predictions': accuracy_data['overall_accuracy']['correct'],
+            'total_predictions_with_results': accuracy_data['overall_accuracy']['total'],
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_stats_migrated(request):
+    """
+    MIGRATED from predictions/views.py with OPTIMIZED logic.
+    Uses UserWindowStat and fixed week logic.
+    """
+    user = request.user
+    season = request.GET.get('season')
+    season = int(season) if season and season.isdigit() else None
+    
+    try:
+        stats = get_user_stats_optimized(user, season=season, include_rank=True)
+        
+        return Response({
+            'username': stats['username'],
+            'currentWeek': stats['current_week'],
+            'weeklyPoints': stats['weekly_points'],
+            'rank': stats.get('rank'),
+            'totalUsers': stats.get('total_users'),
+            'pointsFromLeader': stats.get('points_from_leader'),
+            'pendingPicks': stats['pending_picks']
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_leaderboard_migrated(request):
+    """
+    MIGRATED from predictions/views.py with OPTIMIZED logic.
+    Uses UserWindowStat for much faster queries with trend arrows.
+    """
+    limit = request.GET.get('limit', '5')
+    season = request.GET.get('season')
+    with_trends = request.GET.get('trends', 'true').lower() == 'true'
+    
+    # Validate limit
+    try:
+        limit = max(1, min(20, int(limit)))
+    except (ValueError, TypeError):
+        limit = 5
+    
+    season = int(season) if season and season.isdigit() else None
+    
+    try:
+        leaderboard = get_leaderboard_optimized(
+            season=season, 
+            limit=limit, 
+            with_trends=with_trends
+        )
+        
+        # Mark current user
+        user = request.user
+        for row in leaderboard:
+            if row['username'] == user.username:
+                row['isCurrentUser'] = True
+        
+        return Response({
+            'leaderboard': leaderboard,
+            'limit': limit,
+            'currentUserIncluded': any(u.get('isCurrentUser') for u in leaderboard),
+            'season': season or _current_season(),
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_dashboard_data_migrated(request):
+    """
+    MIGRATED from predictions/views.py with OPTIMIZED logic.
+    Single endpoint that returns all dashboard data efficiently.
+    """
+    user = request.user
+    season = request.GET.get('season')
+    season = int(season) if season and season.isdigit() else None
+    
+    try:
+        dashboard_data = get_dashboard_data_consolidated(user, season=season)
+        return Response(dashboard_data)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def truth_counter(request):

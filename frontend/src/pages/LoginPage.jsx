@@ -152,14 +152,14 @@ export default function LoginPage() {
               />
               Remember me
             </label>
-            <a
-              href={`${API_BASE}/accounts/api/password-reset/`}
+            <Link
+              to="/password-reset"
               className={`text-sm hover:underline ml-4 ${isLoggingIn ? 'opacity-50 cursor-not-allowed' : ''}`}
               style={{ color: '#8B5CF6' }}
-              onClick={isLoggingIn ? (e) => e.preventDefault() : undefined} // ✅ Disable link during login
+              onClick={isLoggingIn ? (e) => e.preventDefault() : undefined}
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
 
           <button

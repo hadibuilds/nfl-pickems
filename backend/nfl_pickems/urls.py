@@ -16,19 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
-from django.http import HttpResponse
 from django.views.generic import TemplateView
-
-def home(request):
-    return HttpResponse("Welcome to the NFL Pick'em League!")
-
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('accounts.urls')),  # Includes the accounts URLs
+    path('accounts/', include('accounts.urls')),
     path('predictions/', include('predictions.urls')),
     path('games/', include('games.urls')),
     path('analytics/', include('analytics.urls')),
-    path('', include('frontend.urls')),
+    # Catch-all route for React SPA (must be last)
+    re_path(r'^.*$', TemplateView.as_view(template_name="index.html")),
 ]
 

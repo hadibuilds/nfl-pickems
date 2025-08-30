@@ -92,7 +92,7 @@ export default function useDashboardData(
     try {
       if (!loadGranular) {
         // If you still keep a legacy monolith endpoint around, surface it here
-        const data = await fetchJSON('/predictions/api/dashboard/realtime/');
+        const data = await fetchJSON('/analytics/api/dashboard/');
         mergeRoot(data || {});
         setLoadingStates({ stats: false, accuracy: false, leaderboard: false, recent: false, insights: false });
         return;

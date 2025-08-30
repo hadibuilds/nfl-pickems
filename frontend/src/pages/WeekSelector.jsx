@@ -25,7 +25,7 @@ export default function WeekSelector({
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/current-week/`, { credentials: 'include' });
+        const res = await fetch(`${API_BASE}/analytics/api/current-week/`, { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json(); // { currentWeek, weeks }
         if (!mounted) return;

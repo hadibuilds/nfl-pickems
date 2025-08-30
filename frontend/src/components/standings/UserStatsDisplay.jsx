@@ -26,7 +26,7 @@ export default function UserStatsDisplay({ userInfo }) {
         setStats(prev => ({ ...prev, isLoading: true }));
 
         // Fetch standings data to calculate user stats
-        const standingsResponse = await fetch(`${API_BASE}/predictions/api/standings/`, {
+        const standingsResponse = await fetch(`${API_BASE}/analytics/api/standings/`, {
           credentials: 'include',
           headers: {
             'X-CSRFToken': getCookie('csrftoken'),
@@ -86,11 +86,11 @@ export default function UserStatsDisplay({ userInfo }) {
   };
 
   // Calculate accuracy from actual prediction data
-  const calculateAccuracy = async (username) => {
+  const calculateAccuracy = async () => {
     try {
       
       // Use the user_accuracy endpoint directly
-      const accuracyResponse = await fetch(`${API_BASE}/predictions/api/user-accuracy/`, {
+      const accuracyResponse = await fetch(`${API_BASE}/analytics/api/user-accuracy/`, {
         credentials: 'include',
         headers: {
           'X-CSRFToken': getCookie('csrftoken'),

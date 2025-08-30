@@ -23,7 +23,6 @@ INSTALLED_APPS = [
     'accounts',
     'games',
     'predictions',
-    'frontend',
     'analytics',
 ]
 
