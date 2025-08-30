@@ -122,12 +122,12 @@ class Game(models.Model):
         Set winner and grade money-line predictions for this game only,
         then recompute the window. Atomic by design.
         """
-        from analytics.services.window_stats import recompute_window  # lazy import
+        from analytics.services.window_stats_optimized import recompute_window_optimized  # lazy import
         from predictions.models import MoneyLinePrediction
 
         # Save winner (validation already enforced by clean() / constraint)
         self.winner = winner
-        self.save(update_fields=["winner", "updated_at"] if hasattr(self, "updated_at") else ["winner"])
+        self.save(update_fields=["winner"])
 
         # Grade ML predictions for this game
         if winner is None:
@@ -143,7 +143,7 @@ class Game(models.Model):
             )
 
         # Recompute stats for this window
-        recompute_window(self.window_id)
+        transaction.on_commit(lambda: recompute_window_optimized(self.window_id))
 
 
 class PropBet(models.Model):
@@ -182,7 +182,7 @@ class PropBet(models.Model):
     @transaction.atomic
     def grade(self, correct_answer: str | None):
         """Set correct answer and grade prop-bet predictions for this prop only, then recompute."""
-        from analytics.services.window_stats import recompute_window
+        from analytics.services.window_stats_optimized import recompute_window_optimized
         from predictions.models import PropBetPrediction
 
         self.correct_answer = correct_answer
@@ -199,4 +199,4 @@ class PropBet(models.Model):
                 )
             )
 
-        recompute_window(self.game.window_id)
+        transaction.on_commit(lambda: recompute_window_optimized(self.game.window_id))

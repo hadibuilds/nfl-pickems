@@ -9,15 +9,15 @@ div[style*="flex: 1 1 0%"].recent-games-scrollable,
   display: block !important;
   flex: 1 1 0% !important;
   min-height: 0 !important;
-  max-height: 250px !important;
-  height: 250px !important;
+  max-height: 240px !important;
+  height: 240px !important;
 }
 
 /* Target by the container background color specifically */
 div[style*="background-color: rgb(45, 45, 45)"] .recent-games-scrollable {
   overflow: hidden auto !important;
   scrollbar-width: thin !important;
-  scrollbar-color: #4B5563 #2d2d2d !important;
+  scrollbar-color: #4B5563 #2d2d2d !important;  
   max-height: 280px !important;
 }
 
@@ -66,8 +66,8 @@ div[style*="min-height: 300px"] div[style*="flex: 1 1 0%"] {
 div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.space-y-3.recent-games-scrollable[style*="flex: 1 1 0%"] {
   overflow-y: scroll !important;
   overflow-x: hidden !important;
-  max-height: 250px !important;
-  height: 250px !important;
+  max-height: 240px !important;
+  height: 240px !important;
   scrollbar-width: thin !important;
   scrollbar-color: #4B5563 #2d2d2d !important;
 }

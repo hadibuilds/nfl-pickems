@@ -11,7 +11,10 @@ class UserWindowStat(models.Model):
     ml_correct = models.IntegerField(default=0)
     pb_correct = models.IntegerField(default=0)
     season_cume_points = models.IntegerField(default=0)
+    window_points = models.IntegerField(default=0)
+    
     rank_dense = models.IntegerField(default=0)
+    rank_delta = models.IntegerField(default=0)
 
     # audit
     computed_at = models.DateTimeField(auto_now=True)

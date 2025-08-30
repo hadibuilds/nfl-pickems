@@ -1,8 +1,10 @@
 /*
  * HomePage: season rings + trend arrows everywhere
- * - Season rings: /predictions/api/user-season-stats-fast/
- * - Rank trend card: /predictions/api/user-trends-fast/?weeks=2
- * - Leaderboard WITH arrows: /predictions/api/season-leaderboard-fast/?limit=3
+ * (now backed by analytics endpoints)
+ * - Season rings: /analytics/accuracy_summary/
+ * - Rank & points-behind & pending picks (week): /analytics/stats_summary/
+ * - Leaderboard WITH arrows (rank_delta from snapshots): /analytics/leaderboard/?window_key=...
+ * - Recent Games (fully completed): /analytics/recent_results/?limit=10
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -82,7 +84,6 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
       ? (entry.rank_change > 0 ? 'up' : entry.rank_change < 0 ? 'down' : 'same')
       : 'same');
 
-
   const renderRankBadge = (tier) => {
     if (tier === 1) return <GoldMedal />;
     if (tier === 2) return <SilverMedal />;
@@ -103,7 +104,6 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
         </div>
       </div>
       <div className="flex items-center text-sm">
-        {/* exact same snippet you pointed out, but using the derived trend */}
         {derivedTrend !== 'same' && (
           <div className={`flex items-center text-sm ${derivedTrend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
             {derivedTrend === 'up'
@@ -118,96 +118,172 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
 
 function HomePage() {
   const { userInfo, navigate } = useAuthWithNavigation();
-  // Weekly/live tiles
+  // legacy hook still used for error/loading guards; we’ll overlay our own data
   const { dashboardData, error } = useDashboardData(userInfo, {
     loadGranular: true,
     includeLeaderboard: false,
   });
 
-  // Season (snapshot) performance
+  // Local home data overlayed onto existing UI bindings
+  const [homeUserData, setHomeUserData] = useState({
+    currentWeek: null,
+    rank: null,
+    pointsFromLeader: 0,
+    pendingPicks: 0,
+    bestCategory: 'N/A',
+    bestCategoryAccuracy: 0,
+    recentGames: [],
+  });
+
+  // Season (snapshot) performance rings
   const [seasonPerf, setSeasonPerf] = useState({ overall: 0, ml: 0, prop: 0, totalPoints: 0, loaded: false });
-  // Weekly rank trend for the stat card
+
+  // Weekly rank trend for the stat card (keep default for now)
   const [rankMeta, setRankMeta] = useState({ trend: 'same', rankChange: 0 });
 
-  // Leaderboard (with trend)
+  // Leaderboard (with trend/rank_delta)
   const [standings, setStandings] = useState([]);
   const [standingsLoaded, setStandingsLoaded] = useState(false);
 
+  // anchor window key for the season-to-date leaderboard
+  const [anchorWindowKey, setAnchorWindowKey] = useState(null);
+  
+  // Last updated timestamp
+  const [lastUpdated, setLastUpdated] = useState(null);
+
   const API_BASE = import.meta.env.VITE_API_URL;
 
-  // Season performance
+  // 1) Stats header + Season performance + Leaderboard (sequential calls)
   useEffect(() => {
     if (!userInfo) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/predictions/api/user-season-stats-fast/`, {
+        // Stats header
+        const statsRes = await fetch(`${API_BASE}/analytics/api/stats-summary/`, {
           credentials: 'include',
           headers: { 'X-CSRFToken': getCookie('csrftoken') }
         });
-        if (!res.ok) throw new Error('user-season-stats-fast failed');
-        const s = await res.json();
+        if (!statsRes.ok) throw new Error('stats_summary failed');
+        const stats = await statsRes.json();
+
+        // Accuracy (season rings + best category)
+        const accRes = await fetch(`${API_BASE}/analytics/api/accuracy-summary/`, {
+          credentials: 'include',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        if (!accRes.ok) throw new Error('accuracy_summary failed');
+        const acc = await accRes.json();
+
+        // season rings
         setSeasonPerf({
-          overall: Number(s?.current_season_accuracy ?? 0),
-          ml: Number(s?.current_moneyline_accuracy ?? 0),
-          prop: Number(s?.current_prop_accuracy ?? 0),
-          totalPoints: Number(s?.current_season_points ?? 0),
+          overall: Number((acc?.overallAccuracy ?? 0) * 100),
+          ml: Number((acc?.moneylineAccuracy ?? 0) * 100),
+          prop: Number((acc?.propBetAccuracy ?? 0) * 100),
+          totalPoints: Number(acc?.totalPoints ?? 0),
           loaded: true
         });
-        if (typeof s?.trending_direction === 'string') {
-          setRankMeta((prev) => ({ ...prev, trend: s.trending_direction }));
+
+        // best category + header tiles
+        setHomeUserData((prev) => ({
+          ...prev,
+          currentWeek: stats?.currentWeek ?? null,
+          rank: stats?.rank ?? null,
+          pointsFromLeader: stats?.pointsFromLeader ?? 0,
+          // backend exposes pendingPicksWeek; map to UI's "Pending Picks"
+          pendingPicks: stats?.pendingPicksWeek ?? 0,
+          bestCategory: acc?.bestCategory || 'N/A',
+          bestCategoryAccuracy: Number(acc?.bestCategoryAccuracy || 0)
+        }));
+
+        // Get window key and fetch leaderboard immediately
+        const windowKey = stats?.window?.key;
+        if (windowKey) {
+          setAnchorWindowKey(windowKey);
+          
+          // Fetch leaderboard with the window key
+          try {
+            const leaderRes = await fetch(
+              `${API_BASE}/analytics/api/leaderboard/?window_key=${encodeURIComponent(windowKey)}&limit=3`,
+              { credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') } }
+            );
+            if (leaderRes.ok) {
+              const leaderData = await leaderRes.json();
+              const rows = Array.isArray(leaderData?.leaderboard) ? leaderData.leaderboard : [];
+
+              const marked = rows.map(r => ({
+                username: r.username,
+                total_points: r.total_points,
+                rank_dense: r.rank_dense,
+                rank_change: r.rank_delta,
+                isCurrentUser: String(r.username) === String(userInfo?.username),
+              }));
+              setStandings(marked);
+            } else {
+              console.warn('Leaderboard fetch failed:', leaderRes.status);
+              setStandings([]);
+            }
+          } catch (leaderError) {
+            console.warn('Leaderboard error:', leaderError);
+            setStandings([]);
+          } finally {
+            setStandingsLoaded(true);
+          }
+        } else {
+          // Fallback: try to get leaderboard without window_key (use current window)
+          try {
+            const leaderRes = await fetch(
+              `${API_BASE}/analytics/api/leaderboard/?limit=3`,
+              { credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') } }
+            );
+            if (leaderRes.ok) {
+              const leaderData = await leaderRes.json();
+              const rows = Array.isArray(leaderData?.leaderboard) ? leaderData.leaderboard : [];
+              const marked = rows.map(r => ({
+                username: r.username,
+                total_points: r.total_points,
+                rank_dense: r.rank_dense,
+                rank_change: r.rank_delta,
+                isCurrentUser: String(r.username) === String(userInfo?.username),
+              }));
+              setStandings(marked);
+            } else {
+              setStandings([]);
+            }
+          } catch (fallbackError) {
+            setStandings([]);
+          } finally {
+            setStandingsLoaded(true);
+          }
         }
+        
+        // Set last updated timestamp after all data loads
+        setLastUpdated(new Date());
       } catch (e) {
         console.warn(e);
         setSeasonPerf((p) => ({ ...p, loaded: true }));
-      }
-    })();
-  }, [userInfo, API_BASE]);
-
-  // Rank trend for stat card - now using window-based trends
-  useEffect(() => {
-    if (!userInfo) return;
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/predictions/api/user-window-trends/?windows=2`, {
-          credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') }
-        });
-        if (!res.ok) throw new Error('user-window-trends failed');
-        const data = await res.json();
-        const arr = Array.isArray(data?.trends) ? data.trends : [];
-        if (arr.length >= 2) {
-          const latest = arr[arr.length - 1];
-          const prev = arr[arr.length - 2];
-          const change = (prev?.rank && latest?.rank) ? (prev.rank - latest.rank) : 0; // lower is better
-          const trend = change > 0 ? 'up' : change < 0 ? 'down' : 'same';
-          setRankMeta({ trend, rankChange: Math.abs(change) });
-        } else if (arr.length === 1) {
-          setRankMeta({ trend: arr[0]?.trend || 'same', rankChange: Math.abs(arr[0]?.rank_change || 0) });
-        }
-      } catch (e) {
-        console.warn(e);
-      }
-    })();
-  }, [userInfo, API_BASE]);
-
-  // Leaderboard with trend - now using window-based trends
-  useEffect(() => {
-    if (!userInfo) return;
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/predictions/api/season-leaderboard-window-trends/?limit=3`, {
-          credentials: 'include', headers: { 'X-CSRFToken': getCookie('csrftoken') }
-        });
-        if (!res.ok) throw new Error('season-leaderboard-window-trends failed');
-        const data = await res.json();
-        const rows = Array.isArray(data?.standings) ? data.standings : [];
-        // mark current user; preserve trend
-        const marked = rows.map(r => ({ ...r, isCurrentUser: String(r.username) === String(userInfo?.username) }));
-        setStandings(marked);
-      } catch (e) {
-        console.warn(e);
         setStandings([]);
-      } finally {
         setStandingsLoaded(true);
+        setLastUpdated(new Date());
+      }
+    })();
+  }, [userInfo, API_BASE]);
+
+  // 3) Recent fully completed games
+  useEffect(() => {
+    if (!userInfo) return;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/analytics/api/recent-results/?limit=10`, {
+          credentials: 'include',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        if (!res.ok) throw new Error('recent_results failed');
+        const data = await res.json();
+        const results = Array.isArray(data?.results) ? data.results : [];
+        setHomeUserData((prev) => ({ ...prev, recentGames: results }));
+      } catch (e) {
+        console.warn(e);
+        setHomeUserData((prev) => ({ ...prev, recentGames: [] }));
       }
     })();
   }, [userInfo, API_BASE]);
@@ -245,7 +321,8 @@ function HomePage() {
     navigate('/weeks');
   };
 
-  const userData = dashboardData?.user_data || {};
+  // Prefer our local overlay; fall back to hook data if needed (keeps JSX unchanged)
+  const userData = homeUserData || dashboardData?.user_data || {};
 
   return (
     <PageLayout>
@@ -297,7 +374,18 @@ function HomePage() {
         {/* Leaderboard (with trend arrows) */}
         <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Leaderboard</h3>
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-semibold">Leaderboard</h3>
+              {lastUpdated && (
+                <span style={{ color: '#6b7280', fontSize: '11px' }}>
+                  Updated @ {lastUpdated.toLocaleTimeString('en-US', { 
+                    hour12: false, 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                  })}
+                </span>
+              )}
+            </div>
             <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
           </div>
           <div className="space-y-0">
@@ -337,7 +425,7 @@ function HomePage() {
               minHeight: '0'
             }}
           >
-            {(dashboardData?.user_data?.recentGames || []).map(game => {
+            {(userData?.recentGames || []).map(game => {
               // Handle the new 3-way color logic
               const status = game.correctStatus || (game.correct ? 'full' : 'none');
               const isGreen = status === 'full';
@@ -364,7 +452,7 @@ function HomePage() {
                 </div>
               );
             })}
-            {(!dashboardData?.user_data?.recentGames || dashboardData.user_data.recentGames.length === 0) && (
+            {(!userData?.recentGames || userData.recentGames.length === 0) && (
               <div className="text-center py-4" style={{ color: '#9ca3af' }}>
                 <p>No recent completed games</p>
               </div>

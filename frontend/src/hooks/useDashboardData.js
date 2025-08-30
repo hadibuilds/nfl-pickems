@@ -1,9 +1,9 @@
-// hooks/useDashboardData.js — Optimized, robust, and consistent
+// hooks/useDashboardData.js — wired to analytics/* endpoints
 // - Parallel granular fetches with AbortController
 // - Safe immutable merges (no invalid spreads)
-// - Fine‑grained loadingStates + single error surface
+// - Fine-grained loadingStates + single error surface
 // - Idempotent reload() and option flags
-// - Uses server as source of truth for currentWeek
+// - Uses server as source of truth for currentWeek and leaderboard anchor window
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -91,88 +91,100 @@ export default function useDashboardData(
 
     try {
       if (!loadGranular) {
-        // Legacy monolithic endpoint fallback if you still keep it around
+        // If you still keep a legacy monolith endpoint around, surface it here
         const data = await fetchJSON('/predictions/api/dashboard/realtime/');
         mergeRoot(data || {});
         setLoadingStates({ stats: false, accuracy: false, leaderboard: false, recent: false, insights: false });
         return;
       }
 
-      // Granular parallel fetches
+      // --- 1) STATS (anchor for leaderboard + week header tile) ---
+      updateLoading({ stats: true });
+      const statsPromise = fetchJSON('/analytics/api/stats-summary/')
+        .then((stats) => {
+          // Normalize expected fields into user_data
+          const patch = {
+            username: userInfo?.username,
+            currentWeek: stats.currentWeek ?? null,
+            weeklyPoints: stats.weeklyPoints ?? 0,
+            rank: stats.rank ?? null,
+            pointsFromLeader: stats.pointsFromLeader ?? 0,
+            // keep a copy of anchor window for downstream calls
+            _anchorWindowKey: stats?.window?.key || null,
+          };
+          mergeUserData(patch);
+        })
+        .catch((e) => { setError((prev) => prev || e.message); })
+        .finally(() => updateLoading({ stats: false }));
+
+      // --- 2) ACCURACY (season rings + best category + total points) ---
+      updateLoading({ accuracy: true });
+      const accuracyPromise = fetchJSON('/analytics/api/accuracy-summary/')
+        .then((a) => {
+          const patch = {
+            overallAccuracy: a.overallAccuracy ?? 0,           // 0..1 for rings
+            moneylineAccuracy: a.moneylineAccuracy ?? 0,       // 0..1
+            propBetAccuracy: a.propBetAccuracy ?? 0,           // 0..1
+            bestCategory: a.bestCategory ?? null,              // if you added this server-side
+            bestCategoryAccuracy: a.bestCategoryAccuracy ?? 0, // %
+            totalPoints: a.totalPoints ?? 0,
+          };
+          mergeUserData(patch);
+        })
+        .catch((e) => { setError((prev) => prev || e.message); })
+        .finally(() => updateLoading({ accuracy: false }));
+
+      // Wait for stats to know the anchor window for leaderboard
+      const [statsResult, accuracyResult] = await Promise.all([statsPromise, accuracyPromise]);
+
+      // Get the anchor window key from the stats response directly
+      let windowKey = null;
+      try {
+        const statsData = await fetchJSON('/analytics/api/stats-summary/');
+        windowKey = statsData?.window?.key || null;
+      } catch (e) {
+        // If we can't get window key, leaderboard will be skipped
+        windowKey = null;
+      }
+
       const tasks = [];
 
-      // STATS — includes currentWeek and basic numbers used on Home
-      updateLoading({ stats: true });
-      tasks.push(
-        fetchJSON('/predictions/api/dashboard/stats/')
-          .then((data) => {
-            // Normalize expected fields into user_data
-            const patch = {
-              username: userInfo?.username,
-              currentWeek: data.currentWeek,
-              weeklyPoints: data.weeklyPoints,
-              rank: data.rank,
-              totalUsers: data.totalUsers,
-              pointsFromLeader: data.pointsFromLeader,
-              pendingPicks: data.pendingPicks,
-            };
-            mergeUserData(patch);
-          })
-          .catch((e) => { setError((prev) => prev || e.message); })
-          .finally(() => updateLoading({ stats: false }))
-      );
-
-      // ACCURACY + BEST CATEGORY + TOTAL POINTS
-      updateLoading({ accuracy: true });
-      tasks.push(
-        fetchJSON('/predictions/api/dashboard/accuracy/')
-          .then((data) => {
-            const patch = {
-              overallAccuracy: data.overallAccuracy ?? 0,
-              moneylineAccuracy: data.moneylineAccuracy ?? 0,
-              propBetAccuracy: data.propBetAccuracy ?? 0,
-              bestCategory: data.bestCategory ?? null,
-              bestCategoryAccuracy: data.bestCategoryAccuracy ?? 0,
-              totalPoints: data.totalPoints ?? 0,
-            };
-            mergeUserData(patch);
-          })
-          .catch((e) => { setError((prev) => prev || e.message); })
-          .finally(() => updateLoading({ accuracy: false }))
-      );
-
-      // LEADERBOARD (optional)
-      if (includeLeaderboard) {
+      // --- 3) LEADERBOARD (optional; needs window_key) ---
+      if (includeLeaderboard && windowKey) {
         updateLoading({ leaderboard: true });
         tasks.push(
-          fetchJSON('/predictions/api/dashboard/leaderboard/')
+          fetchJSON(`/analytics/api/leaderboard/?window_key=${encodeURIComponent(windowKey)}&limit=10`)
             .then((data) => {
-              // Expecting { leaderboard: [...] }
               mergeRoot({ leaderboard: Array.isArray(data?.leaderboard) ? data.leaderboard : [] });
             })
             .catch((e) => { setError((prev) => prev || e.message); })
             .finally(() => updateLoading({ leaderboard: false }))
         );
+      } else if (includeLeaderboard) {
+        // If no window yet, just show empty until next render tick
+        mergeRoot({ leaderboard: [] });
+        updateLoading({ leaderboard: false });
       }
 
-      // RECENT GAMES
+      // --- 4) RECENT RESULTS (fully completed games/props) ---
       updateLoading({ recent: true });
       tasks.push(
-        fetchJSON('/predictions/api/dashboard/recent/')
+        fetchJSON('/analytics/api/recent-results/?limit=10')
           .then((data) => {
-            const patch = { recentGames: Array.isArray(data?.recentGames) ? data.recentGames : [] };
+            const patch = { recentGames: Array.isArray(data?.results) ? data.results : [] };
             mergeUserData(patch);
           })
           .catch((e) => { setError((prev) => prev || e.message); })
           .finally(() => updateLoading({ recent: false }))
       );
 
-      // INSIGHTS
+      // --- 5) INSIGHTS (map to user timeline for now) ---
       updateLoading({ insights: true });
       tasks.push(
-        fetchJSON('/predictions/api/dashboard/insights/')
+        fetchJSON('/analytics/api/user-timeline/')
           .then((data) => {
-            mergeRoot({ insights: Array.isArray(data?.insights) ? data.insights : [] });
+            // Expose as insights to keep existing consumers working
+            mergeRoot({ insights: Array.isArray(data?.timeline) ? data.timeline : [] });
           })
           .catch((e) => { setError((prev) => prev || e.message); })
           .finally(() => updateLoading({ insights: false }))
@@ -199,6 +211,10 @@ export default function useDashboardData(
     startFetch();
   }, [startFetch]);
 
-  const api = useMemo(() => ({ dashboardData, loadingStates, error, reload }), [dashboardData, loadingStates, error, reload]);
+  const api = useMemo(
+    () => ({ dashboardData, loadingStates, error, reload }),
+    [dashboardData, loadingStates, error, reload]
+  );
+
   return api;
 }
