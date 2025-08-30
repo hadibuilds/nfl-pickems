@@ -2,43 +2,44 @@
 from __future__ import annotations
 from typing import Dict, Tuple, List
 from django.contrib.auth import get_user_model
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Max
 from django.utils import timezone
 from django.db.models import Prefetch
 
 from ..models import MoneyLinePrediction, PropBetPrediction, UserStatHistory
-from games.models import Game, Window
+from games.models import Game, Window, PropBet
 from analytics.models import UserWindowStat  # snapshot table we write in window_stats
 
 
 User = get_user_model()
 
-# -------- week selection: earliest incomplete window -> its week; else next kickoff; else last week
+# -------- week selection: proper week transition logic (resets when last game of week finishes)
 def get_current_week(season: int | None = None) -> int:
-    qs = Window.objects.filter(is_complete=False)
+    """
+    Returns the current week for pending picks and dashboard display.
+    Week transitions happen immediately when the last game of a week finishes.
+    
+    Logic: Find the earliest week that has games without winners (unfinished).
+    """
+    base_qs = Game.objects.all()
     if season is not None:
-        qs = qs.filter(season=season)
-    # order by PT spine (date, slot)
-    w = (qs.extra(select={"_ord": "CASE slot WHEN 'morning' THEN 0 WHEN 'afternoon' THEN 1 ELSE 2 END"})
-           .order_by("date", "_ord")
-           .first())
-    if w:
-        wk = (Game.objects.filter(window=w)
-                          .values_list("week", flat=True)
-                          .order_by("week")
-                          .first())
-        if wk is not None:
-            return int(wk)
-
-    now = timezone.now()
-    nxt = Game.objects.filter(start_time__gte=now)
-    if season is not None:
-        nxt = nxt.filter(season=season)
-    wk = nxt.order_by("start_time").values_list("week", flat=True).first()
-    if wk is not None:
-        return int(wk)
-
-    return int(Game.objects.order_by("-week").values_list("week", flat=True).first() or 1)
+        base_qs = base_qs.filter(season=season)
+    
+    # Primary logic: Find the earliest week with unfinished games (no winner)
+    unfinished_games = base_qs.filter(winner__isnull=True)
+    if unfinished_games.exists():
+        return int(unfinished_games.order_by("week", "start_time").first().week)
+    
+    # Fallback: Return the next week after the highest completed week
+    latest_completed_week = base_qs.aggregate(
+        max_week=Max("week")
+    )["max_week"]
+    
+    if latest_completed_week is not None:
+        return int(latest_completed_week) + 1
+    
+    # Ultimate fallback
+    return 1
 
 
 # -------- live weekly numbers (snapshot-first)
@@ -76,17 +77,27 @@ def calculate_current_user_rank_realtime(user, current_week: int) -> Dict[str, i
 
 def calculate_pending_picks(user, current_week: int) -> int:
     now = timezone.now()
-    unlocked_games = Game.objects.filter(week=current_week).exclude(Q(locked=True) | Q(start_time__lte=now))
-    ml_pending = unlocked_games.exclude(
-        id__in=MoneyLinePrediction.objects.filter(user=user).values("game_id")
-    ).count()
+    week_games = Game.objects.filter(week=current_week)
+    unlocked_games = week_games.exclude(Q(locked=True) | Q(start_time__lte=now))
+    
+    # Get user's ML picks for THIS WEEK only (not all weeks)
+    user_ml_picks = set(
+        MoneyLinePrediction.objects.filter(
+            user=user, game__in=week_games
+        ).values_list("game_id", flat=True)
+    )
+    
+    ml_pending = unlocked_games.exclude(id__in=user_ml_picks).count()
 
-    unlocked_prop_ids = (PropBetPrediction.objects
-                         .filter(user=user, prop_bet__game__week=current_week)
-                         .values_list("prop_bet_id", flat=True))  # already answered ids
-    total_prop_ids = list(Game.objects.filter(week=current_week, id__in=unlocked_games.values("id"))
-                                .values_list("prop_bets__id", flat=True))
-    pb_pending = len([pid for pid in total_prop_ids if pid and pid not in set(unlocked_prop_ids)])
+    # Count unlocked prop bets user hasn't answered
+    unlocked_props = PropBet.objects.filter(game__in=unlocked_games)
+    user_prop_picks = set(
+        PropBetPrediction.objects.filter(
+            user=user, prop_bet__in=unlocked_props
+        ).values_list("prop_bet_id", flat=True)
+    )
+    
+    pb_pending = unlocked_props.exclude(id__in=user_prop_picks).count()
     return int(ml_pending + pb_pending)
 
 
