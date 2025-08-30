@@ -80,10 +80,10 @@ def live_window(request):
 
     # My current rank/points in this window (from snapshot; recomputed on every grade)
     my_stat: Optional[UserWindowStat] = (
-        UserWindowStat.objects.filter(window=win, user_id=user_id).only("rank_dense", "total_points").first()
+        UserWindowStat.objects.filter(window=win, user_id=user_id).only("rank_dense", "season_cume_points").first()
     )
     my_rank = my_stat.rank_dense if my_stat else None
-    my_points = my_stat.total_points if my_stat else 0
+    my_points = my_stat.season_cume_points if my_stat else 0
 
     # Completeness (live)
     total_games = len(game_ids)
@@ -145,8 +145,8 @@ def leaderboard(request):
         UserWindowStat.objects
         .filter(window=win)
         .select_related("user")
-        .order_by("-total_points", "user_id")[:limit]
-        .values("user_id", "user__username", "total_points", "rank_dense")
+        .order_by("-season_cume_points", "user_id")[:limit]
+        .values("user_id", "user__username", "season_cume_points", "rank_dense")
     )
 
     # Optional trend arrows vs previous completed window
@@ -176,7 +176,7 @@ def leaderboard(request):
             {
                 "user_id": r["user_id"],
                 "username": r["user__username"],
-                "total_points": r["total_points"],
+                "total_points": r["season_cume_points"],
                 "rank_dense": r["rank_dense"],
                 **({"trend_delta": trend_map.get(r["user_id"])} if include_trend else {}),
             }

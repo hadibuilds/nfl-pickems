@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🔄 Starting full React → Django sync process..."
+echo "Starting full React → Django sync process..."
 
 # 0. Remove old React build just in case
 echo "🧼 Cleaning old React build..."

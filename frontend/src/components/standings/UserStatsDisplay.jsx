@@ -88,7 +88,6 @@ export default function UserStatsDisplay({ userInfo }) {
   // Calculate accuracy from actual prediction data
   const calculateAccuracy = async (username) => {
     try {
-      console.log('🎯 Calculating accuracy for:', username);
       
       // Use the user_accuracy endpoint directly
       const accuracyResponse = await fetch(`${API_BASE}/predictions/api/user-accuracy/`, {
@@ -98,19 +97,15 @@ export default function UserStatsDisplay({ userInfo }) {
         },
       });
 
-      console.log('📊 User accuracy API response:', accuracyResponse.status, accuracyResponse.statusText);
 
       if (!accuracyResponse.ok) {
-        console.warn('❌ User accuracy endpoint failed:', accuracyResponse.status);
         return 0;
       }
 
       const accuracyData = await accuracyResponse.json();
-      console.log('✅ User accuracy data:', accuracyData);
       
       const overall = accuracyData?.overall_accuracy;
       if (!overall || typeof overall.percentage !== 'number') {
-        console.log('📝 No overall_accuracy in response');
         return 0;
       }
 

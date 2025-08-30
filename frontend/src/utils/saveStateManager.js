@@ -18,7 +18,6 @@ export const useSaveStateManager = () => {
   // Cleanup timeouts when component unmounts - but be more stable
   useEffect(() => {
     return () => {
-      console.log('🧹 Cleaning up save state timeouts... (stable cleanup)');
       Object.values(saveTimeoutsRef.current).forEach(timeoutId => {
         if (timeoutId) {
           clearTimeout(timeoutId);
@@ -34,8 +33,6 @@ export const useSaveStateManager = () => {
    * @param {string} stateKey - The state key to update
    */
   const setSaving = useCallback((stateKey) => {
-    console.log(`🔄 setSaving called for ${stateKey}, clearing ALL previous states`);
-    
     // Clear ALL timeouts (not just current game's timeout)
     Object.values(saveTimeoutsRef.current).forEach(timeoutId => {
       if (timeoutId) {

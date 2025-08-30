@@ -1,10 +1,11 @@
-# predictions/views.py — SLIMMED: delegates compute to utils
+# predictions/views.py — LIVE points via analytics.UserWindowStat.season_cume_points
 from collections import defaultdict
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_page
+from django.db.models import Sum, Max
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -12,14 +13,12 @@ from rest_framework.response import Response
 
 from games.models import Game, PropBet
 from .models import MoneyLinePrediction, PropBetPrediction
+from analytics.models import UserWindowStat
 
-
-# Primary realtime helpers
+# Primary realtime helpers (LIVE, season_cume_points-backed)
 from .utils.dashboard_utils import (
     calculate_user_dashboard_data_realtime,
-    calculate_total_points_simple,
     get_leaderboard_data_realtime,
-    get_user_insights_realtime,
     get_current_week,
     calculate_live_stats,
     calculate_current_user_rank_realtime,
@@ -27,17 +26,24 @@ from .utils.dashboard_utils import (
     calculate_current_accuracy,
     calculate_pending_picks,
     get_recent_games_data,
+    get_user_insights_realtime,
     get_user_rank_achievements,
-    get_user_season_stats,
 )
 
-# New slim utils
+from .utils.trend_utils import (
+    get_user_rank_trend,
+    get_user_weekly_insights,
+)
+
+# Slim utils
 from .utils.param_utils import parse_int
 from .utils.season_utils import (
     api_user_season_stats_fast,
     api_user_weekly_trends_fast,
-    build_season_leaderboard_fast,
+    api_user_window_trends,
     build_season_leaderboard_dynamic,
+    build_season_leaderboard_with_window_trends,
+    get_user_season_stats,
 )
 
 User = get_user_model()
@@ -141,36 +147,75 @@ def get_user_predictions(request):
         'total_predictions': len(predictions_data) + len(prop_bet_data)
     })
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_standings(request):
+    """
+    LIVE standings:
+      - sums analytics.UserWindowStat.season_cume_points (no wait for window completion)
+      - optional ?week=<int> filters totals to that NFL week
+      - includes per-week breakdown computed from analytics (fast)
+    """
     selected_week = request.GET.get('week')
     if selected_week and not selected_week.isdigit():
         return Response({'error': 'Invalid week parameter'}, status=status.HTTP_400_BAD_REQUEST)
+    week_filter = int(selected_week) if selected_week else None
+
+    # Map each window_id -> NFL week (distinct to avoid double counting)
+    window_week_rows = Game.objects.values('window_id', 'week').distinct()
+    window_to_week = {row['window_id']: row['week'] for row in window_week_rows if row['window_id'] is not None}
+    all_weeks = set(window_to_week.values())
 
     users = User.objects.all()
     standings = []
-    all_weeks = set()
 
-    for user in users:
+    for u in users:
+        # Get latest cumulative points per window for this user (live)
+        rows = (
+            UserWindowStat.objects
+            .filter(user=u)
+            .values('window_id')
+            .annotate(points=Max('season_cume_points'))
+        )
+
+        # Since season_cume_points is truly cumulative, we want the max value
+        # For weekly breakdown, we need to calculate per-week deltas
         weekly_scores = defaultdict(int)
+        window_points = {}
+        
+        # Store points by window and calculate max cumulative
+        max_cumulative = 0
+        for r in rows:
+            window_id = r['window_id']
+            points = int(r['points'] or 0)
+            window_points[window_id] = points
+            max_cumulative = max(max_cumulative, points)
+        
+        # Calculate per-week deltas from cumulative values
+        sorted_windows = sorted(window_points.keys())
+        prev_cumulative = 0
+        for window_id in sorted_windows:
+            week = window_to_week.get(window_id)
+            if week is None:
+                continue
+            current_cumulative = window_points[window_id]
+            week_delta = current_cumulative - prev_cumulative
+            weekly_scores[int(week)] += max(0, week_delta)  # Only positive deltas
+            prev_cumulative = current_cumulative
 
-        for pred in MoneyLinePrediction.objects.filter(user=user, is_correct=True).select_related('game'):
-            weekly_scores[pred.game.week] += 1
-            all_weeks.add(pred.game.week)
+        total_points = (
+            weekly_scores.get(week_filter, 0)
+            if week_filter is not None else
+            max_cumulative  # Use max cumulative, not sum of deltas
+        )
 
-        for prop in PropBetPrediction.objects.filter(user=user, is_correct=True).select_related('prop_bet__game'):
-            w = prop.prop_bet.game.week
-            weekly_scores[w] += 2
-            all_weeks.add(w)
-
-        total = weekly_scores[int(selected_week)] if selected_week else sum(weekly_scores.values())
         standings.append({
-            'username': user.username,
-            'first_name': user.first_name,   # 👈 added
-            'last_name': user.last_name,     # 👈 added
+            'username': u.username,
+            'first_name': u.first_name,
+            'last_name': u.last_name,
             'weekly_scores': dict(weekly_scores),
-            'total_points': total
+            'total_points': int(total_points),
         })
 
     standings.sort(key=lambda x: (-x['total_points'], x['username'].lower()))
@@ -179,9 +224,10 @@ def get_standings(request):
     return Response({
         'standings': standings,
         'weeks': all_weeks,
-        'selected_week': int(selected_week) if selected_week else None,
-        'total_users': len(standings)
+        'selected_week': week_filter if week_filter is not None else None,
+        'total_users': len(standings),
     })
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -209,9 +255,14 @@ def get_game_results(request):
         })
     return Response({'results': results, 'total_completed_games': len(results)})
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_accuracy(request):
+    """
+    Legacy accuracy (raw predictions). Kept for compatibility, but your UI should use
+    the granular accuracy endpoint below.
+    """
     user = request.user
     moneyline_with_results = MoneyLinePrediction.objects.filter(user=user, is_correct__isnull=False)
     prop_bet_with_results = PropBetPrediction.objects.filter(user=user, is_correct__isnull=False)
@@ -249,7 +300,7 @@ def get_current_week_only(request):
     return Response({'currentWeek': current, 'weeks': weeks, 'totalWeeks': len(weeks)})
 
 # =============================================================================
-# GRANULAR DASHBOARD
+# GRANULAR DASHBOARD (LIVE)
 # =============================================================================
 
 @api_view(['GET'])
@@ -270,27 +321,42 @@ def get_user_stats_only(request):
         'pendingPicks': pending_picks
     })
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_accuracy_only(request):
+    """
+    Granular accuracy + season total points (LIVE):
+    {
+      overallAccuracy, moneylineAccuracy, propBetAccuracy,
+      bestCategory, bestCategoryAccuracy, totalPoints
+    }
+    """
     user = request.user
     best_category, best_accuracy = get_best_category_realtime(user)
-    total_points = calculate_total_points_simple(user)
+
+    total_points = (
+        UserWindowStat.objects
+        .filter(user=user)
+        .aggregate(points=Sum("season_cume_points"))["points"] or 0
+    )
+
     return Response({
-        'overallAccuracy': calculate_current_accuracy(user, 'overall'),
-        'moneylineAccuracy': calculate_current_accuracy(user, 'moneyline'),
-        'propBetAccuracy': calculate_current_accuracy(user, 'prop'),
-        'totalPoints': total_points,
+        'overallAccuracy': int(calculate_current_accuracy(user, 'overall')),
+        'moneylineAccuracy': int(calculate_current_accuracy(user, 'moneyline')),
+        'propBetAccuracy': int(calculate_current_accuracy(user, 'prop')),
+        'totalPoints': int(total_points),
         'bestCategory': best_category,
-        'bestCategoryAccuracy': best_accuracy,
+        'bestCategoryAccuracy': int(best_accuracy),
     })
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_leaderboard_only(request):
     limit = parse_int(request.GET.get('limit'), default=5, minimum=1, maximum=20)
     user = request.user
-    leaderboard = get_leaderboard_data_realtime(limit=limit)
+    leaderboard = get_leaderboard_data_realtime(limit=limit)  # LIVE (season_cume_points)
     for row in leaderboard:
         if row['username'] == user.username:
             row['isCurrentUser'] = True
@@ -300,6 +366,7 @@ def get_leaderboard_only(request):
         'currentUserIncluded': any(u.get('isCurrentUser') for u in leaderboard)
     })
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_recent_games_only(request):
@@ -307,6 +374,7 @@ def get_recent_games_only(request):
     limit = parse_int(request.GET.get('limit'), default=3, minimum=1, maximum=10)
     recent_games = get_recent_games_data(user, limit=limit)
     return Response({'recentGames': recent_games, 'limit': limit, 'totalGames': len(recent_games)})
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -351,9 +419,9 @@ def get_dashboard_data(request):
             insights = get_user_insights(user)
             calculation_mode = 'snapshot'
         else:
-            dashboard_data = calculate_user_dashboard_data_realtime(user)
-            leaderboard = get_leaderboard_data_realtime(limit=5)
-            insights = get_user_insights_realtime(user)
+            dashboard_data = calculate_user_dashboard_data_realtime(user)  # LIVE
+            leaderboard = get_leaderboard_data_realtime(limit=5)           # LIVE
+            insights = get_user_insights_realtime(user)                    # LIVE
             calculation_mode = 'realtime'
 
         for row in leaderboard:
@@ -383,8 +451,8 @@ def get_dashboard_data(request):
 
         if 'stats' in sections:
             current_week = get_current_week()
-            live_stats = calculate_live_stats(user, current_week)
-            current_rank_info = calculate_current_user_rank_realtime(user, current_week)
+            live_stats = calculate_live_stats(user, current_week)                        # LIVE
+            current_rank_info = calculate_current_user_rank_realtime(user, current_week) # LIVE
             response_data.setdefault('user_data', {}).update({
                 'username': user.username,
                 'currentWeek': current_week,
@@ -397,23 +465,29 @@ def get_dashboard_data(request):
 
         if 'accuracy' in sections:
             best_category, best_accuracy = get_best_category_realtime(user)
+            total_points = (
+                UserWindowStat.objects
+                .filter(user=user)
+                .aggregate(points=Sum("season_cume_points"))["points"] or 0
+            )
             response_data.setdefault('user_data', {}).update({
-                'overallAccuracy': calculate_current_accuracy(user, 'overall'),
-                'moneylineAccuracy': calculate_current_accuracy(user, 'moneyline'),
-                'propBetAccuracy': calculate_current_accuracy(user, 'prop'),
+                'overallAccuracy': int(calculate_current_accuracy(user, 'overall')),
+                'moneylineAccuracy': int(calculate_current_accuracy(user, 'moneyline')),
+                'propBetAccuracy': int(calculate_current_accuracy(user, 'prop')),
                 'bestCategory': best_category,
-                'bestCategoryAccuracy': best_accuracy,
+                'bestCategoryAccuracy': int(best_accuracy),
+                'totalPoints': int(total_points),
             })
 
         if 'leaderboard' in sections:
-            leaderboard = get_leaderboard_data_realtime(limit=5)
+            leaderboard = get_leaderboard_data_realtime(limit=5)                         # LIVE
             for row in leaderboard:
                 if row['username'] == user.username:
                     row['isCurrentUser'] = True
             response_data['leaderboard'] = leaderboard
 
         if 'recent' in sections:
-            response_data.setdefault('user_data', {})['recentGames'] = get_recent_games_data(user, limit=3)
+            response_data.setdefault('user_data', {})['recentGames'] = get_recent_games_data(user, limit=8)
 
         if 'insights' in sections:
             response_data['insights'] = get_user_insights_realtime(user)
@@ -421,6 +495,7 @@ def get_dashboard_data(request):
         response_data['meta'] = {'calculation_mode': 'realtime', 'sections': sections, 'requested_sections': len(sections)}
 
     return Response(response_data)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -449,6 +524,7 @@ def get_dashboard_data_realtime(request):
             'timestamp': dashboard_data.get('currentWeek')
         }
     })
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -519,6 +595,15 @@ def user_weekly_trends_fast_view(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def user_window_trends_view(request):
+    """New endpoint for window-based rank trends from UserWindowStat"""
+    user = request.user
+    windows = parse_int(request.GET.get('windows'), default=2, minimum=1, maximum=10)
+    data = api_user_window_trends(user, windows_back=windows)
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def season_leaderboard_fast_view(request):
     through_week = parse_int(request.GET.get('through_week'))
     limit = parse_int(request.GET.get('limit'), default=10, minimum=1, maximum=50)
@@ -531,4 +616,13 @@ def season_leaderboard_fast_view(request):
 def season_leaderboard_dynamic_trend_view(request):
     limit = parse_int(request.GET.get('limit'), default=10, minimum=1, maximum=50)
     data = build_season_leaderboard_dynamic(limit=limit)
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@cache_page(15)
+def season_leaderboard_window_trends_view(request):
+    """New endpoint for window-based leaderboard trends from UserWindowStat"""
+    limit = parse_int(request.GET.get('limit'), default=10, minimum=1, maximum=50)
+    data = build_season_leaderboard_with_window_trends(limit=limit)
     return Response(data)

@@ -94,7 +94,11 @@ class WindowAdmin(admin.ModelAdmin):
                 recompute_window(wid)
         transaction.on_commit(_do)
         self.message_user(request, f"Scheduled recompute for {len(affected)} window(s).", messages.SUCCESS)
-
+    
+    @admin.action(description="Recompute selected window(s)")
+    def recompute_selected_windows(modeladmin, request, queryset):
+        for w in queryset:
+            recompute_window(w.id)
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
@@ -180,8 +184,10 @@ class PropBetAdmin(admin.ModelAdmin):
 
         super().save_model(request, obj, form, change)
 
-        answer_changed = (not change) or (prev_correct != obj.correct_answer)
-        window_changed = change and prev_window_id and (prev_window_id != obj.game.window_id)
+        # Only recompute when there's a meaningful scoring change
+        answer_changed = (change and prev_correct != obj.correct_answer) or (not change and obj.correct_answer is not None)
+        # Let games handle window moves - prop bets move automatically with their games
+        window_changed = False
 
         affected_window_ids = set()
         if answer_changed:

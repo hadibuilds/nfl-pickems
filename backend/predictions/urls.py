@@ -27,8 +27,10 @@ from .views import (
     # Snapshot-powered reads (season totals + trends)
     user_season_stats_fast_view,
     user_weekly_trends_fast_view,
+    user_window_trends_view,
     season_leaderboard_fast_view,
     season_leaderboard_dynamic_trend_view,
+    season_leaderboard_window_trends_view,
 )
 
 urlpatterns = [
@@ -60,6 +62,8 @@ urlpatterns = [
     # Snapshot-powered reads (season totals + trends)
     path('api/user-season-stats-fast/', user_season_stats_fast_view, name='user-season-stats-fast'),
     path('api/user-trends-fast/', user_weekly_trends_fast_view, name='user-trends-fast'),
+    path('api/user-window-trends/', user_window_trends_view, name='user-window-trends'),
     path('api/season-leaderboard-fast/', season_leaderboard_fast_view, name='season-leaderboard-fast'),
     path('api/season-leaderboard-dynamic/', season_leaderboard_dynamic_trend_view, name='season-leaderboard-dynamic'),
+    path('api/season-leaderboard-window-trends/', season_leaderboard_window_trends_view, name='season-leaderboard-window-trends'),
 ]
