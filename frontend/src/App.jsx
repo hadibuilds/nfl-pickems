@@ -150,6 +150,7 @@ export default function App() {
 
   const fetchGameResults = useCallback(async () => {
     try {
+      // 🔁 Swap to analytics feed; map to legacy shape expected by GamePage
       const res = await fetch(`${API_BASE}/predictions/api/game-results/`, {
         credentials: 'include',
         headers: { 'X-CSRFToken': getCookie('csrftoken') },
@@ -157,7 +158,6 @@ export default function App() {
       if (!res.ok) throw new Error('Failed to fetch game results');
 
       const data = await res.json();
-      // Accept either { results: [...] } or bare [...]
       const payload = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : []);
       const resultsMap = {};
 
@@ -172,13 +172,15 @@ export default function App() {
                 ? r.prop_bet_results[0]?.correct_answer
                 : null);
 
-        resultsMap[r.game_id] = {
-          winner,
-          prop_result,
-          // keep legacy/raw fields around (optional)
-          winning_team: r?.winning_team ?? winner,
-          prop_bet_results: Array.isArray(r?.prop_bet_results) ? r.prop_bet_results : undefined,
-        };
+        // Legacy map keyed by game_id
+        if (r?.game_id != null) {
+          resultsMap[r.game_id] = {
+            winner,
+            prop_result,
+            winning_team: r?.winning_team ?? winner,
+            prop_bet_results: Array.isArray(r?.prop_bet_results) ? r.prop_bet_results : undefined,
+          };
+        }
       }
 
       setGameResults(resultsMap);
@@ -207,7 +209,7 @@ export default function App() {
         const response = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-          body: JSON.stringify({ game_id: parseInt(gameId), predicted_winner: team }),
+          body: JSON.stringify({ game_id: parseInt(gameId, 10), predicted_winner: team }),
           credentials: 'include',
         });
         if (!response.ok) throw new Error(`Failed to submit pick for game ${gameId}`);
@@ -216,7 +218,7 @@ export default function App() {
         const response = await fetch(`${API_BASE}/predictions/api/save-selection/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-          body: JSON.stringify({ prop_bet_id: parseInt(propBetId), answer }),
+          body: JSON.stringify({ prop_bet_id: parseInt(propBetId, 10), answer }),
           credentials: 'include',
         });
         if (!response.ok) throw new Error(`Failed to submit prop bet ${propBetId}`);
