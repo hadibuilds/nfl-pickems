@@ -15,6 +15,7 @@ matplotlib-inline==0.1.7
 packaging==25.0
 parso==0.8.4
 pexpect==4.9.0
+Pillow==11.1.0
 prompt_toolkit==3.0.50
 psycopg2-binary==2.9.10
 ptyprocess==0.7.0
