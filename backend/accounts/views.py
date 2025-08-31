@@ -82,44 +82,50 @@ class LoginAPIView(APIView):
             "last_name": user.last_name,    # Add last name
         })
 
-
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         try:
-            username = request.data.get("username", "").strip().lower()
-            email = request.data.get("email", "").strip().lower()
+            username = (request.data.get("username") or "").strip().lower()
+            email = (request.data.get("email") or "").strip().lower()
             password = request.data.get("password")
-            first_name = request.data.get("first_name", "").strip().title()  # Capitalize first letter
-            last_name = request.data.get("last_name", "").strip().title()    # Capitalize first letter
-            invite_code = request.data.get("inviteCode")
+            first_name = (request.data.get("first_name") or "").strip().title()
+            last_name = (request.data.get("last_name") or "").strip().title()
+            invite_code = request.data.get("inviteCode")  # frontend uses camelCase
 
-            INV = INVITE_CODE
-
-            # Validation
-            if invite_code != INV:
+            # --- Invite code check (from settings or env) ---
+            expected_invite = getattr(settings, "INVITE_CODE", None)
+            if not expected_invite:
+                return Response(
+                    {"detail": "Server misconfigured: invite code not set"},
+                    status=500,
+                )
+            if invite_code != expected_invite:
                 return Response({"detail": "Invalid invite code"}, status=400)
 
+            # --- Required fields ---
             if not username or not email or not password:
-                return Response({"detail": "Username, email, and password are required"}, status=400)
-            
-            # First name is required, last name is optional
+                return Response(
+                    {"detail": "Username, email, and password are required"},
+                    status=400,
+                )
             if not first_name:
                 return Response({"detail": "First name is required"}, status=400)
 
+            # --- Uniqueness checks (case-insensitive) ---
             if User.objects.filter(username__iexact=username).exists():
                 return Response({"detail": "Username already taken"}, status=400)
-
             if User.objects.filter(email__iexact=email).exists():
                 return Response({"detail": "Email already registered"}, status=400)
 
+            # --- Password validation ---
             try:
                 validate_password(password)
             except DjangoValidationError as e:
                 return Response({"detail": list(e.messages)}, status=400)
 
-            # Create user with first/last names
+            # --- Create user ---
             user = User.objects.create_user(
                 username=username,
                 email=email,
@@ -128,20 +134,30 @@ class RegisterView(APIView):
                 last_name=last_name,
             )
 
-            login(request, user)
+            # --- Establish session (authenticate -> login) ---
+            authed = authenticate(request, username=username, password=password)
+            if authed is None:
+                # Fallback: explicitly pass backend (if you know which one you use)
+                # login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                return Response(
+                    {"detail": "User created but could not log in automatically"},
+                    status=201,
+                )
+            login(request, authed)
 
-            return Response({
-                "username": user.username,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-            }, status=201)
+            return Response(
+                {
+                    "username": user.username,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+                status=201,
+            )
 
         except Exception as e:
-            return Response({
-                "detail": "Unexpected error",
-                "error": str(e)
-            }, status=500)
+            # Optional: log e with logger.exception(...)
+            return Response({"detail": "Unexpected error", "error": str(e)}, status=500)
 
 
 @api_view(['POST'])
