@@ -40,8 +40,6 @@ export default function PropBetSection({
       
       {/* Prop bet section */}
       <div className="game-section prop-bet">
-        {/* Correct prediction badge (keep for results display) */}
-        {getCorrectPredictionBadge(game, false, moneyLineSelections, propBetSelections, gameResults)}
         
         <p className="prop-question">
           {propBet.question}

@@ -179,6 +179,7 @@ export default function SignUpPage() {
               disabled={isSigningUp}
               value={formData.username}
               onChange={handleChange}
+              autocomplete="username"
               className={`w-full px-4 py-3 rounded-md focus:ring-2 outline-none text-base text-white ${
                 isSigningUp ? 'opacity-50 cursor-not-allowed' : 'focus:ring-violet-500'
               }`}
@@ -220,6 +221,7 @@ export default function SignUpPage() {
                 disabled={isSigningUp}
                 value={formData.password}
                 onChange={handleChange}
+                autocomplete="new-password"
                 className={`w-full px-4 py-3 pr-10 rounded-md focus:ring-2 outline-none text-base text-white ${
                   isSigningUp ? 'opacity-50 cursor-not-allowed' : 'focus:ring-violet-500'
                 }`}
@@ -251,6 +253,7 @@ export default function SignUpPage() {
                 disabled={isSigningUp}
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                autocomplete="new-password"
                 className={`w-full px-4 py-3 pr-10 rounded-md focus:ring-2 outline-none text-base text-white ${
                   formData.confirmPassword && formData.password !== formData.confirmPassword
                     ? 'focus:ring-red-500 border-red-500'

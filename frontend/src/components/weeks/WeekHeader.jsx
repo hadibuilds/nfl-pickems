@@ -16,7 +16,7 @@ export default function WeekHeader({ weekNumber, onBack }) {
         </button>
         
         {/* Page title - absolutely centered within the max-w-4xl container */}
-        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-5xl text-white font-bebas">
+        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-4xl sm:text-5xl md:text-6xl text-white font-bebas tracking-wider">
           Week {weekNumber}
         </h1>
       </div>

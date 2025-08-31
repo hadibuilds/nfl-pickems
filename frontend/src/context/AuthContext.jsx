@@ -94,6 +94,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Refresh user data function
+  const refreshUser = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/accounts/api/whoami/`, {
+        credentials: 'include',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+      });
+      
+      if (res.ok) {
+        const userData = await res.json();
+        if (userData?.username) {
+          setUserInfo(userData);
+          return { success: true, user: userData };
+        }
+      }
+      return { success: false, error: 'Failed to refresh user data' };
+    } catch (err) {
+      console.error('Refresh user error:', err);
+      return { success: false, error: 'Network error' };
+    }
+  };
+
   // Logout function - only clears auth state, no navigation
   const logout = async () => {
     try {
@@ -120,6 +144,7 @@ export const AuthProvider = ({ children }) => {
     isLoggingIn, // ← NEW: Expose login state
     login,
     logout,
+    refreshUser, // ← NEW: Refresh user data function
   };
 
   return (

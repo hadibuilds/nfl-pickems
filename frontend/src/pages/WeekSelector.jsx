@@ -137,7 +137,8 @@ export default function WeekSelector({
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid gap-6 justify-center
+                grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {availableWeeks.map((week) => {
                 const weekStatus = getWeekStatus(week);
                 const weekDates = getWeekDates(week);
@@ -158,20 +159,17 @@ export default function WeekSelector({
                     >
                       <div className="week-card-content">
                         <div className="week-card-header">
-                          <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-                            {weekDates.start} - {weekDates.end}
-                          </div>
-                          <span 
-                            className="week-status-badge" 
+                          <h3 className="week-number">Week {week}</h3>
+                          <div className="week-card-right">
+                            <span className="week-status-badge" 
                             style={{ 
-                              backgroundColor: weekStatus.status === 'completed' ? '#065F46' : 
-                                             weekStatus.status === 'current' ? '#5B21B6' : '#374151'
-                            }}
-                          >
-                            {weekStatus.label}
-                          </span>
+                              backgroundColor: weekStatus.status === 'completed' ? '#065F46' : weekStatus.status === 'current' ? '#5B21B6' : '#374151' 
+                            }}>{weekStatus.label}</span>
+                            <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
+                              {weekDates.start} - {weekDates.end}
+                            </div>
+                          </div>
                         </div>
-
                         <div className="points-container">
                           {weekStatus.status === 'completed' && weekStatus.points !== null && (
                             <div className="points-earned">
@@ -179,7 +177,6 @@ export default function WeekSelector({
                               <span className="points-value">{weekStatus.points}</span>
                             </div>
                           )}
-                          <h3 className="week-number">Week {week}</h3>
                         </div>
                       </div>
                     </Link>

@@ -46,9 +46,7 @@ def whoami(request):
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "bio": user.bio,
             "avatar": avatar_url,
-            "email_notifications": user.email_notifications,
         })
     else:
         return Response({"user": None})

@@ -8,11 +8,7 @@ class CustomUser(AbstractUser):
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True) 
     email = models.EmailField(unique=True)
-    bio = models.TextField(max_length=500, blank=True, help_text="Tell us about yourself")
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
-    
-    # Preferences
-    email_notifications = models.BooleanField(default=True, help_text="Receive email notifications")
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
