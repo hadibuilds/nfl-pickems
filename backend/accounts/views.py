@@ -360,10 +360,6 @@ def update_profile_api(request):
             if User.objects.filter(email__iexact=new_email).exclude(id=user.id).exists():
                 return Response({"detail": "Email already in use"}, status=status.HTTP_400_BAD_REQUEST)
             user.email = new_email
-        if 'bio' in data:
-            user.bio = data['bio']
-        if 'email_notifications' in data:
-            user.email_notifications = bool(data['email_notifications'])
         
         user.save()
         
@@ -377,9 +373,7 @@ def update_profile_api(request):
             "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "bio": user.bio,
             "avatar": avatar_url,
-            "email_notifications": user.email_notifications,
         })
         
     except Exception as e:

@@ -108,7 +108,7 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
   return (
     <div className={`flex items-center justify-between p-3 rounded-lg ${entry.isCurrentUser ? 'bg-purple-500/20 border border-purple-500/30' : 'hover:bg-gray-700/50'}`}>
       <div className="flex items-center space-x-3">
-        <UserAvatar username={entry.username} size="sm" className="w-8 h-8 flex-shrink-0" />
+        <UserAvatar username={entry.username} profilePicture={entry.avatar} size="sm" className="w-8 h-8 flex-shrink-0" />
         <div className="flex items-center justify-center">{renderRankBadge(medalTier)}</div>
         <div>
           <div className={`font-medium text-sm ${entry.isCurrentUser ? 'text-purple-300' : 'text-white'}`}>

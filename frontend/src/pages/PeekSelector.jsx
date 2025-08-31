@@ -5,7 +5,6 @@ import PageLayout from '../components/common/PageLayout';
 export default function PeekSelector() {
   const [currentWeek, setCurrentWeek] = useState(null);
   const [availableWeeks, setAvailableWeeks] = useState([]);
-  const [games, setGames] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -26,12 +25,6 @@ export default function PeekSelector() {
         for (let i = wk; i >= 1; i--) weeks.push(i);
         setAvailableWeeks(weeks);
 
-        // Fetch all games to count locked games per week
-        const gamesRes = await fetch(`${API_BASE}/games/api/games/`, { credentials: 'include' });
-        if (gamesRes.ok) {
-          const allGames = await gamesRes.json();
-          if (mounted) setGames(allGames || []);
-        }
       } catch {
         setAvailableWeeks([4, 3, 2, 1]);
       } finally {
@@ -41,15 +34,6 @@ export default function PeekSelector() {
     return () => { mounted = false; };
   }, [API_BASE]);
 
-  // Count locked games for a specific week
-  const getLockedGamesCount = (weekNumber) => {
-    const weekGames = games.filter(game => game.week === weekNumber);
-    const now = new Date();
-    const lockedGames = weekGames.filter(game => 
-      game.locked || new Date(game.start_time) <= now
-    );
-    return lockedGames.length;
-  };
 
   return (
     <PageLayout backgroundColor="#1E1E20" maxWidth="max-w-6xl">
@@ -126,12 +110,6 @@ export default function PeekSelector() {
                       }}
                     >
                       {status === 'current' ? 'Current' : status === 'completed' ? 'Completed' : 'Upcoming'}
-                    </div>
-                  </div>
-                  <div className="week-card-middle">
-                    <div className="points-earned">
-                      <span className="points-label">Locked games:</span>
-                      <span className="card-value">{getLockedGamesCount(weekNo)}</span>
                     </div>
                   </div>
                 </div>
