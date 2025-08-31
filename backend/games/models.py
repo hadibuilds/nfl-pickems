@@ -159,6 +159,20 @@ class PropBet(models.Model):
     options = models.JSONField(default=list)
     correct_answer = models.CharField(max_length=100, null=True, blank=True)
 
+    @property
+    def option_a(self):
+        try:
+            return (self.options or [None, None])[0]
+        except Exception:
+            return None
+
+    @property
+    def option_b(self):
+        try:
+            return (self.options or [None, None])[1]
+        except Exception:
+            return None
+
     # Optional denorms (copy from game in importers if you add them)
     # season = models.IntegerField(db_index=True, null=True, blank=True)
     # week = models.IntegerField(db_index=True, null=True, blank=True)

@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Q
 
 from games.models import Window, Game, PropBet
 from predictions.models import MoneyLinePrediction, PropBetPrediction
@@ -1048,3 +1049,93 @@ def pending_picks(request):
         },
         "details": pending_details
     })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def peek_data(request):
+    """
+    Get peek data showing all users' picks for locked games
+    Shows moneyline and prop bet picks grouped by team/answer
+    Only shows data for games that are locked or have started
+    """
+    try:
+        week = request.GET.get('week')
+        if not week:
+            return Response({"detail": "Week parameter required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            week = int(week)
+        except ValueError:
+            return Response({"detail": "Invalid week number"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get locked games for the week
+        locked_games = Game.objects.filter(
+            week=week
+        ).filter(
+            Q(locked=True) | Q(start_time__lte=timezone.now())
+        ).select_related().prefetch_related('prop_bets')
+        
+        peek_data = {}
+        
+        for game in locked_games:
+            # Get all moneyline predictions for this game
+            ml_predictions = MoneyLinePrediction.objects.filter(
+                game=game
+            ).select_related('user')
+            
+            # Group users by their moneyline picks
+            moneyline_picks = {
+                'home_team': [],
+                'away_team': []
+            }
+            
+            for prediction in ml_predictions:
+                user_data = {
+                    'username': prediction.user.username,
+                    'first_name': prediction.user.first_name or '',
+                    'last_name': prediction.user.last_name or ''
+                }
+                
+                if prediction.predicted_winner == game.home_team:
+                    moneyline_picks['home_team'].append(user_data)
+                else:
+                    moneyline_picks['away_team'].append(user_data)
+            
+            # Get prop bet predictions if the game has prop bets
+            prop_picks = {'answer_a': [], 'answer_b': []}
+            
+            if game.prop_bets.exists():
+                prop_bet = game.prop_bets.first()
+                prop_predictions = PropBetPrediction.objects.filter(
+                    prop_bet=prop_bet
+                ).select_related('user')
+                
+                for prediction in prop_predictions:
+                    user_data = {
+                        'username': prediction.user.username,
+                        'first_name': prediction.user.first_name or '',
+                        'last_name': prediction.user.last_name or ''
+                    }
+                    
+                    if prediction.answer == prop_bet.option_a:
+                        prop_picks['answer_a'].append(user_data)
+                    else:
+                        prop_picks['answer_b'].append(user_data)
+            
+            peek_data[game.id] = {
+                'moneyline_picks': moneyline_picks,
+                'prop_picks': prop_picks
+            }
+        
+        return Response({
+            'week': week,
+            'games_count': len(locked_games),
+            'peek_data': peek_data
+        })
+        
+    except Exception as e:
+        return Response(
+            {"detail": "Failed to fetch peek data", "error": str(e)}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

@@ -3,7 +3,8 @@ from analytics.views import (
     live_window, leaderboard, user_timeline, stats_summary, accuracy_summary, recent_results, pending_picks, truth_counter,
     # Migrated analysis functions from predictions app (with optimized logic)
     get_standings_migrated, get_current_week_migrated, user_accuracy_migrated,
-    get_user_stats_migrated, get_leaderboard_migrated, get_dashboard_data_migrated
+    get_user_stats_migrated, get_leaderboard_migrated, get_dashboard_data_migrated,
+    peek_data
 )
 
 urlpatterns = [
@@ -16,6 +17,7 @@ urlpatterns = [
     path("api/recent-results/", recent_results, name="recent_results"),
     path("api/pending-picks/", pending_picks, name="pending_picks"),
     path("api/truth-counter/", truth_counter, name="truth_counter"),
+    path("api/peek-data/", peek_data, name="peek_data"),
     
     # MIGRATED from predictions app (analysis functions with optimized logic)
     path("api/standings/", get_standings_migrated, name="standings"),

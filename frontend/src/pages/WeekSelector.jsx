@@ -12,59 +12,41 @@ export default function WeekSelector({
   moneyLineSelections = {}, 
   propBetSelections = {} 
 }) {
-  const totalWeeks = 18;
-  const weeks = Array.from({ length: totalWeeks }, (_, i) => i + 1);
-
-  // NEW: state for tiny endpoint
-  const [serverCurrentWeek, setServerCurrentWeek] = useState(null);
-  const [serverWeeks, setServerWeeks] = useState(null);
+  // Match PeekSelector approach: only show relevant weeks
+  const [currentWeek, setCurrentWeek] = useState(null);
+  const [availableWeeks, setAvailableWeeks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-  // NEW: one-time fetch of authoritative week; no styling changes, no spinners
+  // Match PeekSelector logic exactly
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         const res = await fetch(`${API_BASE}/analytics/api/current-week/`, { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json(); // { currentWeek, weeks }
+        if (!res.ok) throw new Error('failed');
+        const data = await res.json();
+        const wk = Number(data?.currentWeek ?? 1);
         if (!mounted) return;
-        if (Number.isInteger(data.currentWeek)) setServerCurrentWeek(data.currentWeek);
-        if (Array.isArray(data.weeks)) setServerWeeks(data.weeks);
+        setCurrentWeek(wk);
+
+        // Show current week first, then all previous weeks
+        const weeks = [];
+        for (let i = wk; i >= 1; i--) weeks.push(i);
+        setAvailableWeeks(weeks);
       } catch (e) {
-        // silent fail; fallback to client date logic
-        console.warn('current-week endpoint unavailable; using fallback week calc');
+        console.warn('current-week endpoint unavailable; using fallback');
+        // Fallback: show weeks 1-4 in reverse order
+        setAvailableWeeks([4, 3, 2, 1]);
+      } finally {
+        if (mounted) setIsLoading(false);
       }
     })();
     return () => { mounted = false; };
   }, [API_BASE]);
 
-  // Existing date-based heuristic (kept as-is for fallback)
-  const getCurrentNFLWeekFallback = () => {
-    const now = new Date();
-    const firstTuesday = new Date('2025-09-02T16:00:00Z'); // Sept 2, 2025 8 AM PST
-    const seasonStart = new Date('2025-08-14T00:00:00Z'); // Week 1 opens early
-    
-    if (now >= seasonStart && now < firstTuesday) return 1;
-
-    for (let weekNumber = 1; weekNumber <= 18; weekNumber++) {
-      const weekStart = new Date(firstTuesday);
-      weekStart.setDate(firstTuesday.getDate() + ((weekNumber - 1) * 7));
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7);
-      if (now >= weekStart && now < weekEnd) return weekNumber;
-    }
-    return null;
-  };
-
-  // RESOLVED current week: prefer server, fallback to heuristic
-  const getResolvedCurrentWeek = () => {
-    return serverCurrentWeek ?? getCurrentNFLWeekFallback();
-  };
-
-  // unchanged helper: computes status/points, but now uses resolved current week
+  // Updated getWeekStatus to use new currentWeek state
   const getWeekStatus = (weekNumber) => {
-    const currentNFLWeek = getResolvedCurrentWeek();
     const weekGames = games.filter(game => game.week === weekNumber);
 
     if (weekGames.length === 0) {
@@ -94,11 +76,11 @@ export default function WeekSelector({
       return { status: 'completed', points: totalPoints, label: 'Completed' };
     }
 
-    if (currentNFLWeek && weekNumber === currentNFLWeek) {
+    if (currentWeek && weekNumber === currentWeek) {
       return { status: 'current', points: null, label: 'Current' };
     }
 
-    if (currentNFLWeek && weekNumber < currentNFLWeek && !allGamesHaveResults) {
+    if (currentWeek && weekNumber < currentWeek && !allGamesHaveResults) {
       return { status: 'current', points: null, label: 'In Progress' };
     }
 
@@ -139,9 +121,24 @@ export default function WeekSelector({
     <div className="min-h-screen pt-16 pb-12 px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="page-container">
         <div className="max-w-6xl mx-auto">
+          <div className="mx-auto mb-6 text-center">
+            <h1 className="text-5xl text-white font-bebas">Pick em!</h1>
+            <p className="mt-1 text-sm" style={{ color: 'rgb(156, 163, 175)' }}>Select a week to make your picks</p>
+          </div>
           <div className="week-selector-wrapper">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {weeks.map((week) => {
+            {isLoading ? (
+              <div className="text-center text-white py-6">
+                <div className="inline-flex items-center">
+                  <svg className="animate-spin h-8 w-8 text-violet-500 mr-3" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8"></path>
+                  </svg>
+                  Loading weeks...
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {availableWeeks.map((week) => {
                 const weekStatus = getWeekStatus(week);
                 const weekDates = getWeekDates(week);
                 const styles = getCardStyles(weekStatus.status);
@@ -189,7 +186,8 @@ export default function WeekSelector({
                   </div>
                 );
               })}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
 import useDashboardData from '../hooks/useDashboardData';
 import PageLayout from '../components/common/PageLayout';
 import UserAvatar from '../components/common/UserAvatar';
-import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Zap, Eye } from 'lucide-react';
 import {
   GoldMedal,
   SilverMedal,
@@ -338,10 +338,10 @@ function HomePage() {
 
       {/* Weekly/Live Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={`+${rankMeta.rankChange || 0} this week`} icon={Trophy} trend={rankMeta.trend} color="purple" />
-        <StatCard title="Pending Picks" value={userData.pendingPicks || 0} subtitle="for this week" icon={Clock} color="blue" />
+        <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={`+${rankMeta.rankChange || 0} this week`} icon={Trophy} trend={rankMeta.trend} color="green" />
+        <StatCard title="Pending Picks" value={userData.pendingPicks || 0} subtitle="for this week" icon={Clock} color="purple" />
         <StatCard title="Points Behind" value={userData.pointsFromLeader || 0} subtitle="from 1st place" icon={Target} color="orange" />
-        <StatCard title="Best Category" value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'} subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`} icon={Zap} color="green" />
+        <StatCard title="Best Category" value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'} subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`} icon={Eye} color="blue" />
       </div>
 
       {/* Season Performance + Leaderboard */}
