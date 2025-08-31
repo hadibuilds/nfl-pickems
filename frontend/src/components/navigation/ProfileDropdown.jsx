@@ -149,6 +149,16 @@ export default function ProfileDropdown() {
             </ProtectedDropdownLink>
 
             <ProtectedDropdownLink 
+              to="/peek" 
+              className="dropdown-item"
+            >
+              <span className="dropdown-icon">
+                👀
+              </span>
+              Peek Picks
+            </ProtectedDropdownLink>
+
+            <ProtectedDropdownLink 
               to="/settings" 
               className="dropdown-item"
             >

@@ -24,6 +24,8 @@ import Standings from './pages/Standings';
 import WeekSelector from "./pages/WeekSelector";
 import PasswordResetPage from './pages/PasswordResetPage';
 import PasswordResetConfirmPage from './pages/PasswordResetConfirmPage';
+import PeekPage from './pages/PeekPage';
+import PeekSelector from './pages/PeekSelector';
 import PrivateRoute from './components/common/PrivateRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import NavigationManager from './components/navigation/NavigationManager';
@@ -393,6 +395,26 @@ export default function App() {
                       originalSubmittedPicks={originalSubmittedPicks}
                       originalSubmittedPropBets={originalSubmittedPropBets}
                     />
+                  </PrivateRoute>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/peek"
+              element={
+                <ErrorBoundary level="page" customMessage="Peek selector failed to load">
+                  <PrivateRoute>
+                    <PeekSelector />
+                  </PrivateRoute>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/peek/:weekNumber"
+              element={
+                <ErrorBoundary level="page" customMessage="Peek page failed to load">
+                  <PrivateRoute>
+                    <PeekPage />
                   </PrivateRoute>
                 </ErrorBoundary>
               }

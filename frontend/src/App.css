@@ -2150,3 +2150,25 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 [style*="backgroundColor: '#2d2d2d'"] .space-y-3::-webkit-scrollbar-thumb:hover {
   background: #6B7280 !important;
 }
+
+/* ===== Peek quadrant headings (responsive) ===== */
+.peek-title {
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.2;
+  /* ~16px on mobile, grows modestly on larger screens */
+  font-size: clamp(1rem, 1.2vw + 0.6rem, 1.1rem);
+  letter-spacing: 0.2px;
+  margin-bottom: 6px;
+}
+
+/* Color variants (use your existing success/error colors) */
+.peek-title--green { color: #10B981; }  /* same green as correct states */
+.peek-title--red   { color: #EF4444; }  /* same red as incorrect states */
+
+/* Tighten on very small devices for wrapping control if needed */
+@media (max-width: 360px) {
+  .peek-title {
+    font-size: clamp(0.95rem, 4vw, 1.05rem);
+  }
+}
