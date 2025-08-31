@@ -157,6 +157,7 @@ export default function Standings() {
                 <div className="flex items-center space-x-4">
                   <UserAvatar
                     username={entry.username}
+                    profilePicture={entry.avatar}
                     size="md"
                     className={`w-12 h-12 flex-shrink-0 ${getRingColorClass(medalTier)}`}
                   />

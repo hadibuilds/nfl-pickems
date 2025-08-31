@@ -1013,7 +1013,7 @@
 
 .week-number {
   font-family: 'Bebas Neue';
-  font-size: clamp(2rem, 10vw, 3rem);
+  font-size: clamp(2rem, 10vw, 2.5rem);
   font-weight: bold;
   margin: 0;
   text-align: center;

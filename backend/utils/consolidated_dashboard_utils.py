@@ -153,7 +153,7 @@ def calculate_pending_picks_consolidated(user, current_week: int, season: int | 
 # OPTIMIZED STANDINGS (REPLACES LEGACY get_standings)
 # =============================================================================
 
-def get_standings_optimized(season: int | None = None, week_filter: int | None = None) -> Dict[str, Any]:
+def get_standings_optimized(season: int | None = None, week_filter: int | None = None, request=None) -> Dict[str, Any]:
     """
     OPTIMIZED replacement for predictions/views.py get_standings.
     Uses UserWindowStat for fast calculation instead of raw prediction queries.
@@ -208,10 +208,16 @@ def get_standings_optimized(season: int | None = None, week_filter: int | None =
             max_cumulative  # Use max cumulative, not sum of deltas
         )
         
+        # Get avatar URL
+        avatar_url = None
+        if user.avatar and request:
+            avatar_url = request.build_absolute_uri(user.avatar.url)
+        
         standings.append({
             'username': user.username,
             'first_name': user.first_name,
             'last_name': user.last_name,
+            'avatar': avatar_url,
             'weekly_scores': dict(weekly_scores),
             'total_points': int(total_points),
         })
@@ -293,7 +299,7 @@ def calculate_accuracy_optimized(user, kind: str = "overall") -> Dict[str, Any]:
 # OPTIMIZED LEADERBOARD WITH TRENDS (REPLACES MULTIPLE VARIANTS)
 # =============================================================================
 
-def get_leaderboard_optimized(season: int | None = None, limit: int = 10, with_trends: bool = True) -> List[Dict[str, Any]]:
+def get_leaderboard_optimized(season: int | None = None, limit: int = 10, with_trends: bool = True, request=None) -> List[Dict[str, Any]]:
     """
     OPTIMIZED leaderboard using UserWindowStat for fast queries.
     Optionally includes trend arrows based on rank_delta.
@@ -305,16 +311,22 @@ def get_leaderboard_optimized(season: int | None = None, limit: int = 10, with_t
     leaderboard_data = (
         UserWindowStat.objects
         .filter(window__season=season)
-        .values('user_id', 'user__username')
+        .values('user_id', 'user__username', 'user__avatar')
         .annotate(total_points=Sum('season_cume_points'))
         .order_by('-total_points', 'user__username')[:limit]
     )
     
     leaderboard = []
     for row in leaderboard_data:
+        # Handle avatar URL
+        avatar_url = None
+        if row['user__avatar'] and request:
+            avatar_url = request.build_absolute_uri(f"/media/{row['user__avatar']}")
+        
         entry = {
             'user_id': row['user_id'],
             'username': row['user__username'],
+            'avatar': avatar_url,
             'total_points': int(row['total_points'] or 0),
         }
         

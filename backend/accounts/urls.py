@@ -11,6 +11,9 @@ from .views import (
     password_reset_validate_api,
     password_reset_confirm_api,
     password_reset_email_redirect,
+    update_profile_api,
+    AvatarUploadAPIView,
+    change_password_api,
 )
 
 urlpatterns = [
@@ -24,6 +27,11 @@ urlpatterns = [
     path('api/password-reset/', password_reset_api, name='password_reset_api'),
     path('api/password-reset-validate/', password_reset_validate_api, name='password_reset_validate_api'),
     path('api/password-reset-confirm/', password_reset_confirm_api, name='password_reset_confirm_api'),
+    
+    # Profile management endpoints
+    path('api/profile/', update_profile_api, name='update_profile_api'),
+    path('api/avatar/', AvatarUploadAPIView.as_view(), name='avatar_upload_api'),
+    path('api/change-password/', change_password_api, name='change_password_api'),
 
     # EMAIL REDIRECT: These URLs are used in emails to redirect to React frontend
     path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),  

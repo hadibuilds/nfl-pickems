@@ -249,11 +249,17 @@ def leaderboard(request):
         
         rank_delta = latest_stat.rank_delta if latest_stat else 0
         
+        # Get avatar URL
+        avatar_url = None
+        if user.avatar:
+            avatar_url = request.build_absolute_uri(user.avatar.url)
+        
         # Only include users with any activity
         if total_live_points > 0 or latest_stat:
             live_standings.append({
                 "user_id": user.id,
                 "username": user.username,
+                "avatar": avatar_url,
                 "total_points": total_live_points,
                 "rank_delta": rank_delta,
                 "window_points": latest_stat.window_points if latest_stat else 0,
@@ -278,6 +284,7 @@ def leaderboard(request):
             {
                 "user_id": r["user_id"],
                 "username": r["username"],
+                "avatar": r["avatar"],
                 "window_points": r["window_points"],
                 "total_points": r["total_points"],
                 "rank_dense": r["rank_dense"],
@@ -726,7 +733,7 @@ def get_standings_migrated(request):
     season = int(season) if season and season.isdigit() else None
     
     try:
-        data = get_standings_optimized(season=season, week_filter=week_filter)
+        data = get_standings_optimized(season=season, week_filter=week_filter, request=request)
         return Response(data)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -840,7 +847,8 @@ def get_leaderboard_migrated(request):
         leaderboard = get_leaderboard_optimized(
             season=season, 
             limit=limit, 
-            with_trends=with_trends
+            with_trends=with_trends,
+            request=request
         )
         
         # Mark current user
@@ -1091,10 +1099,15 @@ def peek_data(request):
             }
             
             for prediction in ml_predictions:
+                avatar_url = None
+                if prediction.user.avatar:
+                    avatar_url = request.build_absolute_uri(prediction.user.avatar.url)
+                
                 user_data = {
                     'username': prediction.user.username,
                     'first_name': prediction.user.first_name or '',
-                    'last_name': prediction.user.last_name or ''
+                    'last_name': prediction.user.last_name or '',
+                    'avatar': avatar_url
                 }
                 
                 if prediction.predicted_winner == game.home_team:
@@ -1112,10 +1125,15 @@ def peek_data(request):
                 ).select_related('user')
                 
                 for prediction in prop_predictions:
+                    avatar_url = None
+                    if prediction.user.avatar:
+                        avatar_url = request.build_absolute_uri(prediction.user.avatar.url)
+                    
                     user_data = {
                         'username': prediction.user.username,
                         'first_name': prediction.user.first_name or '',
-                        'last_name': prediction.user.last_name or ''
+                        'last_name': prediction.user.last_name or '',
+                        'avatar': avatar_url
                     }
                     
                     if prediction.answer == prop_bet.option_a:
