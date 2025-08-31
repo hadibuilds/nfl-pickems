@@ -174,7 +174,7 @@ export default function WeekSelector({
                           {weekStatus.status === 'completed' && weekStatus.points !== null && (
                             <div className="points-earned">
                               <span className="points-label">Points: </span>
-                              <span className="points-value">{weekStatus.points}</span>
+                              <span className="card-value">{weekStatus.points}</span>
                             </div>
                           )}
                         </div>

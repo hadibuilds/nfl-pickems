@@ -383,7 +383,7 @@ function HomePage() {
           <div className="homepage-glass-content h-full flex flex-col">
             <h3 className="homepage-section-title text-center">Season Performance</h3>
             <div className="flex-1 flex flex-col justify-center">
-              <div className="flex space-x-4 items-center justify-center">
+              <div className="flex space-x-3 items-center justify-center">
               <div className="flex flex-col items-center">
                 <ProgressRing percentage={seasonPerf.overall || 0} size={80} strokeWidth={6} fontSize="text-base" />
                 <div className="mt-2 text-center"><div className="text-xs font-bold" style={{ color: '#C2185B' }}>Overall</div></div>
@@ -413,7 +413,7 @@ function HomePage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <h3 className="homepage-section-title">Leaderboard</h3>
-                {lastUpdated && (
+              {/*{lastUpdated && (
                   <span className="homepage-section-content" style={{ color: '#6b7280', fontSize: '11px', fontFamily: 'roboto-condensed, sans-serif' }}>
                     Updated @ {lastUpdated.toLocaleTimeString('en-US', { 
                       hour12: false, 
@@ -421,7 +421,7 @@ function HomePage() {
                       minute: '2-digit',
                     })}
                   </span>
-                )}
+                )} */}
               </div>
               <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
             </div>
