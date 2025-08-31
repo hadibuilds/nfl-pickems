@@ -22,9 +22,11 @@ from django.utils.html import strip_tags
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import default_storage
+from nfl_pickems.settings.base import INVITE_CODE
 import os
 
 User = get_user_model()
+
 
 @ensure_csrf_cookie
 @api_view(['GET'])
@@ -93,8 +95,10 @@ class RegisterView(APIView):
             last_name = request.data.get("last_name", "").strip().title()    # Capitalize first letter
             invite_code = request.data.get("inviteCode")
 
+            INV = INVITE_CODE
+
             # Validation
-            if invite_code != settings.INVITE_CODE:
+            if invite_code != INV:
                 return Response({"detail": "Invalid invite code"}, status=400)
 
             if not username or not email or not password:
