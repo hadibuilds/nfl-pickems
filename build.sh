@@ -13,6 +13,11 @@ rm -f backend/templates/index.html
 echo "📦 Installing Python packages..."
 pip install -r requirements.txt
 
+echo "📦 Create media directories..."
+mkdir -p /opt/render/project/src/media/avatars
+chmod 755 /opt/render/project/src/media
+chmod 755 /opt/render/project/src/media/avatars
+
 # Build React
 echo "📦 Installing & building frontend (Render)..."
 cd frontend

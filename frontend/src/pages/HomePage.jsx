@@ -504,28 +504,14 @@ function HomePage() {
       {/* CTA */}
       <div className="flex justify-center">
         <button 
-          className="homepage-glass-section px-8 py-4 text-white font-bold text-lg transition-all duration-300 hover:scale-105 hover:-translate-y-1 shadow-xl inline-flex items-center space-x-3 group relative overflow-hidden"
+          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-semibold rounded-2xl transition-all duration-200 hover:scale-105 shadow-lg inline-flex items-center space-x-2"
           onClick={goToWeeks}
         >
-          <div className="homepage-glass-content flex items-center space-x-3 relative z-10">
-            <div className="p-2 rounded-full bg-gradient-to-r from-purple-500 to-violet-600 shadow-lg group-hover:shadow-purple-500/50 transition-all duration-300">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <span className="tracking-wide">Start Playing</span>
-            <div className="flex items-center ml-2 group-hover:translate-x-1 transition-transform duration-300">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </div>
-          </div>
-          
-          {/* Animated background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-violet-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          
-          {/* Subtle shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="12" cy="12" rx="6" ry="9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M12 3v18M5.5 7.5l13 0M5.5 16.5l13 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <span>View All Games</span>
         </button>
       </div>
     </PageLayout>

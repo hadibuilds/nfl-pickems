@@ -53,3 +53,25 @@ else:
     # Option 2: Local storage with nginx/apache serving
     MEDIA_ROOT = config('MEDIA_ROOT', default=str(BASE_DIR / 'media'))
     # Media files will be served by your web server (nginx/apache) with authentication
+
+LOGGING = {
+      'version': 1,
+      'disable_existing_loggers': False,
+      'handlers': {
+          'console': {
+              'class': 'logging.StreamHandler',
+          },
+      },
+      'loggers': {
+          'accounts.media_views': {
+              'handlers': ['console'],
+              'level': 'DEBUG',
+              'propagate': False,
+          },
+          'django.request': {
+              'handlers': ['console'],
+              'level': 'DEBUG',
+              'propagate': False,
+          },
+      },
+}

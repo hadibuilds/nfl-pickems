@@ -131,7 +131,7 @@ export default function PeekSelector() {
                   <div className="week-card-middle">
                     <div className="points-earned">
                       <span className="points-label">Locked games:</span>
-                      <span className="points-value">{getLockedGamesCount(weekNo)}</span>
+                      <span className="card-value">{getLockedGamesCount(weekNo)}</span>
                     </div>
                   </div>
                 </div>
