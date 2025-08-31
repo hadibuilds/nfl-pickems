@@ -50,9 +50,8 @@ if config('USE_CLOUD_STORAGE', default=False, cast=bool):
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 else:
-    # Option 2: Local storage with nginx/apache serving
     MEDIA_ROOT = config('MEDIA_ROOT', default=str(BASE_DIR / 'media'))
-    # Media files will be served by your web server (nginx/apache) with authentication
+    MEDIA_URL = '/media/'
 
 LOGGING = {
       'version': 1,
