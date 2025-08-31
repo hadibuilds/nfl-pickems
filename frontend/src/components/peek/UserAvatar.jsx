@@ -52,6 +52,7 @@ export default function UserAvatar({ user, size = 28, currentUsername }) {
 
   const initials = getInitials(user?.username);
   const backgroundColor = getUserColor(user?.username);
+  const hasAvatar = user?.avatar;
 
   // Detect touch (no hover)
   const isTouch = typeof window !== 'undefined'
@@ -118,7 +119,7 @@ export default function UserAvatar({ user, size = 28, currentUsername }) {
           width: `${size}px`,
           height: `${size}px`,
           borderRadius: '50%',
-          backgroundColor,
+          backgroundColor: hasAvatar ? 'transparent' : backgroundColor,
           color: 'white',
           display: 'flex',
           alignItems: 'center',
@@ -135,9 +136,13 @@ export default function UserAvatar({ user, size = 28, currentUsername }) {
           boxShadow: 'none',
           padding: 0,
           lineHeight: 1,
+          backgroundImage: hasAvatar ? `url(${user.avatar})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         }}
       >
-        {initials}
+        {!hasAvatar && initials}
       </button>
 
       {/* Tooltip */}

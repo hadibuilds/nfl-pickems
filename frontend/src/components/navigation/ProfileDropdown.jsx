@@ -99,6 +99,7 @@ export default function ProfileDropdown() {
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
           className={`profile-avatar-trigger ${isOpen ? 'active' : ''}`}
+          profilePicture={userInfo.avatar}
         />
       </div>
 

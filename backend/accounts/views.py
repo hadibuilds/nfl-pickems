@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.contrib.auth import authenticate
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.shortcuts import redirect
@@ -19,6 +20,9 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.files.storage import default_storage
+import os
 
 User = get_user_model()
 
@@ -33,11 +37,18 @@ def get_csrf_token(request):
 def whoami(request):
     user = request.user
     if user.is_authenticated:
+        avatar_url = None
+        if user.avatar:
+            avatar_url = request.build_absolute_uri(user.avatar.url)
+        
         return Response({
             "username": user.username,
             "email": user.email,
-            "first_name": user.first_name,  # Add first name
-            "last_name": user.last_name,    # Add last name
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "bio": user.bio,
+            "avatar": avatar_url,
+            "email_notifications": user.email_notifications,
         })
     else:
         return Response({"user": None})
@@ -309,3 +320,148 @@ def password_reset_email_redirect(request, uidb64, token):
     Redirect from email links to React frontend with token parameters
     """
     return redirect(f'/#/password-reset-confirm/{uidb64}/{token}/')
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def update_profile_api(request):
+    """
+    API endpoint to update user profile information
+    """
+    try:
+        user = request.user
+        data = request.data
+        
+        # Update profile fields
+        if 'first_name' in data:
+            user.first_name = data['first_name'].strip().title()
+        if 'last_name' in data:
+            user.last_name = data['last_name'].strip().title()
+        if 'email' in data:
+            new_email = data['email'].strip().lower()
+            # Check if email is already taken by another user
+            if User.objects.filter(email__iexact=new_email).exclude(id=user.id).exists():
+                return Response({"detail": "Email already in use"}, status=status.HTTP_400_BAD_REQUEST)
+            user.email = new_email
+        if 'bio' in data:
+            user.bio = data['bio']
+        if 'email_notifications' in data:
+            user.email_notifications = bool(data['email_notifications'])
+        
+        user.save()
+        
+        # Return updated user data
+        avatar_url = None
+        if user.avatar:
+            avatar_url = request.build_absolute_uri(user.avatar.url)
+        
+        return Response({
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "bio": user.bio,
+            "avatar": avatar_url,
+            "email_notifications": user.email_notifications,
+        })
+        
+    except Exception as e:
+        return Response({"detail": "Failed to update profile"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AvatarUploadAPIView(APIView):
+    """
+    API endpoint for uploading user avatar
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def post(self, request):
+        try:
+            user = request.user
+            
+            if 'avatar' not in request.FILES:
+                return Response({"detail": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            avatar_file = request.FILES['avatar']
+            
+            # Validate file type
+            allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+            if avatar_file.content_type not in allowed_types:
+                return Response({
+                    "detail": "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate file size (5MB max)
+            max_size = 5 * 1024 * 1024  # 5MB
+            if avatar_file.size > max_size:
+                return Response({
+                    "detail": "File size too large. Maximum size is 5MB."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Delete old avatar if exists
+            if user.avatar:
+                if default_storage.exists(user.avatar.name):
+                    default_storage.delete(user.avatar.name)
+            
+            # Save new avatar
+            user.avatar = avatar_file
+            user.save()
+            
+            # Return new avatar URL
+            avatar_url = request.build_absolute_uri(user.avatar.url)
+            return Response({"avatar": avatar_url})
+            
+        except Exception as e:
+            return Response({
+                "detail": "Failed to upload avatar"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def delete(self, request):
+        """Delete user avatar"""
+        try:
+            user = request.user
+            
+            if user.avatar:
+                if default_storage.exists(user.avatar.name):
+                    default_storage.delete(user.avatar.name)
+                user.avatar = None
+                user.save()
+            
+            return Response({"detail": "Avatar deleted"})
+            
+        except Exception as e:
+            return Response({
+                "detail": "Failed to delete avatar"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password_api(request):
+    """
+    API endpoint to change user password
+    """
+    try:
+        user = request.user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        
+        if not current_password or not new_password:
+            return Response({"detail": "Current password and new password are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verify current password
+        if not authenticate(username=user.username, password=current_password):
+            return Response({"detail": "Current password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate new password
+        try:
+            validate_password(new_password, user)
+        except DjangoValidationError as e:
+            return Response({"detail": list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Set new password
+        user.set_password(new_password)
+        user.save()
+        
+        return Response({"detail": "Password changed successfully"})
+        
+    except Exception as e:
+        return Response({"detail": "Failed to change password"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

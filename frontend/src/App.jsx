@@ -26,6 +26,7 @@ import PasswordResetPage from './pages/PasswordResetPage';
 import PasswordResetConfirmPage from './pages/PasswordResetConfirmPage';
 import PeekPage from './pages/PeekPage';
 import PeekSelector from './pages/PeekSelector';
+import SettingsPage from './pages/SettingsPage';
 import PrivateRoute from './components/common/PrivateRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import NavigationManager from './components/navigation/NavigationManager';
@@ -423,9 +424,7 @@ export default function App() {
               path="/settings"
               element={
                 <PrivateRoute>
-                  <div style={{ padding: '80px 20px 20px', color: 'white', textAlign: 'center' }}>
-                    <h1>Coming Soon!</h1>
-                  </div>
+                  <SettingsPage />
                 </PrivateRoute>
               }
             />

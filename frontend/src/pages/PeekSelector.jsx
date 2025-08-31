@@ -52,7 +52,7 @@ export default function PeekSelector() {
   };
 
   return (
-    <PageLayout backgroundColor="#1E1E20" maxWidth="max-w-4xl">
+    <PageLayout backgroundColor="#1E1E20" maxWidth="max-w-6xl">
       {/* Header copy matches your typography; Bebas font is global */}
       <div className="mx-auto mb-6 text-center">
         <h1 className="text-5xl text-white font-bebas">Peek at Picks</h1>
@@ -72,7 +72,7 @@ export default function PeekSelector() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {availableWeeks.map((weekNo) => {
             const status =
               currentWeek == null
@@ -130,7 +130,7 @@ export default function PeekSelector() {
                   </div>
                   <div className="week-card-middle">
                     <div className="points-earned">
-                      <span className="points-label">Peek-able games:</span>
+                      <span className="points-label">Locked games:</span>
                       <span className="points-value">{getLockedGamesCount(weekNo)}</span>
                     </div>
                   </div>
