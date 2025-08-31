@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import Cropper from 'react-easy-crop';
 import toast from 'react-hot-toast';
 import PageLayout from '../components/common/PageLayout';
+import { useAuth } from '../context/AuthContext';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { userInfo, refreshUser } = useAuth();
   
   // User data state
   const [user, setUser] = useState(null);
@@ -18,7 +20,6 @@ export default function SettingsPage() {
     first_name: '',
     last_name: '',
     email: '',
-    email_notifications: true
   });
   
   // Password change state
@@ -45,40 +46,21 @@ export default function SettingsPage() {
     return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
   };
   
-  // Fetch user data
+  // Use user data from AuthContext
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/accounts/api/whoami/`, {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          if (userData.username) {
-            setUser(userData);
-            setFormData({
-              first_name: userData.first_name || '',
-              last_name: userData.last_name || '',
-              email: userData.email || '',
-              email_notifications: userData.email_notifications ?? true
-            });
-          } else {
-            navigate('/login');
-          }
-        } else {
-          navigate('/login');
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        navigate('/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchUserData();
-  }, [API_BASE, navigate]);
+    if (userInfo) {
+      setUser(userInfo);
+      setFormData({
+        first_name: userInfo.first_name || '',
+        last_name: userInfo.last_name || '',
+        email: userInfo.email || '',
+      });
+      setLoading(false);
+    } else {
+      // If no user info, redirect to login
+      navigate('/login');
+    }
+  }, [userInfo, navigate]);
   
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -117,6 +99,9 @@ export default function SettingsPage() {
       if (response.ok) {
         const updatedUser = await response.json();
         setUser(updatedUser);
+        
+        // Refresh user data in AuthContext to update everywhere
+        await refreshUser();
         toast.success('Profile updated successfully!');
       } else {
         const errorData = await response.json();
@@ -264,10 +249,22 @@ export default function SettingsPage() {
       
       if (response.ok) {
         const result = await response.json();
+        
+        // Update local state immediately for instant feedback
         setUser(prev => ({ ...prev, avatar: result.avatar }));
         setShowCropper(false);
         setAvatarSrc(null);
-        toast.success('Avatar updated successfully!');
+        
+        // Refresh user data in AuthContext to update everywhere
+        const refreshResult = await refreshUser();
+        if (refreshResult.success) {
+          // Add a slight delay for visual feedback
+          setTimeout(() => {
+            toast.success('Avatar updated successfully! 📸');
+          }, 200);
+        } else {
+          toast.success('Avatar updated successfully!');
+        }
       } else {
         const errorData = await response.json();
         toast.error(errorData.detail || 'Failed to upload avatar');
@@ -294,7 +291,11 @@ export default function SettingsPage() {
       });
       
       if (response.ok) {
+        // Update local state immediately
         setUser(prev => ({ ...prev, avatar: null }));
+        
+        // Refresh user data in AuthContext
+        await refreshUser();
         toast.success('Avatar deleted successfully!');
       } else {
         toast.error('Failed to delete avatar');
@@ -325,7 +326,7 @@ export default function SettingsPage() {
     <PageLayout backgroundColor="#1E1E20" maxWidth="max-w-4xl">
       {/* Header */}
       <div className="mx-auto mb-8 text-center">
-        <h1 className="text-4xl md:text-5xl text-white font-bebas">Settings</h1>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-2 font-bebas tracking-wider">Settings</h1>
         <p className="mt-2 text-sm text-gray-400">
           Manage your profile and preferences
         </p>
@@ -334,8 +335,9 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {/* Avatar Section */}
         <div className="lg:col-span-1">
-          <div className="bg-[#2d2d2d] rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">Avatar</h2>
+          <div className="homepage-glass-section p-6">
+            <div className="homepage-glass-content">
+              <h2 className="homepage-section-title">Avatar</h2>
             
             <div className="flex flex-col items-center">
               {/* Avatar Display */}
@@ -373,7 +375,7 @@ export default function SettingsPage() {
                 )}
               </div>
               
-              <p className="text-xs text-gray-400 mt-2 text-center">
+              <p className="text-xs homepage-section-content mt-2 text-center" style={{ color: '#9ca3af' }}>
                 JPG, PNG, GIF or WebP. Max 5MB.
               </p>
             </div>
@@ -385,15 +387,19 @@ export default function SettingsPage() {
               onChange={handleAvatarSelect}
               className="hidden"
             />
+            </div>
           </div>
         </div>
         
         {/* Profile Form */}
         <div className="lg:col-span-2">
-          <form onSubmit={handleSaveProfile} className="bg-[#2d2d2d] rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-white mb-6">Profile Information</h2>
+          <form onSubmit={handleSaveProfile} className="homepage-glass-section p-6">
+            <div className="homepage-glass-content">
+              <h2 className="homepage-section-title">Profile Information</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* 2x2 on >=sm, 1-col on phones */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              {/* First Name (top-left) */}
               <div>
                 <label htmlFor="first_name" className="block text-sm font-medium text-gray-300 mb-2">
                   First Name
@@ -408,7 +414,8 @@ export default function SettingsPage() {
                   required
                 />
               </div>
-              
+
+              {/* Last Name (top-right) */}
               <div>
                 <label htmlFor="last_name" className="block text-sm font-medium text-gray-300 mb-2">
                   Last Name
@@ -422,39 +429,43 @@ export default function SettingsPage() {
                   className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
                 />
               </div>
-            </div>
-            
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                required
-              />
-            </div>
-            
-            
-            <div className="mb-6">
-              <label className="flex items-center">
+
+              {/* Email (bottom-left) */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address
+                </label>
                 <input
-                  type="checkbox"
-                  name="email_notifications"
-                  checked={formData.email_notifications}
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
-                  className="rounded border-gray-600 text-violet-600 focus:ring-violet-500 bg-[#1f1f1f]"
+                  autoComplete="email"
+                  className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  required
                 />
-                <span className="ml-2 text-sm text-gray-300">
-                  Receive email notifications
-                </span>
-              </label>
+              </div>
+
+              {/* Username (bottom-right, read-only/disabled) */}
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  id="username"
+                  value={user?.username || ''}
+                  disabled               // ← unclickable & excluded from submit
+                  readOnly               // ← conveys intent
+                  autoComplete="username"
+                  className="w-full px-3 py-2 rounded-lg text-white bg-gray-800 border border-gray-700 opacity-60 cursor-not-allowed"
+                  aria-disabled="true"
+                  tabIndex={-1}
+                />
+                <p className="mt-1 text-xs text-gray-400">This cannot be changed.</p>
+              </div>
             </div>
-            
             <div className="flex gap-4">
               <button
                 type="submit"
@@ -472,13 +483,15 @@ export default function SettingsPage() {
                 Cancel
               </button>
             </div>
+            </div>
           </form>
         </div>
         
         {/* Password Change Section */}
         <div className="lg:col-span-3 mt-8">
-          <form onSubmit={handleChangePassword} className="bg-[#2d2d2d] rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-white mb-6">Change Password</h2>
+          <form onSubmit={handleChangePassword} className="homepage-glass-section p-6">
+            <div className="homepage-glass-content">
+              <h2 className="homepage-section-title">Change Password</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -506,6 +519,7 @@ export default function SettingsPage() {
                   name="new_password"
                   value={passwordData.new_password}
                   onChange={handlePasswordInputChange}
+                  autocomplete="new-password"
                   className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
                   required
                 />
@@ -521,13 +535,14 @@ export default function SettingsPage() {
                   name="confirm_password"
                   value={passwordData.confirm_password}
                   onChange={handlePasswordInputChange}
+                  autocomplete="new-password"
                   className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
                   required
                 />
               </div>
             </div>
             
-            <div className="mt-6 flex gap-4">
+            <div className="mt-6 flex gap-4 justify-center">
               <button
                 type="submit"
                 disabled={changingPassword}
@@ -544,6 +559,7 @@ export default function SettingsPage() {
                 Clear
               </button>
             </div>
+            </div>
           </form>
         </div>
       </div>
@@ -551,8 +567,9 @@ export default function SettingsPage() {
       {/* Avatar Cropper Modal */}
       {showCropper && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#2d2d2d] rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold text-white mb-4">Crop Your Avatar</h3>
+          <div className="homepage-glass-section p-6 w-full max-w-md">
+            <div className="homepage-glass-content">
+              <h3 className="homepage-section-title">Crop Your Avatar</h3>
             
             <div className="relative w-full h-64 mb-4 bg-black rounded-lg overflow-hidden">
               <Cropper
@@ -601,6 +618,7 @@ export default function SettingsPage() {
               >
                 Cancel
               </button>
+            </div>
             </div>
           </div>
         </div>

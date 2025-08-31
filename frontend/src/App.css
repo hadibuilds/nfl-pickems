@@ -6,7 +6,8 @@
  * FIXED: iOS double tap issue with touch-device hover state prevention
  */
  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
-
+ @import url('https://fonts.googleapis.com/css2?family=General+Sans&display=swap');
+ @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap');
  #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -16,6 +17,10 @@
 
 .font-bebas {
   font-family: 'Bebas Neue', cursive;
+}
+
+.font-dates {
+  font-family: 'Merriweather', serif;
 }
 
 .logo {
@@ -634,7 +639,18 @@
   border-radius: 4px;
 }
 
-/* Focus states */
+/* GLOBAL FOCUS OUTLINE REMOVAL - No more double rings! */
+*:focus,
+*:focus-visible,
+button:focus,
+button:focus-visible,
+a:focus,
+a:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Focus states - Only for game buttons where we actually want visual feedback */
 .team-button:focus,
 .team-button:focus-visible,
 .propbet-button:focus,
@@ -1005,9 +1021,9 @@
   align-items: flex-start;
 }
 
-.week-card-middle {
+.week-card-right {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
 }
 
@@ -1031,7 +1047,8 @@
 
 /* Week dates */
 .week-dates {
-  font-size: clamp(0.8rem, 4vw, 1rem);
+  font-family: 'Merriweather', serif;
+  font-size: clamp(0.8rem, 3vw, 0.9rem);
   font-weight: 500;
   align-items: flex-start;
   text-align: left;
@@ -1095,11 +1112,6 @@
   color: #9CA3AF;
 }
 
-/* Responsive adjustments */
-@media (max-width: 414px) {
-  .week-card { aspect-ratio: 2 / 1; padding: 0.75rem; }
-  .week-header { margin-bottom: 0.25rem; }
-}
 
 @media (min-width: 1024px) {
   .week-card { aspect-ratio: 2 / 1; }
@@ -1109,65 +1121,119 @@
    FLOATING SUBMIT BUTTON STYLES
    ================================================================= */
 
-/* Default desktop/tablet styling (unchanged) */
+/* Enhanced responsive floating submit button - optimal proportions across all devices */
 .floating-submit-button {
   position: fixed;
-  bottom: 20px;
+  bottom: max(24px, env(safe-area-inset-bottom, 0px) + 16px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
 
   background-color: #F59E0B;
   color: white;
-  padding: 14px 20px;
-  border-radius: 25px;
   border: none;
   font-weight: 600;
-  font-size: 15px;
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
   white-space: nowrap;
   font-family: inherit;
   outline: none;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  
   /* Improved touch interaction */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
+  
+  /* Responsive sizing based on screen size - moderate proportions */
+  padding: clamp(10px, 1.8vh, 12px) clamp(16px, 3vw, 20px);
+  font-size: clamp(13px, 2.2vh, 14px);
+  border-radius: clamp(16px, 3vh, 20px);
+  
+  /* Minimum touch target size for accessibility */
+  min-height: 40px;
+  min-width: 90px;
+}
+
+/* Hover state (desktop only) */
+@media (hover: hover) and (pointer: fine) {
+  .floating-submit-button:hover {
+    background-color: #D97706;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+    transform: translateX(-50%) translateY(-2px);
+  }
 }
 
 /* Active state for touch feedback */
 .floating-submit-button:active {
-  transform: translateX(-50%) scale(0.97);
+  transform: translateX(-50%) scale(0.96);
 }
 
-/* Mobile adjustments only */
+/* Loading/submitting state */
+.floating-submit-button.submitting {
+  background-color: #D97706 !important;
+  cursor: not-allowed !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Mobile optimizations */
 @media (max-width: 768px) {
-  /* iOS = centered */
+  .floating-submit-button {
+    /* Better mobile sizing - moderate size */
+    padding: clamp(12px, 2.4vh, 14px) clamp(20px, 4.5vw, 24px);
+    font-size: clamp(13px, 2.8vh, 15px);
+    border-radius: clamp(18px, 3.5vh, 22px);
+    min-height: 42px;
+    min-width: 100px;
+    
+    /* Improved mobile positioning with safe area */
+    bottom: max(5vh, env(safe-area-inset-bottom, 0px) + 20px);
+  }
+
+  /* iOS-specific centering */
   body.is-ios .floating-submit-button {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
-    bottom: 3vh;
-
-    /* slightly dynamic sizing for mobile */
-    padding: clamp(10px, 2vw, 16px) clamp(16px, 4vw, 28px);
-    font-size: clamp(14px, 3.5vw, 18px);
-    border-radius: clamp(18px, 5vw, 30px);
   }
 
-  /* Android = bottom-right */
+  /* Android FAB positioning (bottom-right) */
   body.is-android .floating-submit-button {
     left: auto;
-    right: 4vw;
+    right: max(6vw, 24px);
     transform: none;
-    bottom: 3vh;
+  }
 
-    padding: clamp(10px, 2vw, 16px) clamp(16px, 4vw, 28px);
-    font-size: clamp(14px, 3.5vw, 18px);
-    border-radius: clamp(18px, 5vw, 30px);
+  /* Mobile active states with platform-specific transforms */
+  body.is-ios .floating-submit-button:active {
+    transform: translateX(-50%) scale(0.96);
+  }
+
+  body.is-android .floating-submit-button:active {
+    transform: scale(0.96);
+  }
+}
+
+/* Large phones/small tablets (iPhone 14 Pro Max, etc.) */
+@media (min-width: 414px) and (max-width: 768px) {
+  .floating-submit-button {
+    padding: clamp(13px, 2.8vh, 16px) clamp(22px, 5vw, 28px);
+    font-size: clamp(14px, 3vh, 16px);
+    border-radius: clamp(19px, 4vh, 24px);
+    min-width: 110px;
+  }
+}
+
+/* Desktop/tablet - keep reasonable size */
+@media (min-width: 769px) {
+  .floating-submit-button {
+    padding: 14px 24px;
+    font-size: 15px;
+    border-radius: 26px;
+    bottom: 24px;
+    min-width: 120px;
   }
 }
   
@@ -1470,50 +1536,89 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 24px;
-  padding: 20px 24px;
-  background-color: #2d2d2d;
-  border-radius: 16px;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 50%, #2a2a2a 100%);
+  border-radius: 20px;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 1px 0px rgba(255, 255, 255, 0.05) inset,
+    0 -1px 0px rgba(0, 0, 0, 0.2) inset;
+  border: 1px solid rgba(139, 92, 246, 0.2);
   
-  max-width: 30rem;
+  max-width: 32rem;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add subtle animated gradient overlay */
+.result-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(139, 92, 246, 0.03), 
+    transparent
+  );
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  50% { left: -100%; }
+  100% { left: 100%; }
 }
 
 /* Top stats row */
 .result-stats-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  min-width: 80px;
 }
 
 .stat-label {
-  font-size: 0.85rem;
-  color: #9CA3AF;
-  font-weight: 500;
+  font-size: 0.8rem;
+  color: #B0B7C3;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .stat-value {
-  font-size: 1.4rem;
-  font-weight: bold;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .points-value {
-  color: white;
-  font-size: 1.6rem;
+  color: #F59E0B;
+  font-size: 1.8rem;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
 }
 
 /* Results breakdown container */
@@ -1521,94 +1626,135 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Individual result sections */
 .result-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
 }
 
 .result-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
 }
 
 .correct-fraction {
-  color: white;
-  font-weight: bold;
+  color: #E5E7EB;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
 }
 
-/* Progress bar styling */
+/* Enhanced progress bar styling */
 .result-progress-bar {
   width: 100%;
-  height: 8px;
-  background-color: #444;
-  border-radius: 4px;
+  height: 12px;
+  background: linear-gradient(90deg, #1a1a1a, #333);
+  border-radius: 8px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .result-progress-fill {
   height: 100%;
-  transition: width 0.3s ease;
-  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add animated glow effect to progress bars */
+.result-progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: progressGlow 2s ease-in-out infinite;
+}
+
+@keyframes progressGlow {
+  0% { left: -100%; }
+  50% { left: -100%; }
+  100% { left: 100%; }
 }
 
 .moneyline-fill {
-  background-color: #8B5CF6;
+  background: linear-gradient(90deg, #8B5CF6, #A855F7);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
 }
 
 .propbet-fill {
-  background-color: #F59E0B;
+  background: linear-gradient(90deg, #F59E0B, #FBBF24);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
 }
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-  .result-banner {
-    width: 70vw; /* Match the game-box mobile width */
-    margin-left: auto;
-    margin-right: auto;
-  }
-  
   .result-stats-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 8px 16px;
-    margin-bottom: 20px;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
   }
 
   .stat-group {
-    display: contents;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    min-width: auto;
+    width: 100%;
   }
 
   .stat-label {
-    font-size: 0.9rem;
-    text-align: center;
-    grid-row: 1;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
   }
 
   .stat-value {
-    font-size: 1.2rem;
-    text-align: center;
-    grid-row: 2;
+    font-size: 1.4rem;
+    margin: 0;
   }
 
   .points-value {
-    font-size: 1.4rem;
+    font-size: 1.6rem;
+  }
+  
+  .result-section {
+    padding: 14px;
   }
   
   .result-section-header {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
   
   .results-breakdown {
-    gap: 10px;
+    gap: 14px;
+  }
+  
+  .result-progress-bar {
+    height: 10px;
   }
 }
 
@@ -2170,5 +2316,214 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 @media (max-width: 360px) {
   .peek-title {
     font-size: clamp(0.95rem, 4vw, 1.05rem);
+  }
+}
+
+/* =================================================================
+   HOMEPAGE GLASSMORPHISM SECTIONS - Matching Result Banner Style
+   ================================================================= */
+
+/* Base glassmorphism styling for homepage sections */
+.homepage-glass-section {
+  background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 50%, #2a2a2a 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 1px 0px rgba(255, 255, 255, 0.06) inset,
+    0 -1px 0px rgba(0, 0, 0, 0.2) inset,
+    0 0 20px rgba(139, 92, 246, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.homepage-glass-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 1px 0px rgba(255, 255, 255, 0.08) inset,
+    0 -1px 0px rgba(0, 0, 0, 0.25) inset,
+    0 0 25px rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Subtle animated gradient overlay */
+.homepage-glass-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg, 
+    transparent, 
+    rgba(139, 92, 246, 0.06), 
+    transparent
+  );
+  animation: slide-glass 4s ease-in-out infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.homepage-glass-section:hover::before {
+  opacity: 1;
+}
+
+/* Season performance specific styling - purple theme */
+.season-performance-glass {
+  background: linear-gradient(135deg, #2a1f3d 0%, #1a1625 50%, #241a35 100%);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 1px 0px rgba(139, 92, 246, 0.08) inset,
+    0 -1px 0px rgba(0, 0, 0, 0.3) inset,
+    0 0 20px rgba(139, 92, 246, 0.12);
+}
+
+.season-performance-glass:hover {
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 1px 0px rgba(139, 92, 246, 0.12) inset,
+    0 -1px 0px rgba(0, 0, 0, 0.35) inset,
+    0 0 30px rgba(139, 92, 246, 0.18);
+}
+
+/* Animation keyframes */
+@keyframes slide-glass {
+  0% { left: -100%; }
+  50% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Responsive text for homepage sections */
+.homepage-section-title {
+  font-size: clamp(1rem, 2.5vw, 1.125rem);
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: clamp(0.75rem, 2vw, 1rem);
+  position: relative;
+  z-index: 1;
+}
+
+.homepage-section-content {
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+  line-height: 1.4;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure grid items maintain equal height */
+.homepage-grid-equal-height {
+  display: grid;
+  grid-template-rows: 1fr;
+  align-items: stretch;
+}
+
+/* Content inside glass sections */
+.homepage-glass-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+  .homepage-glass-section {
+    margin-bottom: clamp(0.75rem, 2vw, 1rem);
+    border-radius: 16px;
+    padding: clamp(0.75rem, 3vw, 1rem) !important;
+  }
+  
+  .homepage-section-title {
+    font-size: clamp(0.875rem, 3vw, 1rem) !important;
+    margin-bottom: clamp(0.5rem, 1.5vw, 0.75rem) !important;
+  }
+  
+  .homepage-glass-section:hover {
+    transform: translateY(-1px); /* Reduced movement on mobile */
+  }
+  
+  /* Ensure equal height on mobile grid */
+  .homepage-grid-equal-height {
+    grid-template-columns: 1fr;
+    gap: clamp(0.75rem, 3vw, 1rem);
+  }
+  
+  /* Mobile season performance rings - keep horizontal */
+  .season-performance-glass .flex.space-x-4 {
+    flex-direction: row;
+    gap: clamp(0.5rem, 2vw, 1rem);
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+}
+
+/* Tablet specific adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .homepage-glass-section {
+    border-radius: 18px;
+    padding: clamp(1rem, 2vw, 1.25rem) !important;
+  }
+  
+  .homepage-section-title {
+    font-size: clamp(1rem, 2vw, 1.125rem) !important;
+  }
+  
+  .homepage-grid-equal-height {
+    gap: clamp(0.75rem, 2vw, 1rem);
+  }
+}
+
+/* Large screen adjustments */
+@media (min-width: 1025px) {
+  .homepage-glass-section {
+    border-radius: 20px;
+    padding: 1rem !important;
+  }
+  
+  .homepage-glass-section:hover {
+    transform: translateY(-3px); /* More dramatic on desktop */
+  }
+  
+  .homepage-section-title {
+    font-size: 1.125rem !important;
+  }
+  
+  .homepage-grid-equal-height {
+    gap: 0.75rem;
+  }
+}
+
+/* Ensure consistent spacing and alignment */
+.homepage-glass-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: flex-start;
+}
+
+/* Perfect grid alignment - force equal heights */
+@media (min-width: 769px) {
+  .homepage-grid-equal-height > .homepage-glass-section {
+    height: 100%;
+    min-height: 300px;
+  }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+  .homepage-section-title {
+    font-size: clamp(0.8rem, 4vw, 0.95rem) !important;
+  }
+  
+  .homepage-section-content {
+    font-size: clamp(0.7rem, 3vw, 0.8rem) !important;
   }
 }

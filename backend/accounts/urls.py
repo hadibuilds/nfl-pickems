@@ -15,6 +15,7 @@ from .views import (
     AvatarUploadAPIView,
     change_password_api,
 )
+from .media_views import SecureMediaView
 
 urlpatterns = [
     path('api/csrf/', get_csrf_token, name='csrf-token'),
@@ -36,4 +37,7 @@ urlpatterns = [
     # EMAIL REDIRECT: These URLs are used in emails to redirect to React frontend
     path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),  
     path('password-reset-confirm/<uidb64>/<token>/', password_reset_email_redirect, name='password_reset_confirm'),
+    
+    # SECURE MEDIA SERVING: Authenticated-only access to user files
+    path('secure-media/<path:file_path>', SecureMediaView.as_view(), name='secure_media'),
 ]

@@ -96,6 +96,7 @@ export default function LoginPage() {
               value={formData.identifier}
               onChange={handleChange}
               disabled={isLoggingIn} // ✅ Disable input during login
+              autocomplete="username"
               className={`w-full px-4 py-3 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white transition ${
                 isLoggingIn ? 'opacity-50 cursor-not-allowed' : ''
               }`}
@@ -118,7 +119,8 @@ export default function LoginPage() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                disabled={isLoggingIn} // ✅ Disable input during login
+                disabled={isLoggingIn} // Disable input during login
+                autocomplete="current-password"
                 className={`w-full px-4 py-3 pr-10 rounded-md focus:ring-2 focus:ring-violet-500 outline-none text-base text-white transition ${
                   isLoggingIn ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
@@ -128,7 +130,7 @@ export default function LoginPage() {
                 }}
               />
               <div
-                onClick={isLoggingIn ? undefined : toggleVisibility} // ✅ Disable eye toggle during login
+                onClick={isLoggingIn ? undefined : toggleVisibility} // Disable eye toggle during login
                 className={`absolute inset-y-0 right-3 flex items-center ${
                   isLoggingIn ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:text-gray-300'
                 }`}
@@ -147,7 +149,7 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={formData.remember}
                 onChange={handleChange}
-                disabled={isLoggingIn} // ✅ Disable checkbox during login
+                disabled={isLoggingIn} // Disable checkbox during login
                 className="mr-2"
               />
               Remember me
@@ -164,7 +166,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isLoggingIn} // ✅ MAIN PROTECTION: Disable button during login
+            disabled={isLoggingIn} // Disable button during login
             className={`w-full font-semibold py-3 rounded-md text-base text-white transition ${
               isLoggingIn 
                 ? 'opacity-50 cursor-not-allowed bg-violet-500' 
@@ -192,7 +194,7 @@ export default function LoginPage() {
             to="/signup" 
             className={`hover:underline ${isLoggingIn ? 'cursor-not-allowed' : ''}`} 
             style={{ color: '#8B5CF6' }}
-            onClick={isLoggingIn ? (e) => e.preventDefault() : undefined} // ✅ Disable signup link during login
+            onClick={isLoggingIn ? (e) => e.preventDefault() : undefined} // Disable signup link during login
           >
             Sign up
           </Link>

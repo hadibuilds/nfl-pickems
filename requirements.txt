@@ -17,6 +17,8 @@ parso==0.8.4
 pexpect==4.9.0
 Pillow==11.1.0
 prompt_toolkit==3.0.50
+django-storages==1.14.4
+boto3==1.35.84
 psycopg2-binary==2.9.10
 ptyprocess==0.7.0
 pure_eval==0.2.3

@@ -51,13 +51,17 @@ const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage 
   );
 };
 
-const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue" }) => {
+const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", onClick, clickable = false }) => {
   const colorClasses = {
     blue: "from-blue-500 to-blue-600", purple: "from-purple-500 to-purple-600",
-    green: "from-green-500 to-green-600", orange: "from-orange-500 to-orange-600", red: "from-red-500 to-red-600"
+    green: "from-green-500 to-green-600", orange: "from-orange-500 to-orange-600", red: "from-red-500 to-red-500"
   };
-  return (
-    <div className={`bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-6 text-white shadow-lg`}>
+  
+  const baseClasses = `bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-6 text-white shadow-lg transition-all duration-200`;
+  const interactiveClasses = clickable ? `${baseClasses} cursor-pointer hover:scale-105 hover:shadow-xl active:scale-95` : baseClasses;
+  
+  const CardContent = () => (
+    <>
       <div className="flex items-center justify-between">
         <Icon className="w-8 h-8 opacity-80" />
         {trend && trend !== 'same' && (
@@ -69,6 +73,16 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue" })
       <div className="text-3xl font-bold mb-1">{value}</div>
       <div className="text-sm opacity-90">{title}</div>
       {subtitle && <div className="text-xs opacity-70 mt-1">{subtitle}</div>}
+    </>
+  );
+  
+  return clickable ? (
+    <button className={interactiveClasses} onClick={onClick} type="button">
+      <CardContent />
+    </button>
+  ) : (
+    <div className={interactiveClasses}>
+      <CardContent />
     </div>
   );
 };
@@ -94,7 +108,7 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
   return (
     <div className={`flex items-center justify-between p-3 rounded-lg ${entry.isCurrentUser ? 'bg-purple-500/20 border border-purple-500/30' : 'hover:bg-gray-700/50'}`}>
       <div className="flex items-center space-x-3">
-        <UserAvatar username={entry.username} profilePicture={entry.avatar} size="sm" className="w-8 h-8 flex-shrink-0" />
+        <UserAvatar username={entry.username} size="sm" className="w-8 h-8 flex-shrink-0" />
         <div className="flex items-center justify-center">{renderRankBadge(medalTier)}</div>
         <div>
           <div className={`font-medium text-sm ${entry.isCurrentUser ? 'text-purple-300' : 'text-white'}`}>
@@ -330,9 +344,9 @@ function HomePage() {
     <PageLayout>
       {/* Header */}
       <div className="mb-6 text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-          Welcome back, <span style={{ color: '#8B5CF6' }}>{userInfo.username}</span>!
-        </h2>
+        <h1 className="font-bebas text-4xl sm:text-5xl md:text-6xl font-bold mb-2 tracking-wider">
+          Welcome back, <span style={{ color: '#8B5CF6' }}>{userInfo.first_name || userInfo.username}</span>!
+        </h1>
         <p style={{ color: '#9ca3af', fontSize: '14px' }}>
           Week {userData.currentWeek} • Ready to make your picks?
         </p>
@@ -341,136 +355,177 @@ function HomePage() {
       {/* Weekly/Live Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={`+${rankMeta.rankChange || 0} this week`} icon={Trophy} trend={rankMeta.trend} color="green" />
-        <StatCard title="Pending Picks" value={userData.pendingPicks || 0} subtitle="for this week" icon={Clock} color="purple" />
-        <StatCard title="Points Behind" value={userData.pointsFromLeader || 0} subtitle="from 1st place" icon={Target} color="orange" />
+        <StatCard 
+          title="Pending Picks" 
+          value={userData.pendingPicks || 0} 
+          subtitle="for this week" 
+          icon={Clock} 
+          color="purple" 
+          clickable={true}
+          onClick={() => navigate(`/week/${userData.currentWeek}`)}
+        />
+        <StatCard 
+          title="Points Behind" 
+          value={userData.pointsFromLeader || 0} 
+          subtitle="from 1st place" 
+          icon={Target} 
+          color="orange"
+          clickable={true}
+          onClick={() => navigate('/peek')}
+        />
         <StatCard title="Best Category" value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'} subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`} icon={Eye} color="blue" />
       </div>
 
       {/* Season Performance + Leaderboard */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6" style={{ gridTemplateRows: 'minmax(0, 1fr)' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 homepage-grid-equal-height">
         {/* Season Performance Rings */}
-        <div className="rounded-2xl p-4 flex flex-col items-center justify-center mb-6">
-          <h3 className="text-lg font-semibold mb-4">Season Performance</h3>
-          <div className="flex space-x-4 items-center">
-            <div className="flex flex-col items-center">
-              <ProgressRing percentage={seasonPerf.overall || 0} size={80} strokeWidth={6} fontSize="text-base" />
-              <div className="mt-2 text-center"><div className="text-xs font-bold" style={{ color: '#C2185B' }}>Overall</div></div>
+        <div className="homepage-glass-section season-performance-glass p-4">
+          <div className="homepage-glass-content h-full flex flex-col">
+            <h3 className="homepage-section-title text-center">Season Performance</h3>
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="flex space-x-4 items-center justify-center">
+              <div className="flex flex-col items-center">
+                <ProgressRing percentage={seasonPerf.overall || 0} size={80} strokeWidth={6} fontSize="text-base" />
+                <div className="mt-2 text-center"><div className="text-xs font-bold" style={{ color: '#C2185B' }}>Overall</div></div>
+              </div>
+              <div className="flex flex-col items-center">
+                <ProgressRing percentage={seasonPerf.ml || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
+                <div className="mt-2 text-center"><div className="text-xs font-bold text-green-400">Moneyline</div></div>
+              </div>
+              <div className="flex flex-col items-center">
+                <ProgressRing percentage={seasonPerf.prop || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
+                <div className="mt-2 text-center"><div className="text-xs font-bold text-blue-400">Prop Bets</div></div>
+              </div>
             </div>
-            <div className="flex flex-col items-center">
-              <ProgressRing percentage={seasonPerf.ml || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
-              <div className="mt-2 text-center"><div className="text-xs font-bold text-green-400">Moneyline</div></div>
+              <div className="mt-4 text-center">
+                <div className="text-2xl font-bold" style={{ color: "#F9A825" }}>
+                  {seasonPerf.totalPoints || 0}
+                </div>
+                <div className="text-sm homepage-section-content" style={{ color: '#9ca3af' }}>Total Points (season)</div>
+              </div>
             </div>
-            <div className="flex flex-col items-center">
-              <ProgressRing percentage={seasonPerf.prop || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
-              <div className="mt-2 text-center"><div className="text-xs font-bold text-blue-400">Prop Bets</div></div>
-            </div>
-          </div>
-          <div className="mt-4 text-center">
-            <div className="text-2xl font-bold" style={{ color: "#F9A825" }}>
-              {seasonPerf.totalPoints || 0}
-            </div>
-            <div className="text-sm" style={{ color: '#9ca3af' }}>Total Points (season)</div>
           </div>
         </div>
 
         {/* Leaderboard (with trend arrows) */}
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d' }}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <h3 className="text-lg font-semibold">Leaderboard</h3>
-              {lastUpdated && (
-                <span style={{ color: '#6b7280', fontSize: '11px' }}>
-                  Updated @ {lastUpdated.toLocaleTimeString('en-US', { 
-                    hour12: false, 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                  })}
-                </span>
+        <div className="homepage-glass-section p-4">
+          <div className="homepage-glass-content">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <h3 className="homepage-section-title">Leaderboard</h3>
+                {lastUpdated && (
+                  <span className="homepage-section-content" style={{ color: '#6b7280', fontSize: '11px', fontFamily: 'roboto-condensed, sans-serif' }}>
+                    Updated @ {lastUpdated.toLocaleTimeString('en-US', { 
+                      hour12: false, 
+                      hour: '2-digit', 
+                      minute: '2-digit',
+                    })}
+                  </span>
+                )}
+              </div>
+              <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
+            </div>
+            <div className="space-y-0">
+              {!standingsLoaded ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+                </div>
+              ) : (
+                <>
+                  {standings.map((entry, idx) => (
+                    <LeaderboardRow key={entry.username || idx} entry={entry} standingsForMedals={standingsForMedals} />
+                  ))}
+                </>
               )}
             </div>
-            <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
+            <button className="w-full mt-3 text-xs font-medium transition-colors hover:text-purple-300 homepage-section-content" style={{ color: '#8B5CF6' }} onClick={() => navigate('/standings')}>
+              View Full Standings →
+            </button>
           </div>
-          <div className="space-y-0">
-            {!standingsLoaded ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-              </div>
-            ) : (
-              <>
-                {standings.map((entry, idx) => (
-                  <LeaderboardRow key={entry.username || idx} entry={entry} standingsForMedals={standingsForMedals} />
-                ))}
-              </>
-            )}
-          </div>
-          <button className="w-full mt-3 text-xs font-medium transition-colors hover:text-purple-300" style={{ color: '#8B5CF6' }} onClick={() => navigate('/standings')}>
-            View Full Standings →
-          </button>
         </div>
 
         {/* Recent Games */}
-        <div className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#2d2d2d', minHeight: '300px', maxHeight: '400px', height: 'auto', display: 'flex', flexDirection: 'column' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Recent Games</h3>
-            <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
-          </div>
-          <div 
-            className="space-y-3 recent-games-scrollable" 
-            style={{ 
-              flex: '1 1 0%',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              paddingRight: '4px',
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#4B5563 #2d2d2d',
-              WebkitOverflowScrolling: 'touch',
-              minHeight: '0'
-            }}
-          >
-            {(userData?.recentGames || []).map(game => {
-              // Handle the new 3-way color logic
-              const status = game.correctStatus || (game.correct ? 'full' : 'none');
-              const isGreen = status === 'full';
-              const isYellow = status === 'partial';
-              
-              const borderColor = isGreen ? 'border-green-500' : isYellow ? 'border-yellow-500' : 'border-red-500';
-              const bgColor = isGreen ? 'rgba(16, 185, 129, 0.1)' : isYellow ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-              const badgeBg = isGreen ? 'bg-green-500/20' : isYellow ? 'bg-yellow-500/20' : 'bg-red-500/20';
-              const badgeText = isGreen ? 'text-green-300' : isYellow ? 'text-yellow-300' : 'text-red-300';
-              const badge = isGreen ? '✓' : isYellow ? '◐' : '✗';
-              
-              return (
-                <div key={game.id} className={`p-4 rounded-lg border-l-4 transition-all duration-200 ${borderColor}`} style={{ backgroundColor: bgColor }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-sm font-medium" style={{ color: '#9ca3af' }}>{game.awayTeam} @ {game.homeTeam}</div>
-                      <div className={`text-xs px-2 py-1 rounded-full ${badgeBg} ${badgeText}`}>{badge}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-semibold text-white">+{game.points} pts</div>
-                      <div className="text-xs" style={{ color: '#9ca3af' }}>Pick: {game.userPick}</div>
+        <div className="homepage-glass-section p-4" style={{ height: 'auto', display: 'flex', flexDirection: 'column' }}>
+          <div className="homepage-glass-content">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="homepage-section-title">Recent Games</h3>
+              <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
+            </div>
+            <div 
+              className="space-y-3 recent-games-scrollable homepage-section-content" 
+              style={{ 
+                flex: '1 1 0%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                paddingRight: '4px',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#4B5563 #2d2d2d',
+                WebkitOverflowScrolling: 'touch',
+                minHeight: '0'
+              }}
+            >
+              {(userData?.recentGames || []).map(game => {
+                // Handle the new 3-way color logic
+                const status = game.correctStatus || (game.correct ? 'full' : 'none');
+                const isGreen = status === 'full';
+                const isYellow = status === 'partial';
+                
+                const borderColor = isGreen ? 'border-green-500' : isYellow ? 'border-yellow-500' : 'border-red-500';
+                const bgColor = isGreen ? 'rgba(16, 185, 129, 0.1)' : isYellow ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+                const badgeBg = isGreen ? 'bg-green-500/20' : isYellow ? 'bg-yellow-500/20' : 'bg-red-500/20';
+                const badgeText = isGreen ? 'text-green-300' : isYellow ? 'text-yellow-300' : 'text-red-300';
+                const badge = isGreen ? '✓' : isYellow ? '◐' : '✗';
+                
+                return (
+                  <div key={game.id} className={`p-4 rounded-lg border-l-4 transition-all duration-200 ${borderColor}`} style={{ backgroundColor: bgColor }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-sm font-medium homepage-section-content" style={{ color: '#9ca3af' }}>{game.awayTeam} @ {game.homeTeam}</div>
+                        <div className={`text-xs px-2 py-1 rounded-full ${badgeBg} ${badgeText}`}>{badge}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-white">+{game.points} pts</div>
+                        <div className="text-xs homepage-section-content" style={{ color: '#9ca3af' }}>Pick: {game.userPick}</div>
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+              {(!userData?.recentGames || userData.recentGames.length === 0) && (
+                <div className="text-center py-4 homepage-section-content" style={{ color: '#9ca3af' }}>
+                  <p>No recent completed games</p>
                 </div>
-              );
-            })}
-            {(!userData?.recentGames || userData.recentGames.length === 0) && (
-              <div className="text-center py-4" style={{ color: '#9ca3af' }}>
-                <p>No recent completed games</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* CTA */}
       <div className="flex justify-center">
-        <button className="px-6 py-3 rounded-2xl text-white font-semibold text-base transition-all duration-200 hover:scale-105 shadow-lg inline-flex items-center space-x-2"
-          style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }} onClick={goToWeeks}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-          </svg>
-          <span>View All Games</span>
+        <button 
+          className="homepage-glass-section px-8 py-4 text-white font-bold text-lg transition-all duration-300 hover:scale-105 hover:-translate-y-1 shadow-xl inline-flex items-center space-x-3 group relative overflow-hidden"
+          onClick={goToWeeks}
+        >
+          <div className="homepage-glass-content flex items-center space-x-3 relative z-10">
+            <div className="p-2 rounded-full bg-gradient-to-r from-purple-500 to-violet-600 shadow-lg group-hover:shadow-purple-500/50 transition-all duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <span className="tracking-wide">Start Playing</span>
+            <div className="flex items-center ml-2 group-hover:translate-x-1 transition-transform duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </div>
+          
+          {/* Animated background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-violet-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          {/* Subtle shine effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
         </button>
       </div>
     </PageLayout>

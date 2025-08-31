@@ -30,8 +30,6 @@ export default function MoneyLineSection({
 
   return (
     <div className="game-section money-line">
-      {/* Correct prediction badge (keep for results display) */}
-      {getCorrectPredictionBadge(game, true, moneyLineSelections, propBetSelections, gameResults)}
       
       {/* Team buttons with logos */}
       <div className="button-row">
