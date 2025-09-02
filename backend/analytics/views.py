@@ -1153,7 +1153,10 @@ def peek_data(request):
         })
         
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Peek data fetch error: %s", str(e))
         return Response(
-            {"detail": "Failed to fetch peek data", "error": str(e)}, 
+            {"detail": "Failed to fetch peek data"}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

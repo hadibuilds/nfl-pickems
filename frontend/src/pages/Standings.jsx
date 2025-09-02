@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PageLayout from '../components/common/PageLayout';
 import UserAvatar from '../components/common/UserAvatar';
-import { Trophy, Award } from 'lucide-react';
+import { Trophy, Award, TrendingUp, TrendingDown } from 'lucide-react';
 import {
   sortStandings,
   calculateRankWithTies,
@@ -15,6 +15,7 @@ import {
 export default function Standings() {
   const { userInfo } = useAuth();
   const [standings, setStandings] = useState([]);
+  const [leaderboardData, setLeaderboardData] = useState([]);
   const [weeks, setWeeks] = useState([]);
   const [currentWeek, setCurrentWeek] = useState(null);    // ← authoritative current week
   const [selectedWeek, setSelectedWeek] = useState(null);
@@ -28,15 +29,26 @@ export default function Standings() {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        // standings + list of weeks available
-        const res = await fetch(`${API_BASE}/analytics/api/standings/`, { credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to load standings');
-        const data = await res.json();
-        setStandings(Array.isArray(data.standings) ? data.standings : []);
-        setWeeks(Array.isArray(data.weeks) ? [...data.weeks].sort((a, b) => a - b) : []);
+        // Fetch both standings and leaderboard data in parallel
+        const [standingsRes, leaderboardRes] = await Promise.all([
+          fetch(`${API_BASE}/analytics/api/standings/`, { credentials: 'include' }),
+          fetch(`${API_BASE}/analytics/api/leaderboard/?limit=100`, { credentials: 'include' })
+        ]);
+        
+        if (!standingsRes.ok) throw new Error('Failed to load standings');
+        const standingsData = await standingsRes.json();
+        setStandings(Array.isArray(standingsData.standings) ? standingsData.standings : []);
+        setWeeks(Array.isArray(standingsData.weeks) ? [...standingsData.weeks].sort((a, b) => a - b) : []);
+        
+        // Fetch leaderboard for trend data (season totals with rank_delta)
+        if (leaderboardRes.ok) {
+          const leaderboardData = await leaderboardRes.json();
+          setLeaderboardData(Array.isArray(leaderboardData.leaderboard) ? leaderboardData.leaderboard : []);
+        }
       } catch (err) {
         console.error('Failed to load standings:', err);
         setStandings([]);
+        setLeaderboardData([]);
         setWeeks([]);
       } finally {
         setLoading(false);
@@ -78,7 +90,10 @@ export default function Standings() {
     return weeks.filter((w) => w <= currentWeek);
   })().sort((a, b) => b - a); // show most recent first
 
-  const sortedStandings = sortStandings(standings, selectedWeek);
+  // Use leaderboard data for "All Weeks" view to get trends, otherwise use standings data
+  const sortedStandings = selectedWeek === null && leaderboardData.length > 0 
+    ? leaderboardData.sort((a, b) => b.total_points - a.total_points)
+    : sortStandings(standings, selectedWeek);
 
   const getContainerStyling = (isCurrentUser) => {
     let base = 'rounded-xl p-4 transition-all duration-300 border ';
@@ -182,14 +197,25 @@ export default function Standings() {
               <p className="text-gray-500">Check back later for results!</p>
             </div>
           ) : (
-            sortedStandings.map((entry) => {
+            sortedStandings.map((entry, index) => {
               const points = selectedWeek
                 ? (entry.weekly_scores?.[selectedWeek] ?? 0)
                 : (entry.total_points ?? 0);
               const isCurrentUser = String(entry.username) === String(userInfo?.username);
 
-              const displayRank = calculateRankWithTies(standings, entry.username, selectedWeek);
-              const medalTier = getMedalTier(standings, entry.username, selectedWeek);
+              // Use leaderboard data for All Weeks view, standings data for specific weeks
+              const isLeaderboardView = selectedWeek === null && leaderboardData.length > 0;
+              const displayRank = isLeaderboardView 
+                ? (entry.rank_dense || index + 1)
+                : calculateRankWithTies(standings, entry.username, selectedWeek);
+              const medalTier = isLeaderboardView
+                ? (index < 3 ? ['gold', 'silver', 'bronze'][index] : null)
+                : getMedalTier(standings, entry.username, selectedWeek);
+              
+              // Trend arrow logic for leaderboard view
+              const rankDelta = isLeaderboardView ? (entry.rank_delta || 0) : 0;
+              const showTrend = isLeaderboardView && rankDelta !== 0;
+              const trendDirection = rankDelta > 0 ? 'up' : 'down';
 
               return (
                 <div key={entry.username} className={getContainerStyling(isCurrentUser)}>
@@ -208,6 +234,12 @@ export default function Standings() {
                         {capitalizeFirstLetter(entry.first_name || entry.username)}
                       </div>
                     </div>
+                    {showTrend && (
+                      <div className={`flex items-center text-sm ${trendDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+                        {trendDirection === 'up' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                        <span className="ml-1">{Math.abs(rankDelta)}</span>
+                      </div>
+                    )}
                     <div className="text-2xl font-bold text-white">
                       {points}
                     </div>
