@@ -1,28 +1,24 @@
 version: 1
 applications:
-  - appRoot: frontend
-    frontend:
+  - frontend:
       phases:
         preBuild:
           commands:
-            - echo "🚀 [AMPLIFY] Building from ./frontend"
-            - echo "📂 Working dir:" && pwd && ls -la
-            - echo "🔢 Node version:" && node -v
-            - echo "📦 Installing deps (npm ci)…"
+            - echo PreBuild starting
+            - pwd
+            - ls -la
+            - node -v
             - npm ci
-            - echo "🔍 Env check: VITE_API_URL=${VITE_API_URL:-<empty>}"
+            - echo VITE_API_URL=$VITE_API_URL
         build:
           commands:
-            - echo "🔨 npm run build (must call vite build under the hood)…"
             - npm run build
-            - echo "📋 Verifying dist artifacts…"
-            - test -d dist || (echo "❌ dist/ missing" && exit 1)
-            - test -f dist/index.html || (echo "❌ dist/index.html missing" && exit 1)
+            - test -d dist || (echo "dist missing" && exit 1)
+            - test -f dist/index.html || (echo "index.html missing" && exit 1)
         postBuild:
           commands:
-            - echo "📊 Build stats:" && ls -la dist/ || true
-            - echo "📁 Assets:" && ls -la dist/assets/ 2>/dev/null || echo "No assets/"
-            - echo "✅ [AMPLIFY] Frontend build complete!"
+            - echo "Listing dist contents"
+            - ls -la dist || true
       artifacts:
         baseDirectory: dist
         files:
@@ -30,3 +26,4 @@ applications:
       cache:
         paths:
           - node_modules/**/*
+    appRoot: frontend
