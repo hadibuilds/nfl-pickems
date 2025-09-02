@@ -4,6 +4,7 @@ import Cropper from 'react-easy-crop';
 import toast from 'react-hot-toast';
 import PageLayout from '../components/common/PageLayout';
 import { useAuth } from '../context/AuthContext';
+import Modal from '../components/common/Modal';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -61,21 +62,7 @@ export default function SettingsPage() {
       navigate('/login');
     }
   }, [userInfo, navigate]);
-  
-  // Handle body scroll when modal is open
-  useEffect(() => {
-    if (showCropper) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [showCropper]);
-  
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -113,8 +100,6 @@ export default function SettingsPage() {
       if (response.ok) {
         const updatedUser = await response.json();
         setUser(updatedUser);
-        
-        // Refresh user data in AuthContext to update everywhere
         await refreshUser();
         toast.success('Profile updated successfully!');
       } else {
@@ -132,19 +117,15 @@ export default function SettingsPage() {
   // Handle password change form submission
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    
     if (passwordData.new_password !== passwordData.confirm_password) {
       toast.error('New passwords do not match');
       return;
     }
-    
     if (passwordData.new_password.length < 5) {
       toast.error('Password must be at least 5 characters long');
       return;
     }
-    
     setChangingPassword(true);
-    
     try {
       const response = await fetch(`${API_BASE}/accounts/api/change-password/`, {
         method: 'POST',
@@ -158,7 +139,6 @@ export default function SettingsPage() {
           new_password: passwordData.new_password
         })
       });
-      
       if (response.ok) {
         toast.success('Password changed successfully!');
         setPasswordData({
@@ -186,12 +166,10 @@ export default function SettingsPage() {
         toast.error('File size must be less than 5MB');
         return;
       }
-      
       if (!file.type.startsWith('image/')) {
         toast.error('Please select an image file');
         return;
       }
-      
       const reader = new FileReader();
       reader.onload = () => {
         setAvatarSrc(reader.result);
@@ -204,8 +182,8 @@ export default function SettingsPage() {
   };
   
   // Handle crop complete
-  const onCropComplete = (_, croppedAreaPixels) => {
-    setCroppedAreaPixels(croppedAreaPixels);
+  const onCropComplete = (_, croppedArea) => {
+    setCroppedAreaPixels(croppedArea);
   };
   
   // Create cropped image blob
@@ -214,20 +192,16 @@ export default function SettingsPage() {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const image = new Image();
-      
       return new Promise((resolve) => {
         image.onload = () => {
           const { width, height, x, y } = croppedAreaPixels;
-          
-          canvas.width = 400; // Fixed output size
+          canvas.width = 400;
           canvas.height = 400;
-          
           ctx.drawImage(
             image,
-            x, y, width, height,  // Source rectangle
-            0, 0, 400, 400        // Destination rectangle
+            x, y, width, height,
+            0, 0, 400, 400
           );
-          
           canvas.toBlob(resolve, 'image/jpeg', 0.9);
         };
         image.src = avatarSrc;
@@ -241,17 +215,14 @@ export default function SettingsPage() {
   // Upload cropped avatar
   const handleAvatarUpload = async () => {
     setAvatarUploading(true);
-    
     try {
       const croppedBlob = await createCroppedImage();
       if (!croppedBlob) {
         toast.error('Failed to process image');
         return;
       }
-      
       const formData = new FormData();
       formData.append('avatar', croppedBlob, 'avatar.jpg');
-      
       const response = await fetch(`${API_BASE}/accounts/api/avatar/`, {
         method: 'POST',
         headers: {
@@ -260,19 +231,13 @@ export default function SettingsPage() {
         credentials: 'include',
         body: formData
       });
-      
       if (response.ok) {
         const result = await response.json();
-        
-        // Update local state immediately for instant feedback
         setUser(prev => ({ ...prev, avatar: result.avatar }));
         setShowCropper(false);
         setAvatarSrc(null);
-        
-        // Refresh user data in AuthContext to update everywhere
         const refreshResult = await refreshUser();
         if (refreshResult.success) {
-          // Add a slight delay for visual feedback
           setTimeout(() => {
             toast.success('Avatar updated successfully! 📸');
           }, 200);
@@ -294,7 +259,6 @@ export default function SettingsPage() {
   // Delete avatar
   const handleDeleteAvatar = async () => {
     if (!window.confirm('Are you sure you want to delete your avatar?')) return;
-    
     try {
       const response = await fetch(`${API_BASE}/accounts/api/avatar/`, {
         method: 'DELETE',
@@ -303,12 +267,8 @@ export default function SettingsPage() {
         },
         credentials: 'include'
       });
-      
       if (response.ok) {
-        // Update local state immediately
         setUser(prev => ({ ...prev, avatar: null }));
-        
-        // Refresh user data in AuthContext
         await refreshUser();
         toast.success('Avatar deleted successfully!');
       } else {
@@ -352,55 +312,54 @@ export default function SettingsPage() {
           <div className="homepage-glass-section p-6">
             <div className="homepage-glass-content">
               <h2 className="homepage-section-title">Avatar</h2>
-            
-            <div className="flex flex-col items-center">
-              {/* Avatar Display */}
-              <div className="relative mb-4">
-                <div 
-                  className="w-32 h-32 rounded-full bg-gray-600 flex items-center justify-center text-2xl font-bold text-white overflow-hidden"
-                  style={{
-                    backgroundImage: user?.avatar ? `url(${user.avatar})` : 'none',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  {!user?.avatar && (
-                    user?.first_name?.charAt(0) || user?.username?.charAt(0) || 'U'
+              <div className="flex flex-col items-center">
+                {/* Avatar Display */}
+                <div className="relative mb-4">
+                  <div 
+                    className="w-32 h-32 rounded-full bg-gray-600 flex items-center justify-center text-4xl font-bold text-white overflow-hidden"
+                    style={{
+                      backgroundImage: user?.avatar ? `url(${user.avatar})` : 'none',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
+                  >
+                    {!user?.avatar && (
+                      user?.first_name?.charAt(0) || user?.username?.charAt(0) || 'U'
+                    )}
+                  </div>
+                </div>
+                
+                {/* Avatar Actions */}
+                <div className="flex flex-col gap-2 w-full">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+                  >
+                    Upload New Avatar
+                  </button>
+                  
+                  {user?.avatar && (
+                    <button
+                      onClick={handleDeleteAvatar}
+                      className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                    >
+                      Delete Avatar
+                    </button>
                   )}
                 </div>
-              </div>
-              
-              {/* Avatar Actions */}
-              <div className="flex flex-col gap-2 w-full">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
-                >
-                  Upload New Avatar
-                </button>
                 
-                {user?.avatar && (
-                  <button
-                    onClick={handleDeleteAvatar}
-                    className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-                  >
-                    Delete Avatar
-                  </button>
-                )}
+                <p className="text-xs homepage-section-content mt-2 text-center" style={{ color: '#9ca3af' }}>
+                  JPG, PNG, GIF or WebP. Max 5MB.
+                </p>
               </div>
               
-              <p className="text-xs homepage-section-content mt-2 text-center" style={{ color: '#9ca3af' }}>
-                JPG, PNG, GIF or WebP. Max 5MB.
-              </p>
-            </div>
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarSelect}
-              className="hidden"
-            />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarSelect}
+                className="hidden"
+              />
             </div>
           </div>
         </div>
@@ -410,93 +369,93 @@ export default function SettingsPage() {
           <form onSubmit={handleSaveProfile} className="homepage-glass-section p-6">
             <div className="homepage-glass-content">
               <h2 className="homepage-section-title">Profile Information</h2>
-            
-            {/* 2x2 on >=sm, 1-col on phones */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              {/* First Name (top-left) */}
-              <div>
-                <label htmlFor="first_name" className="block text-sm font-medium text-gray-300 mb-2">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  id="first_name"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  required
-                />
+              {/* 2x2 on >=sm, 1-col on phones */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                {/* First Name */}
+                <div>
+                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-300 mb-2">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    id="first_name"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    required
+                  />
+                </div>
+
+                {/* Last Name */}
+                <div>
+                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-300 mb-2">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    id="last_name"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    autoComplete="email"
+                    className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    required
+                  />
+                </div>
+
+                {/* Username (read-only) */}
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    value={user?.username || ''}
+                    disabled
+                    readOnly
+                    autoComplete="username"
+                    className="w-full px-3 py-2 rounded-lg text-white bg-gray-800 border border-gray-700 opacity-60 cursor-not-allowed"
+                    aria-disabled="true"
+                    tabIndex={-1}
+                  />
+                  <p className="mt-1 text-xs text-gray-400">This cannot be changed.</p>
+                </div>
               </div>
 
-              {/* Last Name (top-right) */}
-              <div>
-                <label htmlFor="last_name" className="block text-sm font-medium text-gray-300 mb-2">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  id="last_name"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                />
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 px-6 py-3 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-800 text-white rounded-lg font-medium transition-colors"
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
               </div>
-
-              {/* Email (bottom-left) */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  autoComplete="email"
-                  className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  required
-                />
-              </div>
-
-              {/* Username (bottom-right, read-only/disabled) */}
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  value={user?.username || ''}
-                  disabled               // ← unclickable & excluded from submit
-                  readOnly               // ← conveys intent
-                  autoComplete="username"
-                  className="w-full px-3 py-2 rounded-lg text-white bg-gray-800 border border-gray-700 opacity-60 cursor-not-allowed"
-                  aria-disabled="true"
-                  tabIndex={-1}
-                />
-                <p className="mt-1 text-xs text-gray-400">This cannot be changed.</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 px-6 py-3 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-800 text-white rounded-lg font-medium transition-colors"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
             </div>
           </form>
         </div>
@@ -506,138 +465,136 @@ export default function SettingsPage() {
           <form onSubmit={handleChangePassword} className="homepage-glass-section p-6">
             <div className="homepage-glass-content">
               <h2 className="homepage-section-title">Change Password</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="current_password" className="block text-sm font-medium text-gray-300 mb-2">
-                  Current Password
-                </label>
-                <input
-                  type="password"
-                  id="current_password"
-                  name="current_password"
-                  value={passwordData.current_password}
-                  onChange={handlePasswordInputChange}
-                  className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="current_password" className="block text-sm font-medium text-gray-300 mb-2">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    id="current_password"
+                    name="current_password"
+                    value={passwordData.current_password}
+                    onChange={handlePasswordInputChange}
+                    className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="new_password" className="block text-sm font-medium text-gray-300 mb-2">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    id="new_password"
+                    name="new_password"
+                    value={passwordData.new_password}
+                    onChange={handlePasswordInputChange}
+                    autoComplete="new-password"
+                    className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-300 mb-2">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    id="confirm_password"
+                    name="confirm_password"
+                    value={passwordData.confirm_password}
+                    onChange={handlePasswordInputChange}
+                    autoComplete="new-password"
+                    className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    required
+                  />
+                </div>
               </div>
               
-              <div>
-                <label htmlFor="new_password" className="block text-sm font-medium text-gray-300 mb-2">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  id="new_password"
-                  name="new_password"
-                  value={passwordData.new_password}
-                  onChange={handlePasswordInputChange}
-                  autocomplete="new-password"
-                  className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  required
-                />
+              <div className="mt-6 flex gap-4 justify-center">
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white rounded-lg font-medium transition-colors"
+                >
+                  {changingPassword ? 'Changing Password...' : 'Change Password'}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setPasswordData({ current_password: '', new_password: '', confirm_password: '' })}
+                  className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Clear
+                </button>
               </div>
-              
-              <div>
-                <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-300 mb-2">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  id="confirm_password"
-                  name="confirm_password"
-                  value={passwordData.confirm_password}
-                  onChange={handlePasswordInputChange}
-                  autocomplete="new-password"
-                  className="w-full px-3 py-2 bg-[#1f1f1f] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="mt-6 flex gap-4 justify-center">
-              <button
-                type="submit"
-                disabled={changingPassword}
-                className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white rounded-lg font-medium transition-colors"
-              >
-                {changingPassword ? 'Changing Password...' : 'Change Password'}
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => setPasswordData({ current_password: '', new_password: '', confirm_password: '' })}
-                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
-              >
-                Clear
-              </button>
-            </div>
             </div>
           </form>
         </div>
       </div>
-      
-      {/* Avatar Cropper Modal */}
-      {showCropper && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 overflow-hidden" style={{ zIndex: 9999 }}>
-          <div className="homepage-glass-section p-4 sm:p-6 w-full max-w-md">
-            <div className="homepage-glass-content">
-              <h3 className="homepage-section-title">Crop Your Avatar</h3>
-            
-            <div className="relative w-full h-48 sm:h-64 mb-4 bg-black rounded-lg overflow-hidden">
-              <Cropper
-                image={avatarSrc}
-                crop={crop}
-                zoom={zoom}
-                aspect={1}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-                cropShape="round"
-                showGrid={false}
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Zoom
-              </label>
-              <input
-                type="range"
-                min={1}
-                max={3}
-                step={0.1}
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={handleAvatarUpload}
-                disabled={avatarUploading}
-                className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-800 text-white rounded-lg transition-colors"
-              >
-                {avatarUploading ? 'Uploading...' : 'Save Avatar'}
-              </button>
-              
-              <button
-                onClick={() => {
-                  setShowCropper(false);
-                  setAvatarSrc(null);
-                }}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-            </div>
-          </div>
-          </div>
+
+      {/* Avatar Cropper Modal (Portal + scroll lock handled inside Modal component) */}
+      <Modal
+        isOpen={showCropper}
+        onClose={() => {
+          setShowCropper(false);
+          setAvatarSrc(null);
+        }}
+        ariaLabel="Crop your avatar"
+      >
+        <h3 className="homepage-section-title">Crop Your Avatar</h3>
+
+        <div className="relative w-full h-48 sm:h-64 mb-4 bg-black rounded-lg overflow-hidden">
+          <Cropper
+            image={avatarSrc}
+            crop={crop}
+            zoom={zoom}
+            aspect={1}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={onCropComplete}
+            cropShape="round"
+            showGrid={false}
+          />
         </div>
-      )}
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Zoom
+          </label>
+          <input
+            type="range"
+            min={1}
+            max={3}
+            step={0.1}
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            className="w-full"
+          />
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={handleAvatarUpload}
+            disabled={avatarUploading}
+            className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-800 text-white rounded-lg transition-colors"
+          >
+            {avatarUploading ? 'Uploading...' : 'Save Avatar'}
+          </button>
+          <button
+            onClick={() => {
+              setShowCropper(false);
+              setAvatarSrc(null);
+            }}
+            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </Modal>
     </PageLayout>
   );
 }
