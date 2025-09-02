@@ -149,7 +149,7 @@ local_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
-prod_spa_origins = ["https://pickems.fun", "https://www.pickems.fun"]
+prod_spa_origins = ["https://pickems.fun", "https://www.pickems.fun", "https://new-amplify.dnice32pxn4n2.amplifyapp.com"]
 
 CORS_ALLOWED_ORIGINS = csv(
     "CORS_ALLOWED_ORIGINS",
