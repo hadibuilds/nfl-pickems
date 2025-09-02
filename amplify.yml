@@ -1,11 +1,11 @@
 version: 1
 applications:
-  - frontend:
+  - appRoot: frontend
+    frontend:
       phases:
         preBuild:
           commands:
             - echo "🚀 [AMPLIFY] Building frontend for deployment..."
-            - cd frontend
             - echo "🧼 Cleaning previous builds and caches..."
             - rm -rf dist/
             - rm -rf node_modules/.cache/
@@ -53,10 +53,9 @@ applications:
             - echo "✅ [AMPLIFY] Frontend build complete!"
             - echo "📁 Build output ready in:" && pwd && echo "/dist/"
       artifacts:
-        baseDirectory: frontend/dist
+        baseDirectory: dist
         files:
           - '**/*'
       cache:
         paths:
-          - frontend/node_modules/**/*
-  - appRoot: frontend
+          - node_modules/**/*
