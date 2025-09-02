@@ -1,8 +1,13 @@
-# admin.py (fully updated)
+# admin.py (drop-in)
 from django import forms
 from django.contrib import admin, messages
-from django.db import transaction
+from django.db import transaction, IntegrityError
 import logging
+
+from django.utils import timezone                      # ✅ for awareness checks
+from datetime import timezone as dt_timezone            # ✅ Django 5+: use Python's UTC
+from zoneinfo import ZoneInfo                           # ✅ for PT window logic
+from datetime import datetime
 
 from .models import Window, Game, PropBet
 from analytics.services.window_stats_optimized import (
@@ -11,6 +16,42 @@ from analytics.services.window_stats_optimized import (
 )
 
 logger = logging.getLogger(__name__)
+
+# ---------- Helpers for window derivation (PT rules) ----------
+PACIFIC = ZoneInfo("America/Los_Angeles")
+
+def slot_for_pacific_time(dt_pt: datetime) -> str:
+    """
+    Slot rules (PT):
+      - morning:   kickoff before 1:00 PM PT
+      - afternoon: 1:00 PM PT to 4:59 PM PT (inclusive of 5:00 exactly in your prior logic)
+      - late:      5:00 PM PT or later
+    """
+    h, m = dt_pt.hour, dt_pt.minute
+    if h < 13:
+        return "morning"
+    if h < 17 or (h == 17 and m == 0):
+        return "afternoon"
+    return "late"
+
+def ensure_window_for(season: int, start_time_utc: datetime) -> Window:
+    """Map a UTC kickoff to a Window keyed by its Pacific date + slot."""
+    start_pt = start_time_utc.astimezone(PACIFIC)
+    window_date = start_pt.date()
+    slot = slot_for_pacific_time(start_pt)
+    win, _ = Window.objects.get_or_create(
+        season=season,
+        date=window_date,
+        slot=slot,
+        defaults={"is_complete": False},
+    )
+    return win
+
+def derive_season_from_kickoff(start_time_utc: datetime) -> int:
+    """NFL season: Jan–Feb belong to the *previous* year; Mar–Dec to the current year (in PT)."""
+    dt_pt = start_time_utc.astimezone(PACIFIC)
+    return (dt_pt.year - 1) if dt_pt.month in (1, 2) else dt_pt.year
+
 
 # ---------- Forms with safe, dynamic dropdowns ----------
 
@@ -48,6 +89,15 @@ class GameAdminForm(forms.ModelForm):
         if win not in {home, away}:
             raise forms.ValidationError("Winner must match the home or away team.")
         return win
+
+    # ✅ Normalize to UTC (Python's tz) and reject naive datetimes
+    def clean_start_time(self):
+        dt = self.cleaned_data.get("start_time")
+        if dt is None:
+            return dt
+        if timezone.is_naive(dt):
+            raise forms.ValidationError("start_time must be timezone-aware")
+        return dt.astimezone(dt_timezone.utc)
 
 
 class PropBetAdminForm(forms.ModelForm):
@@ -95,7 +145,6 @@ class WindowAdmin(admin.ModelAdmin):
                 try:
                     recompute_window_optimized(wid, actor=request.user)
                 except WindowCalculationError:
-                    # Soft-fail if someone clicks the action repeatedly
                     logger.info("Refresh throttled for window %s", wid)
                 except Exception:
                     logger.exception("Refresh failed for window %s", wid)
@@ -140,11 +189,30 @@ class GameAdmin(admin.ModelAdmin):
         prev_winner = None
         prev_window_id = None
         if change:
-            old = type(obj).objects.only("winner", "window_id").get(pk=obj.pk)
-            prev_winner = old.winner
-            prev_window_id = old.window_id
+            try:
+                old = type(obj).objects.only("winner", "window_id", "start_time").get(pk=obj.pk)
+                prev_winner = old.winner
+                prev_window_id = old.window_id
+            except type(obj).DoesNotExist:
+                prev_winner = None
+                prev_window_id = None
 
-        super().save_model(request, obj, form, change)
+        # ✅ Ensure season & window from kickoff (so the form doesn't need them)
+        if obj.start_time and not obj.season:
+            obj.season = derive_season_from_kickoff(obj.start_time)
+        if obj.start_time and obj.season:
+            obj.window = ensure_window_for(obj.season, obj.start_time)
+
+        try:
+            super().save_model(request, obj, form, change)
+        except IntegrityError as e:
+            logger.exception("Game save failed (IntegrityError).")
+            self.message_user(request, f"Save failed: {e}", messages.ERROR)
+            return
+        except Exception:
+            logger.exception("Game save failed (admin).")
+            self.message_user(request, "Save failed — see server logs for details.", messages.ERROR)
+            return
 
         # Decide what changed
         winner_changed = (not change) or (prev_winner != obj.winner)
@@ -152,9 +220,13 @@ class GameAdmin(admin.ModelAdmin):
 
         # Grade & schedule recompute via model hook
         if winner_changed:
-            obj.finalize(obj.winner)  # grades ML + schedules recompute for obj.window_id
+            try:
+                obj.finalize(obj.winner)  # grades ML + schedules recompute for obj.window_id
+            except Exception:
+                logger.exception("Finalize failed for game_id=%s", obj.pk)
+                self.message_user(request, "Saved, but finalize failed — check logs.", messages.ERROR)
 
-        # If the game moved windows, we also need to recompute the previous window
+        # If the game moved windows, also recompute the previous window
         if window_changed:
             def _do_prev():
                 try:
@@ -170,11 +242,13 @@ class GameAdmin(admin.ModelAdmin):
 
     @admin.action(description="Finalize selected games (grade & recompute)")
     def finalize_selected(self, request, queryset):
-        # Rely on Game.finalize(...) to schedule the recompute — no extra calls here.
         count = 0
         for g in queryset.select_related("window"):
-            g.finalize(g.winner)
-            count += 1
+            try:
+                g.finalize(g.winner)
+                count += 1
+            except Exception:
+                logger.exception("Finalize failed for game_id=%s (bulk action)", g.pk)
         self.message_user(request, f"Finalized {count} game(s). Recompute scheduled.", messages.SUCCESS)
 
 
@@ -192,21 +266,24 @@ class PropBetAdmin(admin.ModelAdmin):
     def save_model(self, request, obj: PropBet, form, change):
         prev_correct = None
         if change:
-            old = type(obj).objects.only("correct_answer").get(pk=obj.pk)
-            prev_correct = old.correct_answer
+            try:
+                old = type(obj).objects.only("correct_answer").get(pk=obj.pk)
+                prev_correct = old.correct_answer
+            except type(obj).DoesNotExist:
+                prev_correct = None
 
-        super().save_model(request, obj, form, change)
+        try:
+            super().save_model(request, obj, form, change)
 
-        answer_changed = (change and prev_correct != obj.correct_answer) or (not change and obj.correct_answer is not None)
-        if answer_changed:
-            obj.grade(obj.correct_answer)  # grades props + schedules recompute for obj.game.window_id
-            self.message_user(request, "Window stats updated.", messages.SUCCESS)
+            answer_changed = (change and prev_correct != obj.correct_answer) or (not change and obj.correct_answer is not None)
+            if answer_changed:
+                try:
+                    obj.grade(obj.correct_answer)  # grades props + schedules recompute for obj.game.window_id
+                    self.message_user(request, "Window stats updated.", messages.SUCCESS)
+                except Exception:
+                    logger.exception("Prop grade failed for prop_id=%s", obj.pk)
+                    self.message_user(request, "Saved, but grading failed — check logs.", messages.ERROR)
 
-    @admin.action(description="Grade selected prop bets (recompute)")
-    def grade_selected(self, request, queryset):
-        # Rely on PropBet.grade(...) to schedule the recompute — no extra calls here.
-        count = 0
-        for pb in queryset.select_related("game__window"):
-            pb.grade(pb.correct_answer)
-            count += 1
-        self.message_user(request, f"Graded {count} prop bet(s). Recompute scheduled.", messages.SUCCESS)
+        except Exception:
+            logger.exception("Prop save failed (admin).")
+            self.message_user(request, "Save failed — see server logs for details.", messages.ERROR)
