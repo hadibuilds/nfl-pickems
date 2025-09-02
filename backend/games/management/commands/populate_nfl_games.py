@@ -1,345 +1,222 @@
-"""
-Django management command to populate NFL game schedules from ESPN API
-Scrapes: season, week, home_team, away_team, start_time
-"""
+# admin.py (fully updated)
+from django import forms
+from django.contrib import admin, messages
+from django.db import transaction
+import logging
+from django.utils import timezone  # ✅ ensure UTC normalization in form clean
 
-import requests
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from .models import Window, Game, PropBet
+from analytics.services.window_stats_optimized import (
+    recompute_window_optimized,
+    WindowCalculationError,
+)
 
-from django.core.management.base import BaseCommand
-from django.utils import timezone
+logger = logging.getLogger(__name__)
 
-from games.models import Game, Window  # ⬅️ add Window
+# ---------- Forms with safe, dynamic dropdowns ----------
 
+class GameAdminForm(forms.ModelForm):
+    """Winner must be either home_team or away_team (or cleared)."""
+    winner = forms.ChoiceField(choices=[], required=False)
 
-PACIFIC = ZoneInfo("America/Los_Angeles")  # ⬅️ PT for windowing
+    class Meta:
+        model = Game
+        fields = "__all__"
 
-
-class Command(BaseCommand):
-    help = "Populate NFL games from ESPN API (idempotent by season+week+teams)"
-
-    # NFL team abbreviations mapping (kept from your legacy script)
-    TEAM_ABBREVIATIONS = {
-        'Arizona Cardinals': 'ARI',
-        'Atlanta Falcons': 'ATL',
-        'Baltimore Ravens': 'BAL',
-        'Buffalo Bills': 'BUF',
-        'Carolina Panthers': 'CAR',
-        'Chicago Bears': 'CHI',
-        'Cincinnati Bengals': 'CIN',
-        'Cleveland Browns': 'CLE',
-        'Dallas Cowboys': 'DAL',
-        'Denver Broncos': 'DEN',
-        'Detroit Lions': 'DET',
-        'Green Bay Packers': 'GB',
-        'Houston Texans': 'HOU',
-        'Indianapolis Colts': 'IND',
-        'Jacksonville Jaguars': 'JAX',
-        'Kansas City Chiefs': 'KC',
-        'Las Vegas Raiders': 'LV',
-        'Los Angeles Chargers': 'LAC',
-        'Los Angeles Rams': 'LAR',
-        'Miami Dolphins': 'MIA',
-        'Minnesota Vikings': 'MIN',
-        'New England Patriots': 'NE',
-        'New Orleans Saints': 'NO',
-        'New York Giants': 'NYG',
-        'New York Jets': 'NYJ',
-        'Philadelphia Eagles': 'PHI',
-        'Pittsburgh Steelers': 'PIT',
-        'San Francisco 49ers': 'SF',
-        'Seattle Seahawks': 'SEA',
-        'Tampa Bay Buccaneers': 'TB',
-        'Tennessee Titans': 'TEN',
-        'Washington Commanders': 'WAS'
-    }
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--season',
-            type=int,
-            default=2025,
-            help='NFL season year (default: 2025)'
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        home = self.instance.home_team if self.instance and self.instance.pk else (
+            self.data.get("home_team") or self.initial.get("home_team")
         )
-        parser.add_argument(
-            '--limit',
-            type=int,
-            default=10,
-            help='Limit number of games to process (0 = all)'
-        )
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Show what would be created/updated without writing'
-        )
-        parser.add_argument(
-            '--display-tz',
-            type=str,
-            default='America/New_York',
-            help='Timezone for printing times in dry-run (default: America/New_York)'
+        away = self.instance.away_team if self.instance and self.instance.pk else (
+            self.data.get("away_team") or self.initial.get("away_team")
         )
 
-    # ---------- Window helpers (new) ----------
+        choices = [("", "— Clear —")]
+        if home:
+            choices.append((home, home))
+        if away and away != home:
+            choices.append((away, away))
+        self.fields["winner"].choices = choices
+        self.fields["winner"].widget = forms.Select(choices=choices)
 
-    def _slot_for(self, dt_utc: datetime) -> str:
-        """Return window slot based on *Pacific* local time."""
-        dt_pt = timezone.localtime(dt_utc, PACIFIC)
-        h = dt_pt.hour
-        if h < 13:          # before 1pm PT
-            return "morning"
-        elif h < 17:        # 1–4:59pm PT
-            return "afternoon"
-        return "late"       # 5pm+ PT
+    def clean_winner(self):
+        win = self.cleaned_data.get("winner")
+        home = self.cleaned_data.get("home_team") or (self.instance.home_team if self.instance else None)
+        away = self.cleaned_data.get("away_team") or (self.instance.away_team if self.instance else None)
+        if win in ("", None):
+            return None
+        if win not in {home, away}:
+            raise forms.ValidationError("Winner must match the home or away team.")
+        return win
 
-    def _ensure_window(self, season: int, start_time_utc: datetime) -> Window:
-        """Create or get the Window (PT date + slot) for a given game."""
-        dt_pt = timezone.localtime(start_time_utc, PACIFIC)
-        slot = self._slot_for(start_time_utc)
-        window, _ = Window.objects.get_or_create(
-            season=season,
-            date=dt_pt.date(),  # PT calendar date
-            slot=slot,
-            defaults={},        # flags are computed later by grading/recompute
-        )
-        return window
+    # ✅ Normalize to UTC and reject naive datetimes to satisfy admin/UI rules
+    def clean_start_time(self):
+        dt = self.cleaned_data.get("start_time")
+        if dt is None:
+            return dt
+        if timezone.is_naive(dt):
+            raise forms.ValidationError("start_time must be timezone-aware")
+        return dt.astimezone(timezone.utc)
 
-    # ---------- Main flow ----------
 
-    def handle(self, *args, **options):
-        season = options['season']
-        limit = options['limit']
-        dry_run = options['dry_run']
-        display_tz = ZoneInfo(options['display_tz'])
+class PropBetAdminForm(forms.ModelForm):
+    """Correct answer must be one of options (JSON array) or cleared."""
+    correct_answer = forms.ChoiceField(choices=[], required=False)
 
-        self.stdout.write(f"Fetching NFL games for {season} season...")
+    class Meta:
+        model = PropBet
+        fields = "__all__"
 
-        games_list_url = (
-            f"https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/"
-            f"seasons/{season}/types/2/events?limit=1000"
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        opts = []
+        if self.instance and getattr(self.instance, "options", None):
+            if isinstance(self.instance.options, list):
+                opts = self.instance.options
+        choices = [("", "— Clear —")] + [(o, o) for o in opts]
+        self.fields["correct_answer"].choices = choices
+        self.fields["correct_answer"].widget = forms.Select(choices=choices)
 
-        try:
-            response = requests.get(games_list_url, timeout=30)
-            response.raise_for_status()
-            games_list = response.json()
+    def clean_correct_answer(self):
+        ans = self.cleaned_data.get("correct_answer")
+        opts = self.cleaned_data.get("options") or []
+        if ans in ("", None):
+            return None
+        if isinstance(opts, list) and ans not in opts:
+            raise forms.ValidationError("Correct answer must be one of the defined options.")
+        return ans
 
-            total = games_list.get('count', 0)
-            self.stdout.write(f"Found {total} games referenced by ESPN")
 
-            created_count = 0
-            updated_count = 0
-            processed_count = 0
-            error_count = 0
+# ---------- Admin registrations ----------
 
-            # ESPN returns refs; fetch each game detail
-            for item in games_list.get('items', []):
-                if limit and limit > 0 and processed_count >= limit:
-                    break
+@admin.register(Window)
+class WindowAdmin(admin.ModelAdmin):
+    list_display = ("season", "date", "slot", "is_complete", "completed_at", "updated_at")
+    list_filter = ("season", "slot", "is_complete")
+    search_fields = ("date",)
+    actions = ["refresh_status", "recompute_selected_windows"]
 
-                game_url = item.get('$ref')
-                if not game_url:
-                    continue
-
+    @admin.action(description="Refresh status (recompute window stats)")
+    def refresh_status(self, request, queryset):
+        affected_ids = {w.id for w in queryset}
+        def _do():
+            for wid in affected_ids:
                 try:
-                    game_response = requests.get(game_url, timeout=30)
-                    game_response.raise_for_status()
-                    game_data = game_response.json()
+                    recompute_window_optimized(wid, actor=request.user)
+                except WindowCalculationError:
+                    # Soft-fail if someone clicks the action repeatedly
+                    logger.info("Refresh throttled for window %s", wid)
+                except Exception:
+                    logger.exception("Refresh failed for window %s", wid)
+        transaction.on_commit(_do)
+        self.message_user(request, f"Scheduled recompute for {len(affected_ids)} window(s).", messages.SUCCESS)
 
-                    game_info = self.extract_game_info(game_data, season=season)
-                    if not game_info:
-                        continue
+    @admin.action(description="Recompute selected window(s) now")
+    def recompute_selected_windows(self, request, queryset):
+        affected_ids = {w.id for w in queryset}
+        def _do():
+            for wid in affected_ids:
+                try:
+                    recompute_window_optimized(wid, actor=request.user)
+                except WindowCalculationError:
+                    logger.info("Manual recompute throttled for window %s", wid)
+                except Exception:
+                    logger.exception("Manual recompute failed for window %s", wid)
+        transaction.on_commit(_do)
+        self.message_user(request, f"Scheduled recompute for {len(affected_ids)} window(s).", messages.SUCCESS)
 
-                    # Convert team names to abbreviations for DB
-                    game_info['home_team'] = self.get_team_abbreviation(game_info['home_team'])
-                    game_info['away_team'] = self.get_team_abbreviation(game_info['away_team'])
 
-                    if dry_run:
-                        # Display-only timezone
-                        disp_dt = game_info['start_time'].astimezone(display_tz)
-                        tz_label = options['display_tz']
-                        self.stdout.write(
-                            f"S{game_info['season']} W{game_info['week']:2d} | "
-                            f"{game_info['away_team']:3s} @ {game_info['home_team']:3s} | "
-                            f"{disp_dt.strftime('%m/%d %I:%M%p')} {tz_label}"
-                        )
-                    else:
-                        created = self.create_or_update_game(game_info)  # ⬅️ now attaches/moves Window
-                        if created is True:
-                            created_count += 1
-                            self.stdout.write(
-                                f"Created: S{game_info['season']} W{game_info['week']} "
-                                f"{game_info['away_team']} @ {game_info['home_team']}"
-                            )
-                        elif created is False:
-                            updated_count += 1
-                            self.stdout.write(
-                                f"Updated: S{game_info['season']} W{game_info['week']} "
-                                f"{game_info['away_team']} @ {game_info['home_team']}"
-                            )
-                        # created can be None on error; no counters in that case
+@admin.register(Game)
+class GameAdmin(admin.ModelAdmin):
+    form = GameAdminForm
+    list_display = (
+        "week", "home_team", "away_team", "start_time",
+        "is_locked_display", "winner", "window", "season",
+    )
+    ordering = ("start_time", "week")  # ✅ earliest games first
+    list_filter = ("season", "week", "locked", "window")
+    search_fields = ("home_team", "away_team")
+    actions = ["finalize_selected"]
 
-                    processed_count += 1
+    class Media:
+        js = ("games/admin_winner_choices.js",)
 
-                except requests.RequestException as e:
-                    error_count += 1
-                    self.stdout.write(f"Error fetching game {game_url}: {e}")
-                except Exception as e:
-                    error_count += 1
-                    self.stdout.write(f"Error processing game {game_url}: {e}")
+    @admin.display(boolean=True, description="Locked?")
+    def is_locked_display(self, obj: Game):
+        return obj.is_locked
 
-            # Summary
-            self.stdout.write("=" * 80)
-            if dry_run:
-                self.stdout.write(f"Dry run complete. Processed {processed_count} games, {error_count} errors")
-            else:
-                self.stdout.write(
-                    f"Complete! Created: {created_count}, Updated: {updated_count}, "
-                    f"Processed: {processed_count}, Errors: {error_count}"
-                )
+    def save_model(self, request, obj: Game, form, change):
+        prev_winner = None
+        prev_window_id = None
+        if change:
+            old = type(obj).objects.only("winner", "window_id").get(pk=obj.pk)
+            prev_winner = old.winner
+            prev_window_id = old.window_id
 
-        except requests.RequestException as e:
-            self.stdout.write(f"Error fetching games list: {e}")
-        except Exception as e:
-            self.stdout.write(f"Unexpected error: {e}")
+        super().save_model(request, obj, form, change)
 
-    def extract_game_info(self, game_data, season: int):
-        """Extract season, week, teams, start_time from ESPN game payload."""
-        try:
-            # Week extraction (your original logic, with a fallback)
-            week = None
-            if 'week' in game_data and game_data['week']:
-                week = game_data['week'].get('number')
+        # Decide what changed
+        winner_changed = (not change) or (prev_winner != obj.winner)
+        window_changed = change and prev_window_id and (prev_window_id != obj.window_id)
 
-            if not week:
-                season_info = game_data.get('season', {})
-                if season_info:
-                    week_info = season_info.get('week', {})
-                    if week_info:
-                        week = week_info.get('number')
+        # Grade & schedule recompute via model hook
+        if winner_changed:
+            obj.finalize(obj.winner)  # grades ML + schedules recompute for obj.window_id
 
-            if not week:
-                game_date_str = game_data.get('date')
-                if game_date_str:
-                    # Estimate week from date if ESPN omits it
-                    game_date = datetime.fromisoformat(game_date_str.replace('Z', '+00:00'))
-                    season_start = datetime(season, 9, 5, tzinfo=game_date.tzinfo)  # rough anchor
-                    days_diff = (game_date - season_start).days
-                    week = max(1, (days_diff // 7) + 1)
-                    self.stdout.write(f"Estimated week {week} from date {game_date_str}")
+        # If the game moved windows, we also need to recompute the previous window
+        if window_changed:
+            def _do_prev():
+                try:
+                    recompute_window_optimized(prev_window_id, actor=request.user)
+                except WindowCalculationError:
+                    logger.info("Prev window recompute throttled for %s", prev_window_id)
+                except Exception:
+                    logger.exception("Prev window recompute failed for %s", prev_window_id)
+            transaction.on_commit(_do_prev)
 
-            if not week:
-                self.stdout.write(f"Could not determine week for game: {game_data.get('name')}")
-                return None
+        if winner_changed or window_changed:
+            self.message_user(request, "Window stats updated.", messages.SUCCESS)
 
-            # Date/time → make tz-aware UTC
-            game_date_str = game_data.get('date')
-            if not game_date_str:
-                self.stdout.write(f"No date found for game: {game_data.get('name')}")
-                return None
+    @admin.action(description="Finalize selected games (grade & recompute)")
+    def finalize_selected(self, request, queryset):
+        # Rely on Game.finalize(...) to schedule the recompute — no extra calls here.
+        count = 0
+        for g in queryset.select_related("window"):
+            g.finalize(g.winner)
+            count += 1
+        self.message_user(request, f"Finalized {count} game(s). Recompute scheduled.", messages.SUCCESS)
 
-            dt = datetime.fromisoformat(game_date_str.replace('Z', '+00:00'))
-            if timezone.is_naive(dt):
-                dt = dt.replace(tzinfo=ZoneInfo("UTC"))
-            else:
-                dt = dt.astimezone(ZoneInfo("UTC"))
 
-            # Teams: prefer competitions block; fall back to name parsing
-            away_team = home_team = None
-            competition = (game_data.get('competitions') or [{}])[0]
-            competitors = competition.get('competitors') or []
-            if len(competitors) == 2:
-                for comp in competitors:
-                    t = comp.get('team', {}) or {}
-                    tname = t.get('displayName') or t.get('name') or ""
-                    if comp.get('homeAway') == 'home':
-                        home_team = tname
-                    elif comp.get('homeAway') == 'away':
-                        away_team = tname
+@admin.register(PropBet)
+class PropBetAdmin(admin.ModelAdmin):
+    form = PropBetAdminForm
+    list_display = ("game", "category", "question", "correct_answer")
+    list_filter = ("category", "game__season", "game__week")
+    search_fields = ("question",)
+    actions = ["grade_selected"]
 
-            if not home_team or not away_team:
-                # fallback to "Team A at Team B"
-                game_name = game_data.get('name', '')
-                if ' at ' in game_name:
-                    parts = game_name.split(' at ')
-                    away_team = away_team or parts[0].strip()
-                    home_team = home_team or parts[1].strip()
+    class Media:
+        js = ("games/admin_propbet_choices.js",)
 
-            if not home_team or not away_team:
-                self.stdout.write(f"Could not extract teams for game: {game_data.get('name')}")
-                return None
+    def save_model(self, request, obj: PropBet, form, change):
+        prev_correct = None
+        if change:
+            old = type(obj).objects.only("correct_answer").get(pk=obj.pk)
+            prev_correct = old.correct_answer
 
-            return {
-                'season': season,
-                'week': int(week),
-                'home_team': home_team,
-                'away_team': away_team,
-                'start_time': dt,  # stored as UTC
-            }
+        super().save_model(request, obj, form, change)
 
-        except Exception as e:
-            self.stdout.write(f"Error extracting game info: {e}")
-            return None
+        answer_changed = (change and prev_correct != obj.correct_answer) or (not change and obj.correct_answer is not None)
+        if answer_changed:
+            obj.grade(obj.correct_answer)  # grades props + schedules recompute for obj.game.window_id
+            self.message_user(request, "Window stats updated.", messages.SUCCESS)
 
-    def get_team_abbreviation(self, team_name):
-        """Convert full team name to abbreviation (kept from your legacy)."""
-        return self.TEAM_ABBREVIATIONS.get(team_name, team_name[:3].upper())
-
-    def create_or_update_game(self, game_info):
-        """
-        Upsert by unique key: (season, week, home_team, away_team).
-        Returns:
-          True  -> created
-          False -> updated (start_time and/or window changed)
-          None  -> error/no change
-        """
-        try:
-            # Compute the correct Window for this start time (PT date + slot)
-            win = self._ensure_window(
-                season=game_info['season'],
-                start_time_utc=game_info['start_time'],
-            )
-
-            # Create or get the game, attaching window on create
-            game, created = Game.objects.get_or_create(
-                season=game_info['season'],
-                week=game_info['week'],
-                home_team=game_info['home_team'],
-                away_team=game_info['away_team'],
-                defaults={
-                    'start_time': game_info['start_time'],  # UTC
-                    'window': win,                          # ⬅️ attach window
-                }
-            )
-
-            if created:
-                return True
-
-            # Existing → update start_time and window if they changed
-            changed = False
-            if game.start_time != game_info['start_time']:
-                game.start_time = game_info['start_time']
-                changed = True
-
-            # If the start time changed, or if the window is simply incorrect, move it
-            new_win = self._ensure_window(
-                season=game_info['season'],
-                start_time_utc=game_info['start_time'],
-            )
-            if game.window_id != new_win.id:
-                game.window = new_win
-                changed = True
-
-            if changed:
-                update_fields = ['start_time', 'window']
-                if hasattr(game, 'updated_at'):
-                    update_fields.append('updated_at')
-                game.save(update_fields=update_fields)
-                return False
-
-            # No changes
-            return None
-
-        except Exception as e:
-            self.stdout.write(f"Error creating/updating game: {e}")
-            return None
+    @admin.action(description="Grade selected prop bets (recompute)")
+    def grade_selected(self, request, queryset):
+        # Rely on PropBet.grade(...) to schedule the recompute — no extra calls here.
+        count = 0
+        for pb in queryset.select_related("game__window"):
+            pb.grade(pb.correct_answer)
+            count += 1
+        self.message_user(request, f"Graded {count} prop bet(s). Recompute scheduled.", messages.SUCCESS)

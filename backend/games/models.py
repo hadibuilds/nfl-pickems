@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import logging
+from datetime import timedelta
+from datetime import timezone as dt_timezone  # ✅ use Python's UTC tzinfo
+
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Q, F, UniqueConstraint, Index, Case, When, IntegerField
 from django.utils import timezone
 from zoneinfo import ZoneInfo
-from datetime import timedelta
+
+logger = logging.getLogger(__name__)
 
 PACIFIC = ZoneInfo("America/Los_Angeles")
 
@@ -16,6 +21,7 @@ WINDOW_SLOTS = (
 )
 
 SLOT_ORDER = {"morning": 0, "afternoon": 1, "late": 2}
+
 
 class Window(models.Model):
     season = models.IntegerField(db_index=True)
@@ -36,7 +42,8 @@ class Window(models.Model):
         ordering = ["season", "date", "slot"]
 
     def __str__(self) -> str:
-        return f"{self.date.isoformat()} {self.slot}{self.is_complete and ' (complete)' or '(open)'}"
+        suffix = " (complete)" if self.is_complete else " (open)"
+        return f"{self.date.isoformat()} {self.slot}{suffix}"
 
     @classmethod
     def previous_completed(cls, season: int, date, slot: str) -> "Window | None":
@@ -77,14 +84,9 @@ class Game(models.Model):
                 check=~Q(home_team=F("away_team")),
                 name="chk_home_away_not_equal",
             ),
-            # winner must be one of the teams (or NULL)
             models.CheckConstraint(
                 name="chk_winner_is_team",
-                check=(
-                    Q(winner__isnull=True)
-                    | Q(winner=F("home_team"))
-                    | Q(winner=F("away_team"))
-                ),
+                check=(Q(winner__isnull=True) | Q(winner=F("home_team")) | Q(winner=F("away_team"))),
             ),
         ]
         indexes = [
@@ -94,7 +96,8 @@ class Game(models.Model):
         ordering = ["season", "week", "start_time"]
 
     def __str__(self) -> str:
-        return f"W{self.week}: {self.away_team} @ {self.home_team} ({self.start_time.isoformat()})"
+        st = self.start_time.isoformat() if self.start_time else "—"
+        return f"W{self.week}: {self.away_team} @ {self.home_team} ({st})"
 
     @property
     def is_locked(self) -> bool:
@@ -102,19 +105,23 @@ class Game(models.Model):
         return bool(self.locked or (self.start_time and now >= self.start_time))
 
     def clean(self):
-        # start_time must be aware
-        if timezone.is_naive(self.start_time):
-            raise ValidationError("start_time must be timezone-aware (UTC).")
+        # ✅ start_time must be timezone-aware (reject naive)
+        if self.start_time is not None and timezone.is_naive(self.start_time):
+            raise ValidationError({"start_time": "start_time must be timezone-aware."})
 
-        # enforce UTC (offset +00:00)
-        if self.start_time.utcoffset() != timedelta(0):
-            raise ValidationError("start_time must be stored in UTC (offset +00:00).")
-
-        # prevent moving a started game to a different window
+        # ✅ prevent moving a started game to a different window
         if self.pk:
             old = type(self).objects.only("window_id", "start_time").get(pk=self.pk)
-            if old.window_id != self.window_id and timezone.now() >= self.start_time:
+            if old.window_id != self.window_id and self.start_time and timezone.now() >= self.start_time:
                 raise ValidationError("Cannot move a started game to a different window.")
+
+        # ❌ Do NOT enforce UTC via utcoffset here; we normalize in save()
+
+    # ✅ Normalize to canonical UTC on write (covers admin, scripts, API)
+    def save(self, *args, **kwargs):
+        if self.start_time and timezone.is_aware(self.start_time):
+            self.start_time = self.start_time.astimezone(dt_timezone.utc)
+        super().save(*args, **kwargs)
 
     @transaction.atomic
     def finalize(self, winner: str | None):
@@ -142,8 +149,14 @@ class Game(models.Model):
                 )
             )
 
-        # Recompute stats for this window
-        transaction.on_commit(lambda: recompute_window_optimized(self.window_id))
+        # Recompute stats for this window (log on failure instead of crashing admin)
+        def _safe_recompute():
+            try:
+                recompute_window_optimized(self.window_id)
+            except Exception:
+                logger.exception("Window recompute failed for window_id=%s (game_id=%s)", self.window_id, self.pk)
+
+        transaction.on_commit(_safe_recompute)
 
 
 class PropBet(models.Model):
@@ -213,4 +226,13 @@ class PropBet(models.Model):
                 )
             )
 
-        transaction.on_commit(lambda: recompute_window_optimized(self.game.window_id))
+        def _safe_recompute():
+            try:
+                recompute_window_optimized(self.game.window_id)
+            except Exception:
+                logger.exception(
+                    "Prop recompute failed for window_id=%s (prop_id=%s, game_id=%s)",
+                    self.game.window_id, self.pk, self.game_id
+                )
+
+        transaction.on_commit(_safe_recompute)
