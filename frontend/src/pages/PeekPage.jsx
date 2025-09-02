@@ -4,9 +4,6 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import PageLayout from '../components/common/PageLayout';
 import WeekHeader from '../components/weeks/WeekHeader';
 import PeekGameCard from '../components/peek/PeekGameCard';
-import { useAuth } from '../context/AuthContext';
-
-const { user } = useAuth();
 
 export default function PeekPage() {
   const params = useParams();
@@ -136,7 +133,7 @@ export default function PeekPage() {
 
       {!isLoading && !error && games.length === 0 && (
         <div className="text-center text-white">
-          <h2>Get outta here {user.first_name}, no games have started yet.</h2>
+          <h2>Get outta here peepin Tom, no games have started yet.</h2>
           <button
             onClick={() => navigate('/peek')}
             style={{ marginTop: 20, padding: '10px 20px', backgroundColor: '#8B5CF6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
