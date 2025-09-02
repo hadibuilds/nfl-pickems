@@ -418,14 +418,21 @@ class AvatarUploadAPIView(APIView):
                 if default_storage.exists(user.avatar.name):
                     default_storage.delete(user.avatar.name)
             
-            # Save new avatar
+            # Generate unique filename with timestamp to avoid caching issues
+            import time
+            timestamp = int(time.time())
+            file_extension = os.path.splitext(avatar_file.name)[1].lower()
+            if not file_extension:
+                file_extension = '.jpg'  # default extension
+            unique_filename = f"avatars/{user.username}_{timestamp}{file_extension}"
+            
+            # Save new avatar with unique filename
+            avatar_file.name = unique_filename
             user.avatar = avatar_file
             user.save()
             
-            # Return new avatar URL with cache busting
-            import time
-            timestamp = int(time.time())
-            avatar_url = request.build_absolute_uri(f'/accounts/secure-media/{user.avatar.name}?t={timestamp}')
+            # Return new avatar URL using consistent endpoint
+            avatar_url = request.build_absolute_uri(f'/accounts/secure-media/{user.avatar.name}')
             return Response({"avatar": avatar_url})
             
         except Exception as e:
