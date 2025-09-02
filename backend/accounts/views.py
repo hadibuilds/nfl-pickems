@@ -422,8 +422,10 @@ class AvatarUploadAPIView(APIView):
             user.avatar = avatar_file
             user.save()
             
-            # Return new avatar URL
-            avatar_url = request.build_absolute_uri(user.avatar.url)
+            # Return new avatar URL with cache busting
+            import time
+            timestamp = int(time.time())
+            avatar_url = request.build_absolute_uri(f'/accounts/secure-media/{user.avatar.name}?t={timestamp}')
             return Response({"avatar": avatar_url})
             
         except Exception as e:

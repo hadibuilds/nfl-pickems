@@ -43,15 +43,7 @@ export const AuthProvider = ({ children }) => {
         
         if (res.ok) {
           const userData = await res.json();
-          if (userData?.username) {
-            // Add cache busting timestamp to avatar URL if present
-            if (userData.avatar) {
-              userData.avatar = `${userData.avatar}?t=${Date.now()}`;
-            }
-            setUserInfo(userData);
-          } else {
-            setUserInfo(null);
-          }
+          setUserInfo(userData?.username ? userData : null);
         } else {
           setUserInfo(null);
         }
@@ -89,10 +81,6 @@ export const AuthProvider = ({ children }) => {
       const data = await res.json();
       
       if (res.ok) {
-        // Add cache busting timestamp to avatar URL if present
-        if (data.avatar) {
-          data.avatar = `${data.avatar}?t=${Date.now()}`;
-        }
         setUserInfo(data);
         return { success: true, user: data };
       } else {
@@ -119,10 +107,6 @@ export const AuthProvider = ({ children }) => {
       if (res.ok) {
         const userData = await res.json();
         if (userData?.username) {
-          // Add cache busting timestamp to avatar URL if present
-          if (userData.avatar) {
-            userData.avatar = `${userData.avatar}?t=${Date.now()}`;
-          }
           setUserInfo(userData);
           return { success: true, user: userData };
         }
