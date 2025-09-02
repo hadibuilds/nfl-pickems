@@ -41,7 +41,7 @@ function ScrollToTop() {
 }
 
 export default function App() {
-  const { userInfo, isLoading, isPostLogin } = useAuth();
+  const { userInfo, isLoading } = useAuth();
   const [games, setGames] = useState([]);
   const [moneyLineSelections, setMoneyLineSelections] = useState({});
   const [propBetSelections, setPropBetSelections] = useState({});
@@ -294,17 +294,6 @@ export default function App() {
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#1f1f1f', color: 'white' }}>
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mb-4"></div>
         <div className="text-xl font-medium text-purple-300">Loading your picks...</div>
-      </div>
-    );
-  }
-
-  // Show post-login loading overlay
-  if (isPostLogin) {
-    return (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.9)', zIndex: 9999, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-        <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-purple-500 mb-6"></div>
-        <div className="text-2xl font-bold text-purple-300 mb-2">Welcome back!</div>
-        <div className="text-lg text-purple-400">Refreshing your session...</div>
       </div>
     );
   }
