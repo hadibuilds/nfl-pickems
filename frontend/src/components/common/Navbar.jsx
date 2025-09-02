@@ -23,11 +23,15 @@ export default function Navbar({ isOpen, setIsOpen }) {
     
     if (originalRefreshAllData) {
       window.refreshAllData = async () => {
+        console.log('Navbar: refreshAllData called, setting spinner');
         setIsSyncing(true);
         try {
           await originalRefreshAllData();
         } finally {
-          setTimeout(() => setIsSyncing(false), 500);
+          setTimeout(() => {
+            console.log('Navbar: refresh complete, hiding spinner');
+            setIsSyncing(false);
+          }, 500);
         }
       };
     }
@@ -45,14 +49,20 @@ export default function Navbar({ isOpen, setIsOpen }) {
   };
 
   const handleSync = async () => {
+    console.log('Sync button clicked', { isSyncing });
     if (isSyncing) return;
+    
+    console.log('Navigation system available:', !!window.navigateWithConfirmation);
+    console.log('RefreshAllData available:', !!window.refreshAllData);
     
     // Always try to refresh through the navigation system first
     if (window.navigateWithConfirmation) {
       // This will either trigger the modal (if unsaved picks) or refresh immediately
+      console.log('Using navigateWithConfirmation for sync');
       window.navigateWithConfirmation(window.location.pathname, { isRefresh: true });
     } else {
       // Fallback: direct refresh if navigation system isn't available
+      console.log('Using direct refresh fallback');
       if (window.refreshAllData) {
         setIsSyncing(true);
         try {
@@ -63,6 +73,7 @@ export default function Navbar({ isOpen, setIsOpen }) {
           setIsSyncing(false);
         }
       } else {
+        console.log('No refresh function available, using page reload');
         window.location.reload();
       }
     }

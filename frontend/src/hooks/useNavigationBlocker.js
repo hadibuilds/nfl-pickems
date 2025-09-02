@@ -36,12 +36,14 @@ export const useNavigationBlocker = (hasUnsavedChanges, onNavigationAttempt) => 
 
   // Block programmatic navigation (like clicking navbar links)
   const navigateWithConfirmation = useCallback((path, options = {}) => {
+    console.log('navigateWithConfirmation called:', { path, options, hasUnsavedChanges });
     if (hasUnsavedChanges) {
       // Pass options to the navigation attempt handler
       onNavigationAttempt(path, options);
     } else {
       // No unsaved changes - handle immediately
       if (options.isRefresh && window.refreshAllData) {
+        console.log('Calling refreshAllData immediately');
         window.refreshAllData();
       } else {
         navigate(path);
