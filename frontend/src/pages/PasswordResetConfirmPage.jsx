@@ -33,7 +33,7 @@ export default function PasswordResetConfirmPage() {
             'X-CSRFToken': getCookie('csrftoken'),
           },
           credentials: 'include',
-          body: JSON.stringify({ uid: uidb64, token: token }),
+          body: JSON.stringify({ uidb64: uidb64, token: token }),
         });
 
         if (response.ok) {
@@ -81,7 +81,7 @@ export default function PasswordResetConfirmPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          uid: uidb64,
+          uidb64: uidb64,
           token: token,
           new_password1: passwords.new_password1,
           new_password2: passwords.new_password2,
