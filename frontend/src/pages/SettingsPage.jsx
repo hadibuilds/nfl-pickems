@@ -233,7 +233,9 @@ export default function SettingsPage() {
       });
       if (response.ok) {
         const result = await response.json();
-        setUser(prev => ({ ...prev, avatar: result.avatar }));
+        // Add cache busting timestamp to avatar URL
+        const avatarWithCacheBust = result.avatar ? `${result.avatar}?t=${Date.now()}` : null;
+        setUser(prev => ({ ...prev, avatar: avatarWithCacheBust }));
         setShowCropper(false);
         setAvatarSrc(null);
         const refreshResult = await refreshUser();
