@@ -35,11 +35,17 @@ export const useNavigationBlocker = (hasUnsavedChanges, onNavigationAttempt) => 
   }, [hasUnsavedChanges, location, onNavigationAttempt]);
 
   // Block programmatic navigation (like clicking navbar links)
-  const navigateWithConfirmation = useCallback((path) => {
+  const navigateWithConfirmation = useCallback((path, options = {}) => {
     if (hasUnsavedChanges) {
-      onNavigationAttempt(path);
+      // Pass options to the navigation attempt handler
+      onNavigationAttempt(path, options);
     } else {
-      navigate(path);
+      // No unsaved changes - handle immediately
+      if (options.isRefresh && window.refreshAllData) {
+        window.refreshAllData();
+      } else {
+        navigate(path);
+      }
     }
   }, [hasUnsavedChanges, navigate, onNavigationAttempt]);
 
