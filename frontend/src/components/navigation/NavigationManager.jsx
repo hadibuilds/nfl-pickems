@@ -17,11 +17,13 @@ export default function NavigationManager({
 }) {
   const [showModal, setShowModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [navigationOptions, setNavigationOptions] = useState({});
 
   // Handle navigation attempts when user has unsaved changes
-  const handleNavigationAttempt = (intendedPath) => {
+  const handleNavigationAttempt = (intendedPath, options = {}) => {
     if (hasUnsavedChanges) {
       setPendingNavigation(intendedPath);
+      setNavigationOptions(options);
       setShowModal(true);
     }
   };
@@ -53,6 +55,7 @@ export default function NavigationManager({
   const handleReview = () => {
     setShowModal(false);
     setPendingNavigation(null);
+    setNavigationOptions({});
     // User stays on page to review picks - no navigation
   };
 
@@ -62,15 +65,23 @@ export default function NavigationManager({
     
     setShowModal(false);
     
-    // Now navigate to intended destination
-    if (pendingNavigation) {
-      // Use setTimeout to ensure state cleanup happens first
+    // Handle based on what was requested
+    if (pendingNavigation && navigationOptions.isRefresh) {
+      // This was a refresh request - refresh the data
+      if (window.refreshAllData) {
+        setTimeout(() => {
+          window.refreshAllData();
+        }, 0);
+      }
+    } else if (pendingNavigation) {
+      // Regular navigation
       setTimeout(() => {
         window.location.href = pendingNavigation;
       }, 0);
     }
     
     setPendingNavigation(null);
+    setNavigationOptions({});
   };
 
   // Expose navigateWithConfirmation to parent components via window

@@ -6,7 +6,7 @@
  * Maintains all existing functionality and styling
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuthWithNavigation } from "../../hooks/useAuthWithNavigation";
 import ProfileDropdown from "../navigation/ProfileDropdown";
@@ -17,6 +17,28 @@ export default function Navbar({ isOpen, setIsOpen }) {
   const { userInfo, logoutAndRedirect, refreshUser } = useAuthWithNavigation();
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // Listen for refresh activity to show spinner
+  useEffect(() => {
+    const originalRefreshAllData = window.refreshAllData;
+    
+    if (originalRefreshAllData) {
+      window.refreshAllData = async () => {
+        setIsSyncing(true);
+        try {
+          await originalRefreshAllData();
+        } finally {
+          setTimeout(() => setIsSyncing(false), 500);
+        }
+      };
+    }
+
+    return () => {
+      if (originalRefreshAllData) {
+        window.refreshAllData = originalRefreshAllData;
+      }
+    };
+  }, []);
+
   const handleLogout = async () => {
     await logoutAndRedirect('/login');
     setIsOpen(false);
@@ -24,14 +46,25 @@ export default function Navbar({ isOpen, setIsOpen }) {
 
   const handleSync = async () => {
     if (isSyncing) return;
-    setIsSyncing(true);
-    try {
-      await refreshUser();
-      // Optional: trigger a brief visual feedback
-      setTimeout(() => setIsSyncing(false), 500);
-    } catch (error) {
-      console.error('Sync failed:', error);
-      setIsSyncing(false);
+    
+    // Check if we should trigger the modal for unsaved picks
+    if (window.navigateWithConfirmation) {
+      // Use navigation protection - this will trigger modal if there are unsaved picks
+      // Pass a special flag to indicate this is a refresh, not navigation
+      window.navigateWithConfirmation(window.location.pathname, { isRefresh: true });
+    } else if (window.refreshAllData) {
+      // No navigation protection, but refresh function is available
+      setIsSyncing(true);
+      try {
+        await window.refreshAllData();
+        setTimeout(() => setIsSyncing(false), 500);
+      } catch (error) {
+        console.error('Sync failed:', error);
+        setIsSyncing(false);
+      }
+    } else {
+      // Ultimate fallback
+      window.location.reload();
     }
   };
 

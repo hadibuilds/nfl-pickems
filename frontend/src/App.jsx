@@ -205,6 +205,14 @@ export default function App() {
     }
   }, [fetchGameData, fetchUserPredictions, fetchGameResults]);
 
+  // Expose refreshAllData globally for navbar sync button
+  useEffect(() => {
+    window.refreshAllData = refreshAllData;
+    return () => {
+      delete window.refreshAllData;
+    };
+  }, [refreshAllData]);
+
   // ======== SUBMIT ========
 
   const submitPicks = useCallback(async () => {
@@ -293,7 +301,7 @@ export default function App() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#1f1f1f', color: 'white' }}>
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mb-4"></div>
-        <div className="text-xl font-medium text-purple-300">Loading your picks...</div>
+        <div className="text-xl font-medium text-purple-300">Hang tight...</div>
       </div>
     );
   }
