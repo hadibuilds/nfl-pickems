@@ -349,7 +349,7 @@ export default function SettingsPage() {
                 </div>
                 
                 <p className="text-xs homepage-section-content mt-2 text-center" style={{ color: '#9ca3af' }}>
-                  JPG, PNG, GIF or WebP. Max 5MB.
+                  Lookin good. Max 5MB tho.
                 </p>
               </div>
               
