@@ -22,7 +22,7 @@ from django.utils.html import strip_tags
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import default_storage
-from nfl_pickems.settings.base import INVITE_CODE
+from django.conf import settings
 import os
 
 User = get_user_model()
