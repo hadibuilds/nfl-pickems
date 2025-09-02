@@ -20,9 +20,13 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
+from django.http import JsonResponse
+
+def healthz(_): return JsonResponse({"status": "ok"})
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("healthz", healthz),
     path('accounts/', include('accounts.urls')),
     path('predictions/', include('predictions.urls')),
     path('games/', include('games.urls')),

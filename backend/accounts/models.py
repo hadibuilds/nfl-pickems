@@ -1,7 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from PIL import Image
-import os
+from django.core.files.storage import default_storage
+from django.conf import settings
+import io
 
 class CustomUser(AbstractUser):
     # Profile fields
@@ -13,20 +15,37 @@ class CustomUser(AbstractUser):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         
-        # Resize avatar if it exists
-        if self.avatar:
-            img_path = self.avatar.path
-            if os.path.exists(img_path):
-                with Image.open(img_path) as img:
-                    # Convert RGBA to RGB if necessary
-                    if img.mode == 'RGBA':
-                        img = img.convert('RGB')
+        # Resize avatar if it exists - works with both local and S3 storage
+        if self.avatar and hasattr(self.avatar, 'file'):
+            try:
+                # Open the image from storage
+                self.avatar.file.seek(0)  # Reset file pointer
+                img = Image.open(self.avatar.file)
+                
+                # Convert RGBA to RGB if necessary
+                if img.mode == 'RGBA':
+                    img = img.convert('RGB')
+                
+                # Resize to max 400x400 to keep file sizes reasonable
+                if img.height > 400 or img.width > 400:
+                    output_size = (400, 400)
+                    img.thumbnail(output_size, Image.Resampling.LANCZOS)
                     
-                    # Resize to max 400x400 to keep file sizes reasonable
-                    if img.height > 400 or img.width > 400:
-                        output_size = (400, 400)
-                        img.thumbnail(output_size, Image.Resampling.LANCZOS)
-                        img.save(img_path, optimize=True, quality=85)
+                    # Save resized image to bytes buffer
+                    output = io.BytesIO()
+                    img.save(output, format='JPEG', optimize=True, quality=85)
+                    output.seek(0)
+                    
+                    # Save back to storage (works with both local and S3)
+                    self.avatar.save(
+                        self.avatar.name,
+                        output,
+                        save=False  # Prevent recursive save calls
+                    )
+            except Exception as e:
+                # Log the error but don't break the save process
+                print(f"Avatar resize error for user {self.username}: {e}")
+                pass
 
     @property
     def display_name(self):

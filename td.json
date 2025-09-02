@@ -1,0 +1,153 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:us-east-2:903252441021:task-definition/nfl-pickems-task:13",
+    "containerDefinitions": [
+        {
+            "name": "nfl-pickems-backend",
+            "image": "903252441021.dkr.ecr.us-east-2.amazonaws.com/pickems-backend:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 8000,
+                    "hostPort": 8000,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "USE_CLOUD_STORAGE",
+                    "value": "True"
+                },
+                {
+                    "name": "CORS_ALLOWED_ORIGINS",
+                    "value": "https://pickems.fun,https://www.pickems.fun"
+                },
+                {
+                    "name": "DJANGO_ENV",
+                    "value": "prod"
+                },
+                {
+                    "name": "AWS_S3_REGION_NAME",
+                    "value": "us-east-2"
+                },
+                {
+                    "name": "ALLOWED_HOSTS",
+                    "value": "pickems.fun,www.pickems.fun,api.pickems.fun,nfl-pickems-alb-1597755509.us-east-2.elb.amazonaws.com"
+                },
+                {
+                    "name": "CSRF_TRUSTED_ORIGINS",
+                    "value": "https://pickems.fun,https://www.pickems.fun,https://api.pickems.fun"
+                },
+                {
+                    "name": "DEBUG",
+                    "value": "False"
+                },
+                {
+                    "name": "AWS_STORAGE_BUCKET_NAME",
+                    "value": "nfl-pickems-avatars-prod"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [
+                {
+                    "name": "DJANGO_SECRET_KEY",
+                    "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/SECRET_KEY"
+                },
+                {
+                    "name": "DATABASE_URL",
+                    "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/DATABASE_URL"
+                },
+                {
+                    "name": "EMAIL_HOST_USER",
+                    "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/EMAIL_HOST_USER"
+                },
+                {
+                    "name": "EMAIL_HOST_PASSWORD",
+                    "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/EMAIL_HOST_PASSWORD"
+                },
+                {
+                    "name": "INVITE_CODE",
+                    "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/INVITE_CODE"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/nfl-pickems-task",
+                    "awslogs-region": "us-east-2",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "curl -sSf -H 'Host: api.pickems.fun' http://127.0.0.1:8000/healthz || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 60
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "nfl-pickems-task",
+    "taskRoleArn": "arn:aws:iam::903252441021:role/nfl-pickems-task-role",
+    "executionRoleArn": "arn:aws:iam::903252441021:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "revision": 13,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.container-health-check"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "ecs.capability.secrets.ssm.environment-variables"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "runtimePlatform": {
+        "cpuArchitecture": "ARM64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "256",
+    "memory": "512",
+    "registeredAt": "2025-09-01T03:59:19.544000-07:00",
+    "registeredBy": "arn:aws:iam::903252441021:user/pickems-deploy-user"
+}

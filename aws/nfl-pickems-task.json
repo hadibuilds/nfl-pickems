@@ -1,0 +1,59 @@
+{
+    "family": "nfl-pickems-task",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::903252441021:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::903252441021:role/nfl-pickems-task-role",
+    "runtimePlatform": {
+      "cpuArchitecture": "ARM64",
+      "operatingSystemFamily": "LINUX"
+    },
+    "containerDefinitions": [
+      {
+        "name": "nfl-pickems-backend",
+        "image": "903252441021.dkr.ecr.us-east-2.amazonaws.com/pickems-backend:latest",
+        "essential": true,
+        "portMappings": [
+          { "containerPort": 8000, "protocol": "tcp" }
+        ],
+        "environment": [
+          { "name": "DJANGO_ENV", "value": "prod" },
+          { "name": "DEBUG", "value": "False" },
+          { "name": "USE_CLOUD_STORAGE", "value": "True" },
+          { "name": "AWS_S3_REGION_NAME", "value": "us-east-2" },
+          { "name": "AWS_STORAGE_BUCKET_NAME", "value": "nfl-pickems-avatars-prod" },
+          { "name": "ALLOWED_HOSTS", "value": "pickems.fun,www.pickems.fun,api.pickems.fun,nfl-pickems-alb-1597755509.us-east-2.elb.amazonaws.com" },
+          { "name": "CORS_ALLOWED_ORIGINS", "value": "https://pickems.fun,https://www.pickems.fun" },
+          { "name": "CSRF_TRUSTED_ORIGINS", "value": "https://pickems.fun,https://www.pickems.fun,https://api.pickems.fun" }
+        ],
+        "secrets": [
+          { "name": "DJANGO_SECRET_KEY", "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/SECRET_KEY" },
+          { "name": "DATABASE_URL", "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/DATABASE_URL" },
+          { "name": "EMAIL_HOST_USER", "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/EMAIL_HOST_USER" },
+          { "name": "EMAIL_HOST_PASSWORD", "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/EMAIL_HOST_PASSWORD" },
+          { "name": "INVITE_CODE", "valueFrom": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/INVITE_CODE" }
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/nfl-pickems-task",
+            "awslogs-region": "us-east-2",
+            "awslogs-stream-prefix": "ecs"
+          }
+        },
+        "healthCheck": {
+          "command": [
+            "CMD-SHELL",
+            "curl -sSf -H 'Host: api.pickems.fun' http://127.0.0.1:8000/healthz || exit 1"
+          ],
+          "interval": 30,
+          "timeout": 5,
+          "retries": 3,
+          "startPeriod": 60
+        }
+      }   
+    ]
+  }
+  
