@@ -1,6 +1,6 @@
 version: 1
 applications:
-  - appRoot: frontend
+  - appRoot: .
     frontend:
       phases:
         preBuild:
@@ -11,7 +11,7 @@ applications:
             - rm -rf node_modules/.cache/
             - rm -rf .cache/
             - echo "📦 Installing Node.js dependencies..."
-            - npm ci --omit=dev
+            - npm ci
         build:
           commands:
             - echo "🔍 Checking environment variables..."
