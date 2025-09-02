@@ -27,7 +27,6 @@ import os
 
 User = get_user_model()
 
-
 @ensure_csrf_cookie
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -337,7 +336,7 @@ def password_reset_email_redirect(request, uidb64, token):
     """
     Redirect from email links to React frontend with token parameters
     """
-    return redirect(f'/#/password-reset-confirm/{uidb64}/{token}/')
+    return redirect(f'/password-reset-confirm/{uidb64}/{token}')
 
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
