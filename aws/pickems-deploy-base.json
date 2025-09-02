@@ -1,0 +1,84 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ECRPushPull",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecr:PutImage",
+        "ecr:DescribeRepositories",
+        "ecr:CreateRepository"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECSRegisterAndUpdate",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:RegisterTaskDefinition",
+        "ecs:DescribeTaskDefinition",
+        "ecs:DescribeClusters",
+        "ecs:DescribeServices",
+        "ecs:ListClusters",
+        "ecs:ListServices",
+        "ecs:UpdateService"
+      ],
+      "Resource": [
+        "arn:aws:ecs:us-east-2:903252441021:cluster/nfl-pickems-cluster",
+        "arn:aws:ecs:us-east-2:903252441021:service/nfl-pickems-cluster/nfl-pickems-service",
+        "arn:aws:ecs:us-east-2:903252441021:task-definition/*"
+      ]
+    },
+    {
+      "Sid": "PassOnlyOurECSRoles",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::903252441021:role/ecsTaskExecutionRole",
+        "arn:aws:iam::903252441021:role/nfl-pickems-task"
+      ]
+    },
+    {
+      "Sid": "ReadSSMParams",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters"
+      ],
+      "Resource": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/*"
+    },
+    {
+      "Sid": "DecryptSSMParams",
+      "Effect": "Allow",
+      "Action": "kms:Decrypt",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": { "kms:ViaService": "ssm.us-east-2.amazonaws.com" },
+        "ForAnyValue:StringLike": {
+          "kms:EncryptionContext:aws:ssm:parameterArn": "arn:aws:ssm:us-east-2:903252441021:parameter/pickems/prod/*"
+        }
+      }
+    },
+    {
+      "Sid": "S3MediaBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::nfl-pickems-avatars-prod",
+        "arn:aws:s3:::nfl-pickems-avatars-prod/*"
+      ]
+    }
+  ]
+}
