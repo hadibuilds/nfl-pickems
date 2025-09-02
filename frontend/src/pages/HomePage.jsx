@@ -430,12 +430,18 @@ function HomePage() {
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
                 </div>
-              ) : (
+              ) : standings.length > 0 ? (
                 <>
                   {standings.map((entry, idx) => (
                     <LeaderboardRow key={entry.username || idx} entry={entry} standingsForMedals={standingsForMedals} />
                   ))}
                 </>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-sm homepage-section-content" style={{ color: '#9ca3af' }}>
+                    No game results, check back later
+                  </p>
+                </div>
               )}
             </div>
             <button className="w-full mt-3 text-xs font-medium transition-colors hover:text-purple-300 homepage-section-content" style={{ color: '#8B5CF6' }} onClick={() => navigate('/standings')}>
