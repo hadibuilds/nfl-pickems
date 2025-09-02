@@ -41,7 +41,7 @@ export default function PeekSelector() {
       <div className="mx-auto mb-6 text-center">
         <h1 className="text-5xl sm:text-6xl md:text-7xl text-white font-bebas tracking-wider">Peek at Picks</h1>
         <p className="mt-1 text-base" style={{ color: '#9ca3af' }}>
-          See others' picks after games lock. Sorry Devin, you can't copy Aboodi anymore.
+            View others’ picks after games lock
         </p>
       </div>
 
