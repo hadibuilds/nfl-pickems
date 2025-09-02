@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Optional: allow DB to come up if you use RDS or a sidecar proxy
-# sleep 2
+# Wait for DB by retrying migrate (safe & idempotent)
+until python manage.py migrate --noinput; do
+  echo "Waiting for database (migrate failed, retrying in 2s)..."
+  sleep 2
+done
 
-# Make sure DB schema is up to date
-python manage.py migrate --noinput
-
-# You can re-run collectstatic at boot if you prefer (harmless):
-# python manage.py collectstatic --noinput
+echo "Migrations completed successfully"
 
 # Start Gunicorn
-# Tune workers/threads based on CPU/Memory in your Fargate task
 exec gunicorn nfl_pickems.wsgi:application \
   --bind 0.0.0.0:8000 \
   --workers 3 \

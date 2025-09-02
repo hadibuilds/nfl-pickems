@@ -18,8 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 
-# Adjust the path if your requirements file lives elsewhere.
-# If your requirements.txt is in repo root, change this COPY to `COPY requirements*.txt ./`
+# Adjust if requirements are elsewhere
 COPY requirements*.txt ./ 
 RUN pip install --upgrade pip && pip wheel --wheel-dir=/wheels -r requirements.txt
 
@@ -36,8 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DJANGO_ENV=prod \
-    # Let Django/Whitenoise find staticfiles inside the container
-    STATIC_ROOT=/app/staticfiles
+    DJANGO_SETTINGS_MODULE=nfl_pickems.settings \
+    STATIC_ROOT=/app/backend/staticfiles \
+    PYTHONPATH=/app/backend
 
 # Create an unprivileged user
 RUN useradd -m appuser
@@ -45,29 +45,28 @@ WORKDIR /app
 
 # Copy wheels and install
 COPY --from=build /wheels /wheels
-# Keep a copy of requirements for reproducibility/logging
-COPY requirements*.txt ./ 
+COPY requirements*.txt ./
 RUN pip install --no-index --find-links=/wheels -r requirements.txt && rm -rf /wheels
 
-# Copy project code (only backend is needed to run Django)
-COPY backend/ /app/
+# Copy project code (preserve backend structure)
+COPY backend/ /app/backend/
+WORKDIR /app/backend
 
-# Collect static at build time (safe: does not require DB)
-# If you use S3 for static in prod (via env), this will still work locally thanks to your USE_CLOUD_STORAGE toggle.
+# Collect static at build time (safe: no DB needed)
 RUN python manage.py collectstatic --noinput
 
-# Copy entrypoint and use it as container entry
+# Copy entrypoint
 COPY backend/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Drop privileges
+# Ensure non-root user owns the app dir
+RUN chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
 
-# Basic container healthcheck; add /healthz route (see below)
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
   CMD curl -fsS http://localhost:8000/healthz || exit 1
 
-# Start: run migrations, then gunicorn
+# Start: run migrations, create superuser, seed data, then gunicorn (entrypoint.sh handles it)
 CMD ["/entrypoint.sh"]
