@@ -1,57 +1,28 @@
 version: 1
 applications:
-  - appRoot: .
+  - appRoot: frontend
     frontend:
       phases:
         preBuild:
           commands:
-            - echo "🚀 [AMPLIFY] Building frontend for deployment..."
-            - echo "🧼 Cleaning previous builds and caches..."
-            - rm -rf dist/
-            - rm -rf node_modules/.cache/
-            - rm -rf .cache/
-            - echo "📦 Installing Node.js dependencies..."
+            - echo "🚀 [AMPLIFY] Building from ./frontend"
+            - echo "📂 Working dir:" && pwd && ls -la
+            - echo "🔢 Node version:" && node -v
+            - echo "📦 Installing deps (npm ci)…"
             - npm ci
+            - echo "🔍 Env check: VITE_API_URL=${VITE_API_URL:-<empty>}"
         build:
           commands:
-            - echo "🔍 Checking environment variables..."
-            - |
-              if [ -z "$VITE_API_URL" ]; then
-                echo "⚠️  Warning: VITE_API_URL not set, using default"
-                export VITE_API_URL="https://api.pickems.fun"
-              else
-                echo "✅ VITE_API_URL: $VITE_API_URL"
-              fi
-            - echo "🔨 Building React application..."
+            - echo "🔨 npm run build (must call vite build under the hood)…"
             - npm run build
-            - echo "📋 Build verification..."
-            - |
-              if [ ! -d "dist" ]; then
-                echo "❌ Build failed: dist directory not found"
-                exit 1
-              fi
-            - |
-              if [ ! -f "dist/index.html" ]; then
-                echo "❌ Build failed: index.html not found"
-                exit 1
-              fi
+            - echo "📋 Verifying dist artifacts…"
+            - test -d dist || (echo "❌ dist/ missing" && exit 1)
+            - test -f dist/index.html || (echo "❌ dist/index.html missing" && exit 1)
         postBuild:
           commands:
-            - echo "📊 Build statistics..."
-            - ls -la dist/
-            - echo "📁 Asset files:"
-            - ls -la dist/assets/ 2>/dev/null || echo "No assets directory"
-            - echo "🔍 Verifying API URL in build..."
-            - |
-              if grep -q "api.pickems.fun" dist/assets/*.js 2>/dev/null; then
-                echo "✅ Production API URL found in build"
-              else
-                echo "⚠️  Warning: Production API URL not found in JavaScript files"
-              fi
-            - echo "📦 Final build size:"
-            - du -sh dist/
+            - echo "📊 Build stats:" && ls -la dist/ || true
+            - echo "📁 Assets:" && ls -la dist/assets/ 2>/dev/null || echo "No assets/"
             - echo "✅ [AMPLIFY] Frontend build complete!"
-            - echo "📁 Build output ready in:" && pwd && echo "/dist/"
       artifacts:
         baseDirectory: dist
         files:
