@@ -291,8 +291,9 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#1f1f1f', color: 'white' }}>
-        Loading...
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#1f1f1f', color: 'white' }}>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mb-4"></div>
+        <div className="text-xl font-medium text-purple-300">Loading your picks...</div>
       </div>
     );
   }
