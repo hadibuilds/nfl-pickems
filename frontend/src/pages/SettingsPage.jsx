@@ -566,7 +566,7 @@ export default function SettingsPage() {
       
       {/* Avatar Cropper Modal */}
       {showCropper && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 overflow-y-auto" style={{ zIndex: 9999, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
           <div className="homepage-glass-section p-6 w-full max-w-md">
             <div className="homepage-glass-content">
               <h3 className="homepage-section-title">Crop Your Avatar</h3>
