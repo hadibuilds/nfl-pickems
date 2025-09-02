@@ -20,7 +20,6 @@ export const AuthProvider = ({ children }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false); // ← NEW: Prevent double login
-  const [isPostLogin, setIsPostLogin] = useState(false); // ← NEW: Post-login loading state
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -83,11 +82,6 @@ export const AuthProvider = ({ children }) => {
       
       if (res.ok) {
         setUserInfo(data);
-        setIsPostLogin(true);
-        // Trigger refresh after login to clear avatar cache
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
         return { success: true, user: data };
       } else {
         return { success: false, error: data.detail || 'Login failed' };
@@ -148,7 +142,6 @@ export const AuthProvider = ({ children }) => {
     setUserInfo,
     isLoading,
     isLoggingIn, // ← NEW: Expose login state
-    isPostLogin, // ← NEW: Post-login loading state
     login,
     logout,
     refreshUser, // ← NEW: Refresh user data function
