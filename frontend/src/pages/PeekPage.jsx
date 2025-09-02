@@ -123,10 +123,10 @@ export default function PeekPage() {
           <h2>Error Loading Peek Data</h2>
           <p>{error}</p>
           <button
-            onClick={() => navigate('/peek')}
-            style={{ marginTop: 20, padding: '10px 20px', backgroundColor: '#8B5CF6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+            onClick={() => navigate('/')}
+            style={{ marginTop: 20, padding: '10px 20px', backgroundColor: '#FB923C', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
           >
-            Back to Weeks
+            Back to Home
           </button>
         </div>
       )}
@@ -135,10 +135,10 @@ export default function PeekPage() {
         <div className="text-center text-white">
           <h2>Get outta here peepin Tom, no games have started yet.</h2>
           <button
-            onClick={() => navigate('/peek')}
-            style={{ marginTop: 20, padding: '10px 20px', backgroundColor: '#8B5CF6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+            onClick={() => navigate('/')}
+            style={{ marginTop: 20, padding: '10px 20px', backgroundColor: '#FB923C', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
           >
-            Back to Weeks
+            Back to Home
           </button>
         </div>
       )}
