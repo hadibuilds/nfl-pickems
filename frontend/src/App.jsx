@@ -299,7 +299,21 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#1f1f1f', color: 'white' }}>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        height: '100dvh', // Use dynamic viewport height for mobile
+        backgroundColor: '#1f1f1f', 
+        color: 'white',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
+      }}>
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mb-4"></div>
         <div className="text-xl font-medium text-purple-300">Hang tight...</div>
       </div>
