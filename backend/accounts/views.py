@@ -40,7 +40,8 @@ def whoami(request):
     if user.is_authenticated:
         avatar_url = None
         if user.avatar:
-            avatar_url = request.build_absolute_uri(user.avatar.url)
+            # Use our secure media endpoint instead of direct S3 URL
+            avatar_url = request.build_absolute_uri(f'/accounts/secure-media/{user.avatar.name}')
         
         return Response({
             "username": user.username,
@@ -365,7 +366,8 @@ def update_profile_api(request):
         # Return updated user data
         avatar_url = None
         if user.avatar:
-            avatar_url = request.build_absolute_uri(user.avatar.url)
+            # Use our secure media endpoint instead of direct S3 URL
+            avatar_url = request.build_absolute_uri(f'/accounts/secure-media/{user.avatar.name}')
         
         return Response({
             "username": user.username,
