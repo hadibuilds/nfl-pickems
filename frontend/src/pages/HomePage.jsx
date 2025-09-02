@@ -62,7 +62,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
   
   const CardContent = () => (
     <>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-3">
         <Icon className="w-8 h-8 opacity-80" />
         {trend && trend !== 'same' && (
           <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
@@ -408,7 +408,7 @@ function HomePage() {
         </div>
 
         {/* Leaderboard (with trend arrows) */}
-        <div className="homepage-glass-section p-4">
+        <div className="homepage-glass-section leaderboard-gold-tint p-4">
           <div className="homepage-glass-content">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

@@ -189,7 +189,7 @@ export default function Standings() {
 
       {/* Standings List — contained scrollbox */}
       <div className="max-w-md mx-auto">
-        <div className="max-h-[70vh] overflow-y-auto space-y-3 pr-1">
+        <div className="max-h-[80vh] sm:max-h-[70vh] overflow-y-auto space-y-3 pr-1">
           {sortedStandings.length === 0 ? (
             <div className="text-center py-16">
               <Trophy className="w-16 h-16 text-gray-500 mx-auto mb-4" />
