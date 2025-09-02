@@ -47,24 +47,24 @@ export default function Navbar({ isOpen, setIsOpen }) {
   const handleSync = async () => {
     if (isSyncing) return;
     
-    // Check if we should trigger the modal for unsaved picks
+    // Always try to refresh through the navigation system first
     if (window.navigateWithConfirmation) {
-      // Use navigation protection - this will trigger modal if there are unsaved picks
-      // Pass a special flag to indicate this is a refresh, not navigation
+      // This will either trigger the modal (if unsaved picks) or refresh immediately
       window.navigateWithConfirmation(window.location.pathname, { isRefresh: true });
-    } else if (window.refreshAllData) {
-      // No navigation protection, but refresh function is available
-      setIsSyncing(true);
-      try {
-        await window.refreshAllData();
-        setTimeout(() => setIsSyncing(false), 500);
-      } catch (error) {
-        console.error('Sync failed:', error);
-        setIsSyncing(false);
-      }
     } else {
-      // Ultimate fallback
-      window.location.reload();
+      // Fallback: direct refresh if navigation system isn't available
+      if (window.refreshAllData) {
+        setIsSyncing(true);
+        try {
+          await window.refreshAllData();
+          setTimeout(() => setIsSyncing(false), 500);
+        } catch (error) {
+          console.error('Sync failed:', error);
+          setIsSyncing(false);
+        }
+      } else {
+        window.location.reload();
+      }
     }
   };
 
