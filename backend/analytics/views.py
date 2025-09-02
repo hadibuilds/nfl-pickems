@@ -252,7 +252,7 @@ def leaderboard(request):
         # Get avatar URL
         avatar_url = None
         if user.avatar:
-            avatar_url = request.build_absolute_uri(user.avatar.url)
+            avatar_url = request.build_absolute_uri(f'/accounts/secure-media/{user.avatar.name}')
         
         # Only include users with any activity
         if total_live_points > 0 or latest_stat:
@@ -1101,7 +1101,7 @@ def peek_data(request):
             for prediction in ml_predictions:
                 avatar_url = None
                 if prediction.user.avatar:
-                    avatar_url = request.build_absolute_uri(prediction.user.avatar.url)
+                    avatar_url = request.build_absolute_uri(f'/accounts/secure-media/{prediction.user.avatar.name}')
                 
                 user_data = {
                     'username': prediction.user.username,
@@ -1127,7 +1127,7 @@ def peek_data(request):
                 for prediction in prop_predictions:
                     avatar_url = None
                     if prediction.user.avatar:
-                        avatar_url = request.build_absolute_uri(prediction.user.avatar.url)
+                        avatar_url = request.build_absolute_uri(f'/accounts/secure-media/{prediction.user.avatar.name}')
                     
                     user_data = {
                         'username': prediction.user.username,

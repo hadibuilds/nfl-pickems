@@ -62,6 +62,20 @@ export default function SettingsPage() {
     }
   }, [userInfo, navigate]);
   
+  // Handle body scroll when modal is open
+  useEffect(() => {
+    if (showCropper) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showCropper]);
+  
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -566,9 +580,8 @@ export default function SettingsPage() {
       
       {/* Avatar Cropper Modal */}
       {showCropper && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto" style={{ zIndex: 9999 }}>
-          <div className="min-h-full flex items-start sm:items-center justify-center p-4">
-            <div className="homepage-glass-section p-4 sm:p-6 w-full max-w-md mt-4 sm:mt-0">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 overflow-hidden" style={{ zIndex: 9999 }}>
+          <div className="homepage-glass-section p-4 sm:p-6 w-full max-w-md">
             <div className="homepage-glass-content">
               <h3 className="homepage-section-title">Crop Your Avatar</h3>
             

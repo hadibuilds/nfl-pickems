@@ -211,7 +211,7 @@ def get_standings_optimized(season: int | None = None, week_filter: int | None =
         # Get avatar URL
         avatar_url = None
         if user.avatar and request:
-            avatar_url = request.build_absolute_uri(user.avatar.url)
+            avatar_url = request.build_absolute_uri(f'/accounts/secure-media/{user.avatar.name}')
         
         standings.append({
             'username': user.username,
@@ -321,7 +321,7 @@ def get_leaderboard_optimized(season: int | None = None, limit: int = 10, with_t
         # Handle avatar URL
         avatar_url = None
         if row['user__avatar'] and request:
-            avatar_url = request.build_absolute_uri(f"/media/{row['user__avatar']}")
+            avatar_url = request.build_absolute_uri(f"/accounts/secure-media/{row['user__avatar']}")
         
         entry = {
             'user_id': row['user_id'],
