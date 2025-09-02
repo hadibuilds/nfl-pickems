@@ -62,7 +62,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
   
   const CardContent = () => (
     <>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <Icon className="w-8 h-8 opacity-80" />
         {trend && trend !== 'same' && (
           <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
