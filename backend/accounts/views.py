@@ -156,8 +156,11 @@ class RegisterView(APIView):
             )
 
         except Exception as e:
-            # Optional: log e with logger.exception(...)
-            return Response({"detail": "Unexpected error", "error": str(e)}, status=500)
+            # Log the full error for debugging but don't expose to client
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Registration error: %s", str(e))
+            return Response({"detail": "Registration failed"}, status=500)
 
 
 @api_view(['POST'])

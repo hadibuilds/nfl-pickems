@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Set
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F, Count
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 from games.models import Game, Window, PropBet
 from predictions.models import MoneyLinePrediction, PropBetPrediction
@@ -18,15 +19,20 @@ from analytics.models import UserWindowStat
 
 logger = logging.getLogger(__name__)
 
-ML_POINTS = 1
-PB_POINTS = 2
+# --------------------------- scoring & behavior ----------------------------
+ML_POINTS = 1   # points per correct moneyline prediction
+PB_POINTS = 2   # points per correct prop-bet prediction
 
-# Slot ordering for same-date windows
+# Slot ordering for same-date windows (used for chronological sort stability)
 SLOT_ORDER = {"morning": 0, "afternoon": 1, "late": 2}
 
-# Throttle + mutex
+# Recompute rate-limiting and mutex
 RECOMPUTE_THROTTLE_SECONDS = getattr(settings, "WINDOW_RECOMPUTE_THROTTLE_SECONDS", 5)
 RECOMPUTE_MUTEX_TTL = getattr(settings, "WINDOW_RECOMPUTE_MUTEX_TTL", 120)
+
+# Optional roster scoping: restrict leaderboards to users in a given Django group name
+# Set ANALYTICS_ROSTER_GROUP="my-league" in settings to enable. If unset, all active users are included.
+ROSTER_GROUP = getattr(settings, "ANALYTICS_ROSTER_GROUP", None)
 
 
 # ----------------------------- Data structures -----------------------------
@@ -70,9 +76,10 @@ def _assert_permission(actor) -> None:
         if actor.has_perm("analytics.change_userwindowstat"):
             return
     except Exception:
-        # If auth backend doesn't support perms cleanly, fall back to staff/superuser only
+        # Fallback to staff/superuser only if the auth backend doesn't support perms cleanly
         pass
     raise WindowCalculationError("Not authorized to recompute window stats.")
+
 
 def _acquire_mutex(window_id: int) -> str:
     """
@@ -84,12 +91,14 @@ def _acquire_mutex(window_id: int) -> str:
         raise WindowCalculationError("A recompute for this window is already in progress.")
     return lock_key
 
+
 def _release_mutex(lock_key: str) -> None:
     try:
         cache.delete(lock_key)
     except Exception:
         # Non-fatal
         pass
+
 
 def _throttle_should_skip(window_id: int) -> bool:
     """
@@ -103,6 +112,22 @@ def _throttle_should_skip(window_id: int) -> bool:
         return True
     cache.set(k, 1, RECOMPUTE_THROTTLE_SECONDS)
     return False
+
+
+# ---------------------------- Roster utilities -----------------------------
+
+def _get_roster_user_ids() -> Set[int]:
+    """
+    Resolve the roster of users who must appear in every window's leaderboard,
+    even if they made no predictions (no-pick => zero points).
+    By default: all active users. If ANALYTICS_ROSTER_GROUP is set, restrict to that group.
+    """
+    User = get_user_model()
+    qs = User.objects.filter(is_active=True)
+    if ROSTER_GROUP:
+        qs = qs.filter(groups__name=ROSTER_GROUP)
+    return set(qs.values_list("id", flat=True))
+
 
 # -------------------------- Core calculator class --------------------------
 
@@ -132,9 +157,11 @@ class OptimizedWindowCalculator:
         # 0) Authorization (if actor provided)
         _assert_permission(self.actor)
 
+        # 1) Throttle (de-bounce bursts)
         if _throttle_should_skip(self.window_id):
             logger.info("Recompute for window %s skipped by throttle.", self.window_id)
             return
+
         # 2) Mutex (expensive operation guard)
         self._mutex_key = _acquire_mutex(self.window_id)
 
@@ -142,7 +169,7 @@ class OptimizedWindowCalculator:
             # 3) Validate and cache chronology
             self._validate_and_setup()
 
-            # 4) Calculate per-user deltas for just the relevant users
+            # 4) Calculate per-user deltas for the full roster (no-pick => zero points)
             user_deltas = self._calculate_user_deltas()
 
             # 5) Upsert current window stats (writes ml_correct/pb_correct/window_points & cume)
@@ -193,6 +220,7 @@ class OptimizedWindowCalculator:
             return cached
 
         windows = list(Window.objects.filter(season=season).only("id", "season", "date", "slot"))
+        # Stable sort by date, slot, then id
         windows.sort(key=lambda w: (w.date, SLOT_ORDER.get(w.slot or "late", 3), w.id))
 
         infos = [
@@ -205,6 +233,7 @@ class OptimizedWindowCalculator:
             )
             for i, w in enumerate(windows)
         ]
+        # Cache for 5 minutes
         cache.set(cache_key, infos, 300)
         return infos
 
@@ -220,10 +249,18 @@ class OptimizedWindowCalculator:
         return self.season_windows_cache[nxt:] if nxt < len(self.season_windows_cache) else []
 
     def _calculate_user_deltas(self) -> List[UserDelta]:
-        """Compute deltas for relevant users only (current window + prior participants)."""
+        """
+        Compute deltas for all users that should appear this window.
+        Includes:
+          - the full roster (ensures no-pick users still get rows and ranks),
+          - users who made predictions in the current window,
+          - anyone who appeared in previous or any season window (idempotent backfills).
+        """
+        # Resolve the games in this window once
         game_ids = list(Game.objects.filter(window_id=self.window_id).values_list("id", flat=True))
 
-        current_window_users = set()
+        # Users who actively touched this window (made any predictions here)
+        current_window_users: Set[int] = set()
         if game_ids:
             current_window_users.update(
                 MoneyLinePrediction.objects.filter(game_id__in=game_ids).values_list("user_id", flat=True)
@@ -232,21 +269,28 @@ class OptimizedWindowCalculator:
                 PropBetPrediction.objects.filter(prop_bet__game_id__in=game_ids).values_list("user_id", flat=True)
             )
 
-        previous_participants = set()
+        # Users who already exist in the previous window (rank deltas will compare against these)
+        previous_participants: Set[int] = set()
         prev_window = self._get_previous_window()
         if prev_window:
             previous_participants = set(
                 UserWindowStat.objects.filter(window_id=prev_window.id).values_list("user_id", flat=True)
             )
 
-        season_participants = set(
+        # Users who have stats anywhere this season (ensures idempotent replays)
+        season_participants: Set[int] = set(
             UserWindowStat.objects.filter(window__season=self.current_window.season).values_list("user_id", flat=True)
         )
 
-        relevant_user_ids = current_window_users | previous_participants | season_participants
+        # Full roster inclusion (key to fixing "no-pick users receive no row")
+        roster_ids: Set[int] = _get_roster_user_ids()
+
+        # Union of all sets
+        relevant_user_ids = roster_ids | current_window_users | previous_participants | season_participants
         if not relevant_user_ids:
             return []
 
+        # Correct counts by user for this window (absent => zero)
         ml_correct = dict(
             MoneyLinePrediction.objects
             .filter(game_id__in=game_ids, is_correct=True, user_id__in=relevant_user_ids)
@@ -258,7 +302,7 @@ class OptimizedWindowCalculator:
             .values("user_id").annotate(count=Count("id")).values_list("user_id", "count")
         )
 
-        # Previous window cumulative map
+        # Previous window cumulative map (default 0 for first appearance)
         prev_cume_map: Dict[int, int] = {}
         if prev_window:
             prev_cume_map = dict(
@@ -267,21 +311,24 @@ class OptimizedWindowCalculator:
                 .values_list("user_id", "season_cume_points")
             )
 
-        # Old cume at this window (to compute delta safely/idempotently)
+        # Old cume at this window (needed to compute precise delta/idempotence)
         old_cume_map = dict(
             UserWindowStat.objects
             .filter(window_id=self.window_id, user_id__in=relevant_user_ids)
             .values_list("user_id", "season_cume_points")
         )
 
+        # Assemble user deltas
         user_deltas: List[UserDelta] = []
         for user_id in relevant_user_ids:
-            ml_pts = ml_correct.get(user_id, 0) * ML_POINTS
-            pb_pts = pb_correct.get(user_id, 0) * PB_POINTS
-            window_points = ml_pts + pb_pts
+            # Window points for this user
+            window_points = ml_correct.get(user_id, 0) * ML_POINTS + pb_correct.get(user_id, 0) * PB_POINTS
 
+            # New cumulative = previous cumulative + this window points
             prev_cume = prev_cume_map.get(user_id, 0)
             new_cume = prev_cume + window_points
+
+            # Delta vs what was previously stored at this window (default 0)
             old_cume = old_cume_map.get(user_id, 0)
             delta = new_cume - old_cume
 
@@ -289,9 +336,14 @@ class OptimizedWindowCalculator:
         return user_deltas
 
     def _update_current_window_stats(self, user_deltas: List[UserDelta]) -> None:
+        """
+        Upsert ml_correct/pb_correct/window_points and season_cume_points for all relevant users.
+        Uses bulk upsert to be idempotent and fast.
+        """
         if not user_deltas:
             return
 
+        # Precompute correct counts again restricted to the users included in deltas
         game_ids = list(Game.objects.filter(window_id=self.window_id).values_list("id", flat=True))
         user_ids = [ud.user_id for ud in user_deltas]
 
@@ -306,24 +358,25 @@ class OptimizedWindowCalculator:
             .values("user_id").annotate(count=Count("id")).values_list("user_id", "count")
         )
 
+        # Build rows to upsert (no-pick => zeros)
         stats_to_upsert: List[UserWindowStat] = []
         for ud in user_deltas:
-            ml_correct = ml_correct_map.get(ud.user_id, 0)
-            pb_correct = pb_correct_map.get(ud.user_id, 0)
-            window_points = ml_correct * ML_POINTS + pb_correct * PB_POINTS
+            mlc = ml_correct_map.get(ud.user_id, 0)
+            pbc = pb_correct_map.get(ud.user_id, 0)
+            window_points = mlc * ML_POINTS + pbc * PB_POINTS
 
             stats_to_upsert.append(UserWindowStat(
                 user_id=ud.user_id,
                 window_id=self.window_id,
-                ml_correct=ml_correct,
-                pb_correct=pb_correct,
+                ml_correct=mlc,
+                pb_correct=pbc,
                 window_points=window_points,
                 season_cume_points=ud.new_cume,
                 rank_dense=0,
                 rank_delta=0,
             ))
 
-        # Django 5.1+: bulk upsert
+        # Django 5.1+: bulk upsert on (user, window)
         UserWindowStat.objects.bulk_create(
             stats_to_upsert,
             update_conflicts=True,
@@ -332,12 +385,15 @@ class OptimizedWindowCalculator:
         )
 
     def _propagate_deltas_forward(self, user_deltas: List[UserDelta]) -> None:
+        """
+        Add each user's delta to all later windows in-season, keeping season_cume_points consistent
+        after edits or late resolutions.
+        """
         later = self._get_later_windows()
         if not later:
             return
         later_ids = [w.id for w in later]
 
-        # Grouped batch updates per user
         for ud in user_deltas:
             if ud.delta == 0:
                 continue
@@ -346,6 +402,10 @@ class OptimizedWindowCalculator:
             ).update(season_cume_points=F("season_cume_points") + ud.delta)
 
     def _update_rankings(self) -> None:
+        """
+        Compute dense rank for this window based on season_cume_points and write rank deltas
+        against the previous window's ranks. Users without a prior row implicitly have delta 0.
+        """
         current_stats = list(
             UserWindowStat.objects.filter(window_id=self.window_id).order_by("-season_cume_points", "user_id")
         )
@@ -360,9 +420,8 @@ class OptimizedWindowCalculator:
             )
 
         updates: List[UserWindowStat] = []
-        # Dense ranking
         prev_points = None
-        points_seen = 0  # number of unique point levels processed
+        points_seen = 0  # number of unique point levels processed (dense rank counter)
 
         for stat in current_stats:
             if prev_points is None:
@@ -373,9 +432,9 @@ class OptimizedWindowCalculator:
                 prev_points = stat.season_cume_points
             current_rank = points_seen
 
-            rank_delta = 0
-            if prev_ranks and stat.user_id in prev_ranks:
-                rank_delta = prev_ranks[stat.user_id] - current_rank
+            # Rank delta: positive means improvement versus previous window rank
+            prev_rank = prev_ranks.get(stat.user_id)
+            rank_delta = (prev_rank - current_rank) if prev_rank is not None else 0
 
             if stat.rank_dense != current_rank or stat.rank_delta != rank_delta:
                 stat.rank_dense = current_rank
@@ -386,7 +445,9 @@ class OptimizedWindowCalculator:
             UserWindowStat.objects.bulk_update(updates, ["rank_dense", "rank_delta"])
 
     def _update_window_completeness(self) -> None:
-        """Flip completeness using a row lock to avoid races with other writers."""
+        """
+        Flip completeness based on whether all games and props are resolved, guarded by a row lock.
+        """
         try:
             w = Window.objects.select_for_update().get(pk=self.window_id)
         except Window.DoesNotExist:
@@ -394,8 +455,9 @@ class OptimizedWindowCalculator:
             raise WindowCalculationError(f"Window {self.window_id} does not exist")
 
         games = Game.objects.filter(window_id=self.window_id)
+
+        # If no games exist, ensure window is not complete
         if not games.exists():
-            # Don't force-complete a window with no games
             if w.is_complete:
                 w.is_complete = False
                 w.completed_at = None
@@ -429,6 +491,7 @@ def recompute_window_optimized(window_id: int, *, actor=None) -> None:
     calculator = OptimizedWindowCalculator(window_id, actor=actor)
     calculator.recompute_window()
 
+
 def bulk_recompute_windows_optimized(window_ids: List[int], *, actor=None) -> Dict[int, bool]:
     """
     Bulk recompute multiple windows in chronological order.
@@ -459,9 +522,11 @@ def bulk_recompute_windows_optimized(window_ids: List[int], *, actor=None) -> Di
             results[wid] = False
     return results
 
+
 def validate_window_calculations(window_id: int) -> Dict[str, Any]:
     """
     Diagnostic consistency checker for a window.
+    Adds a roster coverage check to ensure every roster user has a UserWindowStat row.
     """
     try:
         window = Window.objects.get(id=window_id)
@@ -486,6 +551,10 @@ def validate_window_calculations(window_id: int) -> Dict[str, Any]:
         )
         users_with_stats = set(stats.values_list("user_id", flat=True))
 
+        # Roster coverage (ensures no-pick users are represented)
+        roster = _get_roster_user_ids()
+        missing_from_roster = roster - users_with_stats
+
         return {
             "window_id": window_id,
             "season": window.season,
@@ -495,11 +564,13 @@ def validate_window_calculations(window_id: int) -> Dict[str, Any]:
             "users": {
                 "with_predictions": len(users_with_predictions),
                 "with_stats": len(users_with_stats),
-                "missing_stats": users_with_predictions - users_with_stats,
+                "missing_stats_from_predictions": list(users_with_predictions - users_with_stats),
+                "missing_stats_from_roster": list(missing_from_roster),
             },
             "validation_passed": (
                 unresolved_games == 0 and unresolved_props == 0 and
-                len(users_with_predictions - users_with_stats) == 0
+                len(users_with_predictions - users_with_stats) == 0 and
+                len(missing_from_roster) == 0
             ),
         }
     except Exception as e:
@@ -513,6 +584,10 @@ from django.db.models import F as _F
 BEST_BALANCED_MARGIN = 0.02  # 2 percentage points
 
 def compute_best_category_for_user(user, season: int):
+    """
+    Determine a user's best category for the season using resolved counts.
+    Denominators are all resolved items (missed picks count as incorrect).
+    """
     # Totals of resolved items
     total_ml_resolved = Game.objects.filter(season=season, winner__isnull=False).count()
     total_pb_resolved = PropBet.objects.filter(game__season=season, correct_answer__isnull=False).count()

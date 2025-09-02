@@ -122,8 +122,8 @@ export default function WeekSelector({
       <div className="page-container">
         <div className="max-w-6xl mx-auto">
           <div className="mx-auto mb-6 text-center">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl text-white font-bebas tracking-wider">Pick em!</h1>
-            <p className="mt-1 text-sm" style={{ color: 'rgb(156, 163, 175)' }}>Select a week to make your picks</p>
+            <h1 className="text-5xl sm:text-6xl md:text-7xl text-white font-bebas tracking-wider">Pick em!</h1>
+            <p className="mt-1 text-base" style={{ color: 'rgb(156, 163, 175)' }}>Select a week to make your picks</p>
           </div>
           <div className="week-selector-wrapper">
             {isLoading ? (

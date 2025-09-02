@@ -1030,8 +1030,8 @@ a:focus-visible {
 /* Week header styling */
 .week-card-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
   gap: clamp(8px, 2vw, 12px);
   min-width: 0;
 }

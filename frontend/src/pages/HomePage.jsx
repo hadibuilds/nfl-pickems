@@ -70,7 +70,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
           </div>
         )}
       </div>
-      <div className="text-3xl font-bold mb-1">{value}</div>
+      <div className={`font-bold mb-1 ${value?.length > 6 ? 'text-xl' : 'text-3xl'}`}>{value}</div>
       <div className="text-sm opacity-90">{title}</div>
       {subtitle && <div className="text-xs opacity-70 mt-1">{subtitle}</div>}
     </>
@@ -354,7 +354,7 @@ function HomePage() {
 
       {/* Weekly/Live Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={`+${rankMeta.rankChange || 0} this week`} icon={Trophy} trend={rankMeta.trend} color="green" />
+        <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={userData.currentWeek >= 2 ? `${rankMeta.rankChange > 0 ? '+' : ''}${rankMeta.rankChange || 0} this week` : ""} icon={Trophy} trend={userData.currentWeek >= 2 ? rankMeta.trend : 'same'} color="green" />
         <StatCard 
           title="Pending Picks" 
           value={userData.pendingPicks || 0} 
@@ -410,7 +410,7 @@ function HomePage() {
         {/* Leaderboard (with trend arrows) */}
         <div className="homepage-glass-section p-4">
           <div className="homepage-glass-content">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <h3 className="homepage-section-title">Leaderboard</h3>
               {/*{lastUpdated && (
@@ -453,7 +453,7 @@ function HomePage() {
         {/* Recent Games */}
         <div className="homepage-glass-section p-4" style={{ height: 'auto', display: 'flex', flexDirection: 'column' }}>
           <div className="homepage-glass-content">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <h3 className="homepage-section-title">Recent Games</h3>
               <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
             </div>

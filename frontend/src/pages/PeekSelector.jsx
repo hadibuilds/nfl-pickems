@@ -39,8 +39,8 @@ export default function PeekSelector() {
     <PageLayout backgroundColor="#1E1E20" maxWidth="max-w-6xl">
       {/* Header copy matches your typography; Bebas font is global */}
       <div className="mx-auto mb-6 text-center">
-        <h1 className="text-5xl text-white font-bebas">Peek at Picks</h1>
-        <p className="mt-1 text-sm" style={{ color: '#9ca3af' }}>
+        <h1 className="text-5xl sm:text-6xl md:text-7xl text-white font-bebas tracking-wider">Peek at Picks</h1>
+        <p className="mt-1 text-base" style={{ color: '#9ca3af' }}>
           See how everyone else picked for locked games
         </p>
       </div>
