@@ -112,7 +112,7 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
         <div className="flex items-center justify-center">{renderRankBadge(medalTier)}</div>
         <div>
           <div className={`font-medium text-sm ${entry.isCurrentUser ? 'text-purple-300' : 'text-white'}`}>
-            {capitalizeFirstLetter(entry.username)}
+            {capitalizeFirstLetter(entry.first_name || entry.username)}
           </div>
           <div className="text-xs" style={{ color: '#9ca3af' }}>{entry.total_points ?? entry.points ?? 0} points</div>
         </div>
@@ -357,7 +357,7 @@ function HomePage() {
         <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={userData.currentWeek >= 2 ? `${rankMeta.rankChange > 0 ? '+' : ''}${rankMeta.rankChange || 0} this week` : ""} icon={Trophy} trend={userData.currentWeek >= 2 ? rankMeta.trend : 'same'} color="green" />
         <StatCard 
           title="Pending Picks" 
-          value={userData.pendingPicks || 0} 
+          value={userData.pendingPicks ?? '—'} 
           subtitle="for this week" 
           icon={Clock} 
           color="purple" 
@@ -366,14 +366,14 @@ function HomePage() {
         />
         <StatCard 
           title="Points Behind" 
-          value={userData.pointsFromLeader || 0} 
+          value={userData.pointsFromLeader ?? '—'} 
           subtitle="from 1st place" 
           icon={Target} 
           color="orange"
           clickable={true}
           onClick={() => navigate('/peek')}
         />
-        <StatCard title="Best Category" value={userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A'} subtitle={`${userData.bestCategoryAccuracy || 0}% accuracy`} icon={Eye} color="blue" />
+        <StatCard title="Best Category" value={!seasonPerf.loaded ? '—' : (userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A')} subtitle={!seasonPerf.loaded ? '—' : `${userData.bestCategoryAccuracy || 0}% accuracy`} icon={Eye} color="blue" />
       </div>
 
       {/* Season Performance + Leaderboard */}
