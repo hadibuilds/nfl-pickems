@@ -95,11 +95,14 @@ export default function ProfileDropdown() {
       {/* Avatar Button */}
       <div ref={buttonRef}>
         <UserAvatar
+          key={userInfo.avatar || userInfo.username}
           username={userInfo.username}
+          firstName={userInfo.first_name}
+          lastName={userInfo.last_name}
+          profilePicture={userInfo.avatar}
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
           className={`profile-avatar-trigger ${isOpen ? 'active' : ''}`}
-          profilePicture={userInfo.avatar}
         />
       </div>
 
