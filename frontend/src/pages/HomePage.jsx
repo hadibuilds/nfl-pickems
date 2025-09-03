@@ -376,39 +376,10 @@ function HomePage() {
         <StatCard title="Best Category" value={!seasonPerf.loaded ? '—' : (userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A')} subtitle={!seasonPerf.loaded ? '—' : `${userData.bestCategoryAccuracy || 0}% accuracy`} icon={Eye} color="blue" />
       </div>
 
-      {/* Season Performance + Leaderboard */}
+      {/* Leaderboard + Season Performance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 homepage-grid-equal-height">
-        {/* Season Performance Rings */}
-        <div className="homepage-glass-section season-performance-glass p-4">
-          <div className="homepage-glass-content h-full flex flex-col">
-            <h3 className="homepage-section-title text-center">Season Performance</h3>
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="flex space-x-3 items-center justify-center">
-              <div className="flex flex-col items-center">
-                <ProgressRing percentage={seasonPerf.overall || 0} size={80} strokeWidth={6} fontSize="text-base" />
-                <div className="mt-2 text-center"><div className="text-xs font-bold" style={{ color: '#C2185B' }}>Overall</div></div>
-              </div>
-              <div className="flex flex-col items-center">
-                <ProgressRing percentage={seasonPerf.ml || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
-                <div className="mt-2 text-center"><div className="text-xs font-bold text-green-400">Moneyline</div></div>
-              </div>
-              <div className="flex flex-col items-center">
-                <ProgressRing percentage={seasonPerf.prop || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
-                <div className="mt-2 text-center"><div className="text-xs font-bold text-blue-400">Prop Bets</div></div>
-              </div>
-            </div>
-              <div className="mt-4 text-center">
-                <div className="text-2xl font-bold" style={{ color: "#F9A825" }}>
-                  {seasonPerf.totalPoints || 0}
-                </div>
-                <div className="text-sm homepage-section-content" style={{ color: '#9ca3af' }}>Total Points (season)</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Leaderboard (with trend arrows) */}
-        <div className="homepage-glass-section leaderboard-gold-tint p-4">
+        <div className="homepage-glass-section p-4">
           <div className="homepage-glass-content">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -447,6 +418,35 @@ function HomePage() {
             <button className="w-full mt-3 text-xs font-medium transition-colors hover:text-purple-300 homepage-section-content" style={{ color: '#8B5CF6' }} onClick={() => navigate('/standings')}>
               View Full Standings →
             </button>
+          </div>
+        </div>
+
+        {/* Season Performance Rings */}
+        <div className="homepage-glass-section season-performance-glass p-4">
+          <div className="homepage-glass-content h-full flex flex-col">
+            <h3 className="homepage-section-title text-center">Season Performance</h3>
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="flex space-x-3 items-center justify-center">
+              <div className="flex flex-col items-center">
+                <ProgressRing percentage={seasonPerf.overall || 0} size={80} strokeWidth={6} fontSize="text-base" />
+                <div className="mt-2 text-center"><div className="text-xs font-bold" style={{ color: '#C2185B' }}>Overall</div></div>
+              </div>
+              <div className="flex flex-col items-center">
+                <ProgressRing percentage={seasonPerf.ml || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
+                <div className="mt-2 text-center"><div className="text-xs font-bold text-green-400">Moneyline</div></div>
+              </div>
+              <div className="flex flex-col items-center">
+                <ProgressRing percentage={seasonPerf.prop || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
+                <div className="mt-2 text-center"><div className="text-xs font-bold text-blue-400">Prop Bets</div></div>
+              </div>
+            </div>
+              <div className="mt-4 text-center">
+                <div className="text-2xl font-bold" style={{ color: "#F9A825" }}>
+                  {seasonPerf.totalPoints || 0}
+                </div>
+                <div className="text-sm homepage-section-content" style={{ color: '#9ca3af' }}>Total Points (season)</div>
+              </div>
+            </div>
           </div>
         </div>
 
