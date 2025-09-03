@@ -1,5 +1,5 @@
 import React from 'react';
-import UserAvatar from '../common/UserAvatar';
+import UserAvatar from './UserAvatar';
 
 export default function PeekPicksSection({ game, peekData }) {
   const propBet = game?.prop_bets?.[0];
