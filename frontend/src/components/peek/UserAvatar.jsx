@@ -4,46 +4,76 @@ export default function UserAvatar({ user, size = 28, currentUsername }) {
   const [open, setOpen] = useState(false);
   const idRef = useRef(`avatar-${Math.random().toString(36).slice(2)}`);
 
+  // ---------- Normalize incoming user fields (snake_case, camelCase, or aliases) ----------
+  const norm = useMemo(() => {
+    const u = user || {};
+
+    // username fallbacks
+    const username =
+      u.username ??
+      u.userName ??
+      (typeof u.email === 'string' ? u.email.split('@')[0] : '') ??
+      '';
+
+    // names in either casing
+    const firstName = (u.first_name ?? u.firstName ?? '').trim();
+    const lastName  = (u.last_name  ?? u.lastName  ?? '').trim();
+
+    // avatar could be in several keys; ignore empty strings
+    const rawAvatar =
+      u.avatar ??
+      u.profilePicture ??
+      u.avatar_url ??
+      u.avatarUrl ??
+      null;
+    const avatar = rawAvatar && String(rawAvatar).length > 0 ? String(rawAvatar) : null;
+
+    // optional display name if your API ever sends it
+    const displayName =
+      (u.display_name ?? u.displayName ?? '').trim() ||
+      `${firstName} ${lastName}`.trim() ||
+      username;
+
+    // boolean for "this is me"
+    const isSelf = u.is_self === true;
+
+    return { username, firstName, lastName, avatar, displayName, isSelf };
+  }, [user]);
+
   // ---------- Helpers ----------
   const getInitials = (firstName, lastName, username) => {
-    // Priority 1: First + Last name initials
+    // 1) First + Last initials
     if (firstName && lastName) {
       return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
     }
-    
-    // Priority 2: First initial + second letter of first name
+    // 2) First two of first name
     if (firstName && firstName.length >= 2) {
       return (firstName.charAt(0) + firstName.charAt(1)).toUpperCase();
     }
-    
-    // Priority 3: First letter of first name + 'U' if only one character
+    // 3) First letter + 'U'
     if (firstName) {
       return (firstName.charAt(0) + 'U').toUpperCase();
     }
-    
-    // Priority 4: Username fallback
+    // 4) Username fallback
     if (username) {
-      const names = username.trim().split(' ');
+      const names = username.trim().split(/\s+/);
       if (names.length === 1) {
-        return names[0].length >= 2 ? 
-          (names[0].charAt(0) + names[0].charAt(1)).toUpperCase() : 
-          (names[0].charAt(0) + 'U').toUpperCase();
+        const n = names[0];
+        return (n.charAt(0) + (n.charAt(1) || 'U')).toUpperCase();
       }
       return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
     }
-    
+    // 5) Ultimate fallback
     return 'UU';
   };
 
-  const getUserColor = (u) => {
-    const str = String(u || '');
+  const getUserColor = (seed) => {
+    const str = String(seed || '');
     let hash = 0;
     for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    
-    // Use the same colorful color wheel as the original
     const colors = [
       '#8B5CF6', // purple-500
-      '#7C3AED', // violet-600  
+      '#7C3AED', // violet-600
       '#6366F1', // indigo-500
       '#3B82F6', // blue-500
       '#0EA5E9', // sky-500
@@ -51,7 +81,6 @@ export default function UserAvatar({ user, size = 28, currentUsername }) {
       '#10B981', // emerald-500
       '#F59E0B', // amber-500
     ];
-    
     return colors[Math.abs(hash) % colors.length];
   };
 
@@ -71,27 +100,25 @@ export default function UserAvatar({ user, size = 28, currentUsername }) {
   }, [currentUsername]);
 
   const isYou = useMemo(() => {
-    if (user?.is_self === true) return true;
-    if (!resolvedCurrentUsername || !user?.username) return false;
-    return String(user.username).toLowerCase() === String(resolvedCurrentUsername).toLowerCase();
-  }, [user, resolvedCurrentUsername]);
+    if (norm.isSelf) return true;
+    if (!resolvedCurrentUsername || !norm.username) return false;
+    return String(norm.username).toLowerCase() === String(resolvedCurrentUsername).toLowerCase();
+  }, [norm.isSelf, norm.username, resolvedCurrentUsername]);
 
   const displayName = useMemo(() => {
     if (isYou) return 'You';
-    const first = (user?.first_name || '').trim();
-    const last = (user?.last_name || '').trim();
-    if (first || last) return `${first} ${last}`.trim();
-    return user?.username || '';
-  }, [isYou, user]);
+    return norm.displayName || norm.username || 'User';
+  }, [isYou, norm.displayName, norm.username]);
 
-  const initials = getInitials(user?.first_name, user?.last_name, user?.username);
-  const backgroundColor = getUserColor(user?.username);
-  const hasAvatar = user?.avatar;
+  const initials = getInitials(norm.firstName, norm.lastName, norm.username);
+  const backgroundColor = getUserColor(norm.username);
+  const hasAvatar = !!norm.avatar;
 
   // Detect touch (no hover)
-  const isTouch = typeof window !== 'undefined'
-    && window.matchMedia
-    && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  const isTouch =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
   // ---------- Single-open bus ----------
   useEffect(() => {
@@ -170,7 +197,7 @@ export default function UserAvatar({ user, size = 28, currentUsername }) {
           boxShadow: 'none',
           padding: 0,
           lineHeight: 1,
-          backgroundImage: hasAvatar ? `url(${user.avatar})` : 'none',
+          backgroundImage: hasAvatar ? `url(${norm.avatar})` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

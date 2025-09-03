@@ -7,55 +7,58 @@
 import React from 'react';
 
 export default function UserAvatar({ 
+  // existing props
   username, 
   firstName = null,
   lastName = null,
   size = 'sm', 
   onClick, 
   className = '',
-  profilePicture = null 
+  profilePicture = null,
+
+  // added resiliency props (optional, non-breaking)
+  first_name = null,
+  last_name = null,
+  email = null,
+  avatar = null,
+  avatar_url = null,
+  avatarUrl = null,
 }) {
+  // -------- Normalize inputs (names, username, picture) --------
+  const normFirst = (firstName ?? first_name ?? '').trim() || null;
+  const normLast  = (lastName  ?? last_name  ?? '').trim() || null;
+
+  // If username not provided, fall back to email prefix (common DRF pattern)
+  const normUsername = (username ?? (email ? String(email).split('@')[0] : '')).trim();
+
+  // Accept multiple image keys; keep original profilePicture precedence
+  const normPicture = profilePicture ?? avatar ?? avatar_url ?? avatarUrl ?? null;
+
   // Generate two initials with fallback logic
-  const getInitials = (firstName, lastName, username) => {
-    // Priority 1: First + Last name initials
-    if (firstName && lastName) {
-      return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-    }
-    
-    // Priority 2: First initial + second letter of first name
-    if (firstName && firstName.length >= 2) {
-      return (firstName.charAt(0) + firstName.charAt(1)).toUpperCase();
-    }
-    
-    // Priority 3: First letter of first name + 'U' if only one character
-    if (firstName) {
-      return (firstName.charAt(0) + 'U').toUpperCase();
-    }
-    
-    // Priority 4: Username fallback
-    if (username) {
-      const names = username.trim().split(' ');
+  const getInitials = (first, last, uname) => {
+    if (first && last) return (first.charAt(0) + last.charAt(0)).toUpperCase();
+    if (first && first.length >= 2) return (first.charAt(0) + first.charAt(1)).toUpperCase();
+    if (first) return (first.charAt(0) + 'U').toUpperCase();
+
+    if (uname) {
+      const names = uname.trim().split(' ');
       if (names.length === 1) {
-        return names[0].length >= 2 ? 
-          (names[0].charAt(0) + names[0].charAt(1)).toUpperCase() : 
-          (names[0].charAt(0) + 'U').toUpperCase();
+        return names[0].length >= 2
+          ? (names[0].charAt(0) + names[0].charAt(1)).toUpperCase()
+          : (names[0].charAt(0) + 'U').toUpperCase();
       }
       return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
     }
-    
     return 'UU';
   };
 
   // Generate consistent color from username
   const getAvatarColor = (name) => {
     if (!name) return '#8B5CF6';
-    
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
-    // Generate colors in purple/blue spectrum for consistency
     const colors = [
       '#8B5CF6', // purple-500
       '#7C3AED', // violet-600  
@@ -66,32 +69,32 @@ export default function UserAvatar({
       '#10B981', // emerald-500
       '#F59E0B', // amber-500
     ];
-    
     return colors[Math.abs(hash) % colors.length];
   };
 
-  // Size configurations matching HeroUI
+  // Size configurations matching HeroUI (unchanged)
   const sizeClasses = {
     sm: 'avatar-sm',
     md: 'avatar-md', 
     lg: 'avatar-lg'
   };
+  const safeSizeClass = sizeClasses[size] || sizeClasses.sm;
 
-  const avatarColor = getAvatarColor(username);
-  const initials = getInitials(firstName, lastName, username);
+  const avatarColor = getAvatarColor(normUsername);
+  const initials = getInitials(normFirst, normLast, normUsername);
 
   return (
     <button
-      className={`user-avatar ${sizeClasses[size]} ${className}`}
+      className={`user-avatar ${safeSizeClass} ${className}`}
       onClick={onClick}
       style={{
         '--avatar-color': avatarColor,
-        backgroundImage: profilePicture ? `url(${profilePicture})` : 'none',
-        backgroundColor: profilePicture ? 'transparent' : avatarColor,
+        backgroundImage: normPicture ? `url(${normPicture})` : 'none',
+        backgroundColor: normPicture ? 'transparent' : avatarColor,
       }}
-      aria-label={`User avatar for ${username}`}
+      aria-label={`User avatar for ${normUsername || initials}`}
     >
-      {!profilePicture && (
+      {!normPicture && (
         <span className="avatar-initials">
           {initials}
         </span>
