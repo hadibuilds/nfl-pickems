@@ -81,8 +81,10 @@ export const AuthProvider = ({ children }) => {
       const data = await res.json();
       
       if (res.ok) {
-        setUserInfo(data);
-        return { success: true, user: data };
+        const refreshed = await refreshUser(true); // add `true` if you want cache-busting
+        if (refreshed.success) {
+          return { success: true, user: refreshed.user };
+        }
       } else {
         return { success: false, error: data.detail || 'Login failed' };
       }
