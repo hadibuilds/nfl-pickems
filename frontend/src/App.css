@@ -66,6 +66,15 @@
   align-items: center;
 }
 
+/* GamePage uppercase styling */
+.game-page-content {
+  text-transform: uppercase;
+}
+
+.game-page-content .game-time {
+  letter-spacing: 0.05em;
+}
+
 /* UPDATED: Enhanced game box styling */
 .game-box {
   background-color: #1f1f1f;

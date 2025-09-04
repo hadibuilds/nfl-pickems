@@ -167,7 +167,7 @@ export default function ResultBanner({
         {/* Money Line Section */}
         <div className="result-section">
           <div className="result-section-header">
-            <span>Money Line Correct</span>
+            <span>Money Line</span>
             <span className="correct-fraction">
               {ml.correct}/{ml.withResults}
               {ml.withResults > 0 && ` (${mlPct}%)`}
@@ -181,7 +181,7 @@ export default function ResultBanner({
         {/* Prop Bets Section */}
         <div className="result-section">
           <div className="result-section-header">
-            <span>Prop Bets Correct</span>
+            <span>Prop Bets</span>
             <span className="correct-fraction">
               {pb.correct}/{pb.withResults}
               {pb.withResults > 0 && ` (${pbPct}%)`}
