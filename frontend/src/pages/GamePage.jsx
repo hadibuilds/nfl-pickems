@@ -89,7 +89,7 @@ export default function GamePage({
   return (
     <>
       {/* Main GamePage Content */}
-      <div className="pt-16 px-4">
+      <div className="pt-16 px-4 game-page-content">
         {/* Header with controls and title - Protected */}
         <ErrorBoundary level="component" customMessage="Header controls failed to load">
           <WeekHeader 
