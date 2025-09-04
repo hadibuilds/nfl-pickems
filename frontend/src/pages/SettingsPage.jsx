@@ -309,7 +309,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {/* Avatar Section */}
         <div className="lg:col-span-1">
-          <div className="homepage-glass-section p-6">
+          <div className="homepage-glass-section avatar-section-mobile p-6">
             <div className="homepage-glass-content">
               <h2 className="homepage-section-title">Avatar</h2>
               <div className="flex flex-col items-center">
