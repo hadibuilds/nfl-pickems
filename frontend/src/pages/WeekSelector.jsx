@@ -10,7 +10,8 @@ export default function WeekSelector({
   games = [], 
   gameResults = {}, 
   moneyLineSelections = {}, 
-  propBetSelections = {} 
+  propBetSelections = {},
+  isAuthLoading = false
 }) {
   // Match PeekSelector approach: only show relevant weeks
   const [currentWeek, setCurrentWeek] = useState(null);
@@ -126,7 +127,7 @@ export default function WeekSelector({
             <p className="mt-1 text-base" style={{ color: 'rgb(156, 163, 175)' }}>Select a week to make your picks</p>
           </div>
           <div className="week-selector-wrapper">
-            {isLoading ? (
+            {isLoading && !isAuthLoading ? (
               <div className="text-center text-white py-6">
                 <div className="inline-flex items-center">
                   <svg className="animate-spin h-8 w-8 text-violet-500 mr-3" viewBox="0 0 24 24">

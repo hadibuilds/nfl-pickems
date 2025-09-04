@@ -12,7 +12,7 @@ import {
   renderRank
 } from '../components/standings/rankingUtils.jsx';
 
-export default function Standings() {
+export default function Standings({ isAuthLoading = false }) {
   const { userInfo } = useAuth();
   const [standings, setStandings] = useState([]);
   const [leaderboardData, setLeaderboardData] = useState([]);
@@ -108,6 +108,12 @@ export default function Standings() {
     </div>
   );
 
+  // If auth is loading, don't render anything (let App.jsx handle it)
+  if (isAuthLoading) {
+    return null;
+  }
+
+  // Only show page spinner if auth is complete and we're fetching data
   if (loading) {
     return (
       <PageLayout>
