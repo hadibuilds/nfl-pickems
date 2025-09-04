@@ -86,9 +86,12 @@ export default function Standings({ isAuthLoading = false }) {
 
   // Only expose current & prior weeks in the dropdown
   const filteredWeeks = (() => {
-    if (currentWeek == null) return weeks; // fallback if endpoint not available
-    return weeks.filter((w) => w <= currentWeek);
-  })().sort((a, b) => b - a); // show most recent first
+    if (currentWeek == null) {
+      // Fallback: show all weeks in ascending order (weeks with data first)
+      return [...weeks].sort((a, b) => a - b);
+    }
+    return weeks.filter((w) => w <= currentWeek).sort((a, b) => b - a); // show most recent first
+  })();
 
   // Use leaderboard data for "All Weeks" view to get trends, otherwise use standings data
   const sortedStandings = selectedWeek === null && leaderboardData.length > 0 
