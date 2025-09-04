@@ -389,8 +389,8 @@
 }
 
 .prop-question {
-  padding-left: 0;
-  padding-right: 0;
+  opacity: 0.75;
+  letter-spacing: 0.05rem;
 }
 
 /* Desktop adjustments for matchup text only */
@@ -438,6 +438,7 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
+  text-transform: uppercase;
 }
 
 /* Active state for touch feedback */
