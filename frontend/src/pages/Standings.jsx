@@ -108,13 +108,8 @@ export default function Standings({ isAuthLoading = false }) {
     </div>
   );
 
-  // If auth is loading, don't render anything (let App.jsx handle it)
-  if (isAuthLoading) {
-    return null;
-  }
-
-  // Only show page spinner if auth is complete and we're fetching data
-  if (loading) {
+  // Show spinner for both auth loading and data loading to prevent double spinners
+  if (isAuthLoading || loading) {
     return (
       <PageLayout>
         <LoadingSpinner />
