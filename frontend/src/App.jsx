@@ -314,8 +314,9 @@ export default function App() {
         right: 0,
         bottom: 0
       }}>
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mb-4"></div>
-        <div className="text-xl font-medium text-purple-300">Hang tight...</div>
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mb-6"></div>
+        <div className="text-2xl font-light text-white tracking-wide mb-2">Hang tight</div>
+        <div className="text-sm font-medium text-purple-300 tracking-widest uppercase opacity-75">Loading your experience</div>
       </div>
     );
   }
@@ -401,7 +402,7 @@ export default function App() {
               element={
                 <ErrorBoundary level="page" customMessage="Standings page failed to load">
                   <PrivateRoute>
-                    <Standings />
+                    <Standings isAuthLoading={isLoading} />
                   </PrivateRoute>
                 </ErrorBoundary>
               }
@@ -418,6 +419,7 @@ export default function App() {
                       propBetSelections={propBetSelections}
                       originalSubmittedPicks={originalSubmittedPicks}
                       originalSubmittedPropBets={originalSubmittedPropBets}
+                      isAuthLoading={isLoading}
                     />
                   </PrivateRoute>
                 </ErrorBoundary>
