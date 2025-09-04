@@ -143,7 +143,7 @@ export default function Standings({ isAuthLoading = false }) {
           >
             <span className="flex items-center">
               <Trophy className="w-4 h-4 mr-2" />
-              {selectedWeek ? `Week ${selectedWeek}` : 'All Weeks (Total)'}
+              {selectedWeek ? `Week ${selectedWeek}` : 'Overall'}
             </span>
             <svg
               className={`w-4 h-4 ml-2 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
@@ -169,7 +169,7 @@ export default function Standings({ isAuthLoading = false }) {
                     onClick={() => { setSelectedWeek(null); setOpen(false); }}
                     className="w-full px-5 py-2.5 text-left text-white hover:bg-gray-700 transition-colors duration-150 flex items-center"
                   >
-                    <Trophy className="w-4 h-4 mr-3" /> All Weeks (Total)
+                    <Trophy className="w-4 h-4 mr-3" /> Overall
                   </button>
                 </li>
 
