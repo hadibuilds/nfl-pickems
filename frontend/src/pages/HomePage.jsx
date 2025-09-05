@@ -13,7 +13,7 @@ import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
 import useDashboardData from '../hooks/useDashboardData';
 import PageLayout from '../components/common/PageLayout';
 import UserAvatar from '../components/common/UserAvatar';
-import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Eye } from 'lucide-react';
+import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Eye, ThumbsUp, Footprints } from 'lucide-react';
 import {
   GoldMedal,
   SilverMedal,
@@ -372,12 +372,12 @@ function HomePage() {
           title="Points Behind" 
           value={userData.pointsFromLeader ?? '—'} 
           subtitle="from 1st place" 
-          icon={Target} 
+          icon={Footprints} 
           color="orange"
           clickable={true}
           onClick={() => navigate('/peek')}
         />
-        <StatCard title="Best Category" value={!seasonPerf.loaded ? '—' : (userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A')} subtitle={!seasonPerf.loaded ? '—' : `${userData.bestCategoryAccuracy || 0}% accuracy`} icon={Eye} color="blue" />
+        <StatCard title="Best Category" value={!seasonPerf.loaded ? '—' : (userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A')} subtitle={!seasonPerf.loaded ? '—' : `${userData.bestCategoryAccuracy || 0}% accuracy`} icon={ThumbsUp} color="blue" />
       </div>
 
       {/* Leaderboard + Season Performance */}

@@ -267,8 +267,8 @@ def leaderboard(request):
                 "window_points": latest_stat.window_points if latest_stat else 0,
             })
     
-    # Sort by live points and assign dense ranks
-    live_standings.sort(key=lambda x: x["total_points"], reverse=True)
+    # Sort by live points (desc), then by user_id (asc) to favor early signups for ties
+    live_standings.sort(key=lambda x: (-x["total_points"], x["user_id"]))
     
     # Assign dense ranks (handle ties)
     current_rank = 1
