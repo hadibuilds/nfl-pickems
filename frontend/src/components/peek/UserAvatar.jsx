@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-export default function UserAvatar({ user, size = 28, currentUsername }) {
+export default function UserAvatar({ user, size = 28, currentUsername, borderStyle }) {
   const [open, setOpen] = useState(false);
   const idRef = useRef(`avatar-${Math.random().toString(36).slice(2)}`);
 
@@ -114,6 +114,14 @@ export default function UserAvatar({ user, size = 28, currentUsername }) {
   const backgroundColor = getUserColor(norm.username);
   const hasAvatar = !!norm.avatar;
 
+  // Border style logic
+  const getBorderStyle = () => {
+    if (borderStyle === 'peek') {
+      return '2px solid #6B7280'; // Gray border for peek cards
+    }
+    return '2px solid rgba(255,255,255,0.2)'; // Default semi-transparent white
+  };
+
   // Detect touch (no hover)
   const isTouch =
     typeof window !== 'undefined' &&
@@ -188,10 +196,10 @@ export default function UserAvatar({ user, size = 28, currentUsername }) {
           fontSize: `${size * 0.4}px`,
           fontWeight: 'bold',
           cursor: 'pointer',
-          border: '2px solid rgba(255,255,255,0.2)',
+          border: getBorderStyle(),
           transition: 'transform 0.2s ease, border-color 0.2s ease',
           transform: open ? 'scale(1.1)' : 'scale(1)',
-          borderColor: open ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)',
+          borderColor: open ? (borderStyle === 'peek' ? '#9CA3AF' : 'rgba(255,255,255,0.4)') : (borderStyle === 'peek' ? '#6B7280' : 'rgba(255,255,255,0.2)'),
           // Kill focus ring everywhere
           outline: 'none',
           boxShadow: 'none',
