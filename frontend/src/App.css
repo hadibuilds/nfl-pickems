@@ -2603,3 +2603,194 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   font-weight: bold;
   line-height: 1.1;
 }
+
+/* =================================================================
+   PEEK PAGE STYLES - GameCard-inspired layout
+   ================================================================= */
+
+/* Moneyline section - mimics MoneyLineSection */
+.moneyline-section {
+  background-color: #1f1f1f;
+  padding: 16px;
+  position: relative;
+}
+
+.moneyline-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.team-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #383850;
+  border: 2px solid transparent;
+  min-height: 100px;
+}
+
+.team-option {
+  border-color: #6B7280; /* Default neutral gray border for all containers */
+}
+
+/* Results state - green border for correct choice */
+.team-option.correct, .prop-option.correct {
+  border-color: #10B981 !important; /* Green for correct choice */
+}
+
+/* Results state - red border for incorrect choice */
+.team-option.incorrect, .prop-option.incorrect {
+  border-color: #EF4444 !important; /* Red for incorrect choice */
+}
+
+.team-option .team-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: white;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.team-option.away-team .team-name {
+  color: #7DD3FC; /* Light sky blue */
+}
+
+.team-option.home-team .team-name {
+  color: #C4B5FD; /* Light purple */
+}
+
+.team-option .users-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+  margin-bottom: 8px;
+  flex: 1;
+}
+
+.team-option .no-picks {
+  color: #666;
+  font-size: 14px;
+}
+
+.team-option .pick-count {
+  font-size: 12px;
+  color: #999;
+  font-weight: 500;
+}
+
+/* PropBet section - mimics PropBetSection */
+.propbet-section {
+  background-color: #1f1f1f;
+  padding: 16px;
+  position: relative;
+}
+
+.propbet-question {
+  text-align: center;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.propbet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.prop-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #383850;
+  border: 2px solid transparent;
+  min-height: 100px;
+}
+
+.prop-option {
+  border-color: #6B7280; /* Default neutral gray border for all containers */
+}
+
+/* Results state - green border for correct choice */
+.prop-option.correct {
+  border-color: #10B981 !important; /* Green for correct choice */
+}
+
+/* Add this if you want red borders for wrong answers */
+.team-option.incorrect,
+.prop-option.incorrect {
+  border-color: #EF4444 !important; /* Red for incorrect choice */
+}
+
+.prop-option .option-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: white;
+  margin-bottom: 8px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.prop-option.option-a .option-name {
+  color: #FCD34D; /* Light amber */
+}
+
+.prop-option.option-b .option-name {
+  color: #D1D5DB; /* Light gray */
+}
+
+.prop-option .users-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+  margin-bottom: 8px;
+  flex: 1;
+}
+
+.prop-option .no-picks {
+  color: #666;
+  font-size: 14px;
+}
+
+.prop-option .pick-count {
+  font-size: 12px;
+  color: #999;
+  font-weight: 500;
+}
+
+/* Mobile adjustments for peek page */
+@media (max-width: 768px) {
+  .moneyline-grid,
+  .propbet-grid {
+    gap: 8px;
+  }
+  
+  .team-option,
+  .prop-option {
+    padding: 8px;
+    min-height: 80px;
+  }
+  
+  .team-option .team-name,
+  .prop-option .option-name {
+    font-size: 0.9rem;
+  }
+  
+  .propbet-question {
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+}
