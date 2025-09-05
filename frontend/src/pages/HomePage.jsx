@@ -226,6 +226,8 @@ function HomePage() {
 
               const marked = rows.map(r => ({
                 username: r.username,
+                first_name: r.first_name,
+                last_name: r.last_name,
                 avatar: r.avatar,
                 total_points: r.total_points,
                 rank_dense: r.rank_dense,
@@ -255,6 +257,8 @@ function HomePage() {
               const rows = Array.isArray(leaderData?.leaderboard) ? leaderData.leaderboard : [];
               const marked = rows.map(r => ({
                 username: r.username,
+                first_name: r.first_name,
+                last_name: r.last_name,
                 avatar: r.avatar,
                 total_points: r.total_points,
                 rank_dense: r.rank_dense,
