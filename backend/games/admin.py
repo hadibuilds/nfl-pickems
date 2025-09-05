@@ -275,7 +275,8 @@ class PropBetAdmin(admin.ModelAdmin):
         try:
             super().save_model(request, obj, form, change)
 
-            answer_changed = (change and prev_correct != obj.correct_answer) or (not change and obj.correct_answer is not None)
+            # Fixed: Also call grade() when answer is cleared (set to None)
+            answer_changed = (not change and obj.correct_answer is not None) or (change and prev_correct != obj.correct_answer)
             if answer_changed:
                 try:
                     obj.grade(obj.correct_answer)  # grades props + schedules recompute for obj.game.window_id

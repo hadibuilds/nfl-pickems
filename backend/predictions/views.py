@@ -19,6 +19,21 @@ from .models import MoneyLinePrediction, PropBetPrediction
 def make_prediction(request, game_id):
     """Create or update a moneyline prediction."""
     game = get_object_or_404(Game, pk=game_id)
+    
+    # SECURITY: Check if game is locked before accepting predictions
+    if game.is_locked:
+        return Response({'error': 'Cannot submit picks for locked games'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    predicted_winner = request.data.get('predicted_winner')
+    if not predicted_winner:
+        return Response({'error': 'No team selected'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    game = get_object_or_404(Game, pk=game_id)
+    
+    # SECURITY: Check if game is locked before accepting predictions
+    if game.is_locked:
+        return Response({'error': 'Cannot submit picks for locked games'}, status=status.HTTP_400_BAD_REQUEST)
+    
     predicted_winner = request.data.get('predicted_winner')
     if not predicted_winner:
         return Response({'error': 'No team selected'}, status=status.HTTP_400_BAD_REQUEST)
@@ -39,6 +54,11 @@ def make_prediction(request, game_id):
 def make_prop_bet(request, prop_bet_id):
     """Create or update a prop bet prediction."""
     prop_bet = get_object_or_404(PropBet, pk=prop_bet_id)
+    
+    # SECURITY: Check if game is locked before accepting prop bet predictions
+    if prop_bet.is_locked:
+        return Response({'error': 'Cannot submit picks for locked games'}, status=status.HTTP_400_BAD_REQUEST)
+    
     answer = request.data.get('answer')
     if not answer:
         return Response({'error': 'No answer provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -63,28 +83,45 @@ def save_user_selection(request):
 
     if data.get('game_id') and data.get('predicted_winner'):
         game = get_object_or_404(Game, pk=data['game_id'])
-        try:
-            MoneyLinePrediction.objects.update_or_create(
-                user=request.user, game=game, defaults={'predicted_winner': data['predicted_winner']}
-            )
-            results.append({'type': 'moneyline', 'success': True, 'action': 'upserted'})
-        except ValueError as e:
-            results.append({'type': 'moneyline', 'success': False, 'error': str(e)})
+        
+        # SECURITY: Check if game is locked before accepting predictions
+        if game.is_locked:
+            results.append({'type': 'moneyline', 'success': False, 'error': 'Cannot submit picks for locked games'})
+        else:
+            try:
+                MoneyLinePrediction.objects.update_or_create(
+                    user=request.user, game=game, defaults={'predicted_winner': data['predicted_winner']}
+                )
+                results.append({'type': 'moneyline', 'success': True, 'action': 'upserted'})
+            except ValueError as e:
+                results.append({'type': 'moneyline', 'success': False, 'error': str(e)})
 
     if data.get('prop_bet_id') and data.get('answer'):
         prop_bet = get_object_or_404(PropBet, pk=data['prop_bet_id'])
-        try:
-            PropBetPrediction.objects.update_or_create(
-                user=request.user, prop_bet=prop_bet, defaults={'answer': data['answer']}
-            )
-            results.append({'type': 'prop_bet', 'success': True, 'action': 'upserted'})
-        except ValueError as e:
-            results.append({'type': 'prop_bet', 'success': False, 'error': str(e)})
+        
+        # SECURITY: Check if prop bet game is locked before accepting predictions
+        if prop_bet.is_locked:
+            results.append({'type': 'prop_bet', 'success': False, 'error': 'Cannot submit picks for locked games'})
+        else:
+            try:
+                PropBetPrediction.objects.update_or_create(
+                    user=request.user, prop_bet=prop_bet, defaults={'answer': data['answer']}
+                )
+                results.append({'type': 'prop_bet', 'success': True, 'action': 'upserted'})
+            except ValueError as e:
+                results.append({'type': 'prop_bet', 'success': False, 'error': str(e)})
 
     if not results:
-        return Response({'error': 'No valid predictions provided'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'No valid predictions provided'}, status=400)
 
-    return Response({'success': True, 'results': results})
+    any_failed = any(r.get('success') is False for r in results)
+    if any_failed:
+        return Response(
+            {'success': False, 'results': results, 'error': 'Some picks were rejected.'},
+            status=400
+        )
+
+    return Response({'success': True, 'results': results}, status=200)
 
 
 # =============================================================================

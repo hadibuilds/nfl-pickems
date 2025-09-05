@@ -259,6 +259,8 @@ def leaderboard(request):
             live_standings.append({
                 "user_id": user.id,
                 "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
                 "avatar": avatar_url,
                 "total_points": total_live_points,
                 "rank_delta": rank_delta,
@@ -284,6 +286,8 @@ def leaderboard(request):
             {
                 "user_id": r["user_id"],
                 "username": r["username"],
+                "first_name": r["first_name"],
+                "last_name": r["last_name"],
                 "avatar": r["avatar"],
                 "window_points": r["window_points"],
                 "total_points": r["total_points"],
