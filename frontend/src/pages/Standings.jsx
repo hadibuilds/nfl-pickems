@@ -213,7 +213,7 @@ export default function Standings({ isAuthLoading = false }) {
                 ? (entry.rank_dense || index + 1)
                 : calculateRankWithTies(standings, entry.username, selectedWeek);
               const medalTier = isLeaderboardView
-                ? (index < 3 ? ['gold', 'silver', 'bronze'][index] : null)
+                ? (index < 3 ? index + 1 : null)
                 : getMedalTier(standings, entry.username, selectedWeek);
               
               // Trend arrow logic for leaderboard view
