@@ -82,7 +82,7 @@ export default function PeekPicksSection({ game, peekData }) {
                     <span className="no-picks">—</span>
                   ) : (
                     (picksByProp.answer_a || []).map((user) => (
-                      <UserAvatar key={user.username} user={user} size={24} />
+                      <UserAvatar key={user.username} user={user} size={24} borderStyle="peek"/>
                     ))
                   )}
                 </div>
@@ -96,7 +96,7 @@ export default function PeekPicksSection({ game, peekData }) {
                     <span className="no-picks">—</span>
                   ) : (
                     (picksByProp.answer_b || []).map((user) => (
-                      <UserAvatar key={user.username} user={user} size={24} />
+                      <UserAvatar key={user.username} user={user} size={24} borderStyle="peek"/>
                     ))
                   )}
                 </div>
