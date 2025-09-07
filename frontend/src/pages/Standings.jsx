@@ -240,7 +240,7 @@ export default function Standings({ isAuthLoading = false }) {
                     <div className="w-8 flex justify-center">
                       {renderRank(medalTier, displayRank)}
                     </div>
-                    <div className="flex-1 min-w-0 max-w-[200px] sm:max-w-[300px]">
+                    <div className="flex-1 min-w-0 text-left">
                       <div className={`font-bold text-lg truncate ${isCurrentUser ? 'text-purple-300' : 'text-white'}`}>
                         {capitalizeFirstLetter(entry.first_name || entry.username)}
                       </div>
