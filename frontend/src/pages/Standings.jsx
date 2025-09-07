@@ -245,7 +245,7 @@ export default function Standings({ isAuthLoading = false }) {
                         {capitalizeFirstLetter(entry.first_name || entry.username)}
                       </div>
                     </div>
-                    <div className="flex items-center text-xs sm:text-sm min-w-[2rem] sm:min-w-[3rem]">
+                    <div className="flex items-center justify-end text-xs sm:text-sm min-w-[2rem] sm:min-w-[3rem] bg-transparent">
                       {showTrend ? (
                         <>
                           <div className={trendDirection === 'up' ? 'text-green-400' : 'text-red-400'}>
