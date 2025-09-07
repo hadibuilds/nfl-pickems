@@ -37,24 +37,32 @@ class Command(BaseCommand):
             UserStatHistory.objects.filter(week=week).delete()
             LeaderboardSnapshot.objects.filter(week=week).delete()
 
-        # Create compact leaderboard snapshot
-        leaderboard_data = [
-            {
-                'rank': i+1, 
+        # Create compact leaderboard snapshot (with dense ranking)
+        leaderboard_data = []
+        current_rank = 1
+        for i, stats in enumerate(user_stats):
+            if i > 0 and stats['total_points'] < user_stats[i-1]['total_points']:
+                current_rank += 1
+            
+            leaderboard_data.append({
+                'rank': current_rank, 
                 'username': stats['username'], 
                 'points': stats['total_points'],
                 'week_points': stats['week_points'],
                 'accuracy': stats['season_accuracy']
-            }
-            for i, stats in enumerate(user_stats)
-        ]
+            })
+        
         LeaderboardSnapshot.objects.create(week=week, snapshot_data=leaderboard_data)
 
-        # Create detailed user statistics history entries
+        # Create detailed user statistics history entries (with dense ranking)
         created_count = 0
+        current_rank = 1
         for i, stats in enumerate(user_stats):
+            if i > 0 and stats['total_points'] < user_stats[i-1]['total_points']:
+                current_rank += 1
+            
             user = stats['user_object']
-            rank = i + 1
+            rank = current_rank
             
             # Get previous week's stats for trend calculation
             previous_stats = UserStatHistory.objects.filter(

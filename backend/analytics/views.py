@@ -274,7 +274,7 @@ def leaderboard(request):
     current_rank = 1
     for i, entry in enumerate(live_standings):
         if i > 0 and entry["total_points"] < live_standings[i-1]["total_points"]:
-            current_rank = i + 1
+            current_rank += 1
         entry["rank_dense"] = current_rank
     
     # Limit results

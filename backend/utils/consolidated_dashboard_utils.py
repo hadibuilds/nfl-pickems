@@ -308,13 +308,31 @@ def get_leaderboard_optimized(season: int | None = None, limit: int = 10, with_t
         season = get_current_season()
     
     # Get leaderboard from UserWindowStat (much faster than raw predictions)
-    leaderboard_data = (
+    # First get the basic query without limit
+    base_query = (
         UserWindowStat.objects
         .filter(window__season=season)
         .values('user_id', 'user__username', 'user__avatar')
         .annotate(total_points=Sum('season_cume_points'))
-        .order_by('-total_points', 'user__username')[:limit]
+        .order_by('-total_points', 'user__username')
     )
+    
+    # Get the top N results
+    limited_data = list(base_query[:limit])
+    
+    # If we have results and hit the limit, include all users tied with the last place
+    if len(limited_data) == limit and limited_data:
+        last_points = limited_data[-1]['total_points']
+        # Get all users with the same points as the last user in our limit
+        tied_users = base_query.filter(
+            total_points=last_points
+        ).exclude(
+            user_id__in=[user['user_id'] for user in limited_data]
+        )
+        # Add the tied users to our results
+        leaderboard_data = limited_data + list(tied_users)
+    else:
+        leaderboard_data = limited_data
     
     leaderboard = []
     for row in leaderboard_data:
