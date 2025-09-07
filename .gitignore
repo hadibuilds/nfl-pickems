@@ -54,3 +54,4 @@ pnpm-debug.log*
 lerna-debug.log*td.json
 td.new.json
 *.taskdef
+backend/templates/index.html
