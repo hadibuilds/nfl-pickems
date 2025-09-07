@@ -245,7 +245,7 @@ export default function Standings({ isAuthLoading = false }) {
                         {capitalizeFirstLetter(entry.first_name || entry.username)}
                       </div>
                     </div>
-                    <div className="flex items-center justify-end text-xs sm:text-sm min-w-[2rem] sm:min-w-[3rem] bg-transparent">
+                    <div className="flex items-center justify-end text-xs sm:text-sm w-7 sm:w-8">
                       {showTrend ? (
                         <>
                           <div className={trendDirection === 'up' ? 'text-green-400' : 'text-red-400'}>
@@ -255,10 +255,7 @@ export default function Standings({ isAuthLoading = false }) {
                             {Math.abs(rankDelta)}
                           </span>
                         </>
-                      ) : (
-                        // Empty placeholder to maintain consistent spacing
-                        <div className="w-3 h-3 sm:w-4 sm:h-4" />
-                      )}
+                      ) : null}
                     </div>
                     <div className="text-2xl font-bold text-white">
                       {points}
