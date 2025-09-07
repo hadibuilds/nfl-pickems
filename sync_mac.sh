@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Sync React → Django
+# This script is for macOS/BSD systems
+
 echo "Starting full React → Django sync process..."
 
 # 0. Remove old React build just in case

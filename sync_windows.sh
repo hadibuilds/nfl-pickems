@@ -1,4 +1,5 @@
-#!/bin/bash
+# Sync React → Django
+# This script is for Windows systems
 
 echo "🔄 Starting full React → Django sync process..."
 
