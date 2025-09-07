@@ -27,7 +27,7 @@ def assign_dense_ranks(rows: List[Dict[str, Any]],
     for idx, r in enumerate(rows):
         pts = r.get(points_key, 0)
         if prev_points is None or pts < prev_points:
-            rank = idx + 1
+            rank += 1
             prev_points = pts
         r[rank_key] = rank
 
