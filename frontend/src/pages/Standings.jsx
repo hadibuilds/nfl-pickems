@@ -245,11 +245,11 @@ export default function Standings({ isAuthLoading = false }) {
                         {capitalizeFirstLetter(entry.first_name || entry.username)}
                       </div>
                     </div>
-                    <div className="flex items-center justify-end text-xs sm:text-sm w-7 sm:w-8">
+                    <div className="flex items-center justify-end text-xs sm:text-sm">
                       {showTrend ? (
                         <>
                           <div className={trendDirection === 'up' ? 'text-green-400' : 'text-red-400'}>
-                            {trendDirection === 'up' ? <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" /> : <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
+                            {trendDirection === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4" />}
                           </div>
                           <span className={`ml-0.5 sm:ml-1 ${trendDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>
                             {Math.abs(rankDelta)}
