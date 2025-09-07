@@ -210,7 +210,12 @@ export default function Standings({ isAuthLoading = false }) {
               // Use leaderboard data for All Weeks view, standings data for specific weeks
               const isLeaderboardView = selectedWeek === null && leaderboardData.length > 0;
               const displayRank = isLeaderboardView 
-                ? (entry.rank_dense || index + 1)
+                ? (() => {
+                    // For overall leaderboard, check for ties and add T- prefix if needed
+                    const rankValue = entry.rank_dense || index + 1;
+                    const sameRankCount = leaderboardData.filter(e => e.total_points === entry.total_points).length;
+                    return sameRankCount > 1 ? `T-${rankValue}` : rankValue;
+                  })()
                 : calculateRankWithTies(standings, entry.username, selectedWeek);
               const medalTier = isLeaderboardView
                 ? getMedalTier(sortedStandings, entry.username, null) // Use sorted leaderboard data
