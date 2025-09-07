@@ -54,3 +54,12 @@ pnpm-debug.log*
 lerna-debug.log*td.json
 td.new.json
 *.taskdef
+
+# Development-specific files (not for main branch)
+.env.development
+frontend/.env.development
+start-dev.sh
+sync_dev.sh
+
+# Generated files (created by sync script)
+backend/templates/index.html

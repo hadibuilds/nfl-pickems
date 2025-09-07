@@ -241,9 +241,10 @@ LOGGING = {
             "formatter": "verbose" if not DEBUG else "simple",
         }
     },
-    "root": {"handlers": ["console"], "level": "INFO" if not DEBUG else "DEBUG"},
+    "root": {"handlers": ["console"], "level": "INFO"},
     "loggers": {
-        "django": {"handlers": ["console"], "level": "INFO" if not DEBUG else "DEBUG", "propagate": False},
+        "django": {"handlers": ["console"], "level": "INFO" if not DEBUG else "INFO", "propagate": False},
+        "django.db.backends": {"handlers": ["console"], "level": "WARNING" if DEBUG else "INFO", "propagate": False},  # Hide SQL in dev
         "django.request": {"handlers": ["console"], "level": "WARNING", "propagate": False},
         "django.security": {"handlers": ["console"], "level": "INFO", "propagate": False},
         "accounts": {"handlers": ["console"], "level": "INFO", "propagate": False},
