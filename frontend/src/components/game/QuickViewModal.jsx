@@ -52,7 +52,7 @@ export default function QuickViewModal({
             <thead>
               <tr className="border-b border-gray-600">
                 <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>Game</th>
-                <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>$-line</th>
+                <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>$</th>
                 <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>Prop</th>
               </tr>
             </thead>
