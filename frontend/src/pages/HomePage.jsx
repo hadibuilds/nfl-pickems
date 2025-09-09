@@ -358,7 +358,7 @@ function HomePage() {
 
       {/* Weekly/Live Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={userData.currentWeek >= 2 ? `${rankMeta.rankChange > 0 ? '+' : ''}${rankMeta.rankChange || 0} this week` : ""} icon={Trophy} trend={userData.currentWeek >= 2 ? rankMeta.trend : 'same'} color="green" />
+        <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={userData.currentWeek >= 2 && rankMeta.rankChange !== 0 ? `${rankMeta.rankChange > 0 ? '+' : ''}${rankMeta.rankChange} this week` : ""} icon={Trophy} trend={userData.currentWeek >= 2 ? rankMeta.trend : 'same'} color="green" />
         <StatCard 
           title="Pending Picks" 
           value={userData.pendingPicks ?? '—'} 
