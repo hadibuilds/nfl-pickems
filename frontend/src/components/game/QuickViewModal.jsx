@@ -51,9 +51,9 @@ export default function QuickViewModal({
           <table className="w-full text-white">
             <thead>
               <tr className="border-b border-gray-600">
-                <th className="text-left py-3 px-4 text-gray-300 font-roboto uppercase font-semibold text-sm tracking-wide">Game</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-roboto uppercase font-semibold text-sm tracking-wide">$-line</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-roboto uppercase font-semibold text-sm tracking-wide">Prop</th>
+                <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>Game</th>
+                <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>$-line</th>
+                <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>Prop</th>
               </tr>
             </thead>
             <tbody>
@@ -63,10 +63,10 @@ export default function QuickViewModal({
                     <td className="py-3 px-4 font-semibold font-roboto uppercase text-white">
                       {game.away_team}@{game.home_team}
                     </td>
-                    <td className="py-3 px-4 font-roboto uppercase font-medium text-white">
+                    <td className="py-3 px-4 font-roboto uppercase font-medium text-white" style={{opacity: 0.75, letterSpacing: '0.05rem'}}>
                       {moneyLineSelections[game.id] || '—'}
                     </td>
-                    <td className="py-3 px-4 font-roboto uppercase font-medium text-white">
+                    <td className="py-3 px-4 font-roboto uppercase font-medium text-white" style={{opacity: 0.75, letterSpacing: '0.05rem'}}>
                       {getPropBetPick(game)}
                     </td>
                   </tr>
