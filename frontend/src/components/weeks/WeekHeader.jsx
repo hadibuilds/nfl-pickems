@@ -7,7 +7,7 @@ export default function WeekHeader({ weekNumber, onBack, onQuickView }) {
         {/* Back button - positioned on left */}
         <button
           onClick={onBack}
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl text-white hover:bg-[#3a3a3a] transition focus:outline-none"
+          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl text-white hover:bg-[#3a3a3a] transition focus:outline-none focus:ring-0 focus-visible:ring-0"
           style={{ backgroundColor: '#2d2d2d' }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -23,7 +23,7 @@ export default function WeekHeader({ weekNumber, onBack, onQuickView }) {
         {/* Quick View button - positioned on right */}
         <button
           onClick={onQuickView}
-          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl text-white hover:bg-[#3a3a3a] transition focus:outline-none"
+          className="inline-flex items-center space-x-2 px-4 py-2 rounded-2xl text-white hover:bg-[#3a3a3a] transition focus:outline-none focus:ring-0 focus-visible:ring-0"
           style={{ backgroundColor: '#2d2d2d' }}
           title="Quick View - See all your picks"
         >

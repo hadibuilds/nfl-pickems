@@ -34,7 +34,7 @@ export default function QuickViewModal({
     >
       <div className="bg-[#1a1a1a] rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 max-w-3xl">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white font-bebas tracking-wider uppercase">Week {weekNumber} - Quick View</h2>
           <button
             onClick={onClose}
