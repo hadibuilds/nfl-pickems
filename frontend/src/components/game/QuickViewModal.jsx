@@ -34,11 +34,11 @@ export default function QuickViewModal({
     >
       <div className="bg-[#1a1a1a] rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 max-w-3xl">
           <h2 className="text-2xl font-bold text-white font-bebas tracking-wider uppercase">Week {weekNumber} - Quick View</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 transition active:text-[#800020] md:hover:text-[#800020]"
+            className="text-[#800020] transition active:text-[#800020] md:hover:text-[#800020] focus:outline-none focus:ring-2 focus:ring-[#800020] focus:ring-offset-2 focus:ring-offset-[#1a1a1a] md:focus:ring-2 md:focus:ring-[#800020] md:focus:ring-offset-2 md:focus:ring-offset-[#1a1a1a]"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
