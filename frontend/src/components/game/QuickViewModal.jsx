@@ -47,13 +47,13 @@ export default function QuickViewModal({
         </div>
 
         {/* Content */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-white">
+        <div className="overflow-x-auto flex justify-center">
+          <table className="w-full max-w-3xl text-white">
             <thead>
               <tr className="border-b border-gray-600">
                 <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>Game</th>
-                <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>$</th>
-                <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>Prop</th>
+                <th className="text-center py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>$</th>
+                <th className="text-center py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>Prop</th>
               </tr>
             </thead>
             <tbody>
@@ -63,10 +63,10 @@ export default function QuickViewModal({
                     <td className="py-3 px-4 font-semibold font-roboto uppercase text-white">
                       {game.away_team}@{game.home_team}
                     </td>
-                    <td className="py-3 px-4 font-roboto uppercase font-medium text-white" style={{opacity: 0.75, letterSpacing: '0.05rem'}}>
+                    <td className="py-3 px-4 font-roboto uppercase font-medium text-white text-center" style={{opacity: 0.75, letterSpacing: '0.05rem'}}>
                       {moneyLineSelections[game.id] || '—'}
                     </td>
-                    <td className="py-3 px-4 font-roboto uppercase font-medium text-white" style={{opacity: 0.75, letterSpacing: '0.05rem'}}>
+                    <td className="py-3 px-4 font-roboto uppercase font-medium text-white text-center" style={{opacity: 0.75, letterSpacing: '0.05rem'}}>
                       {getPropBetPick(game)}
                     </td>
                   </tr>
