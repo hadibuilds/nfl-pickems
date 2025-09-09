@@ -61,7 +61,7 @@ export default function QuickViewModal({
                 games.map((game) => (
                   <tr key={game.id} className="border-b border-gray-700 md:hover:bg-gray-800">
                     <td className="py-3 px-4 font-semibold font-roboto uppercase text-white">
-                      {game.away_team}@{game.home_team}
+                      {game.away_team} @ {game.home_team}
                     </td>
                     <td className="py-3 px-4 font-roboto uppercase font-medium text-white text-center" style={{opacity: 0.75, letterSpacing: '0.05rem'}}>
                       {moneyLineSelections[game.id] || '—'}
