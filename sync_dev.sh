@@ -66,13 +66,13 @@ done
 # Django operations
 echo "📦 Collecting static files..."
 cd backend
-INVITE_CODE=dev-invite-code ***REMOVED*** ***REMOVED*** python manage.py collectstatic --noinput
+INVITE_CODE=dev-invite-code DJANGO_ADMIN_USERNAME=admin DJANGO_ADMIN_PASSWORD=admin123 python manage.py collectstatic --noinput
 
 echo "🧬 Making migrations..."
-INVITE_CODE=dev-invite-code ***REMOVED*** ***REMOVED*** python manage.py makemigrations
+INVITE_CODE=dev-invite-code DJANGO_ADMIN_USERNAME=admin DJANGO_ADMIN_PASSWORD=admin123 python manage.py makemigrations
 
 echo "🧱 Running migrations..."
-INVITE_CODE=dev-invite-code ***REMOVED*** ***REMOVED*** python manage.py migrate
+INVITE_CODE=dev-invite-code DJANGO_ADMIN_USERNAME=admin DJANGO_ADMIN_PASSWORD=admin123 python manage.py migrate
 
 echo "✅ [DEV] Development sync complete!"
 echo ""
