@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import WeekHeader from '../components/weeks/WeekHeader.jsx'; 
 import GameCard from '../components/game/GameCard.jsx';
 import ResultBanner from '../components/weeks/ResultBanner.jsx';
+import QuickViewModal from '../components/game/QuickViewModal.jsx';
 import ErrorBoundary from '../components/common/ErrorBoundary.jsx';
 
 export default function GamePage({
@@ -43,6 +44,9 @@ export default function GamePage({
   
   // 🆕 SUBMIT STATE: Track submission loading state
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // 🆕 QUICK VIEW STATE: Track modal visibility
+  const [showQuickView, setShowQuickView] = useState(false);
 
   // 🔒 PROTECTED BACK NAVIGATION: Uses navigateWithConfirmation
   const handleBack = () => {
@@ -53,6 +57,15 @@ export default function GamePage({
       // Fallback for when NavigationManager is not active
       window.history.back();
     }
+  };
+
+  // 🆕 QUICK VIEW: Handle modal open/close
+  const handleQuickView = () => {
+    setShowQuickView(true);
+  };
+
+  const handleCloseQuickView = () => {
+    setShowQuickView(false);
   };
 
   // 🆕 ENHANCED: Error-resilient submit handler with loading state
@@ -95,6 +108,7 @@ export default function GamePage({
           <WeekHeader 
             weekNumber={weekNumber} 
             onBack={handleBack}
+            onQuickView={handleQuickView}
           />
         </ErrorBoundary>
 
@@ -164,6 +178,16 @@ export default function GamePage({
         </button>,
         document.body  // "Teleport" the button to document.body
       )}
+
+      {/* 🆕 QUICK VIEW MODAL */}
+      <QuickViewModal 
+        isOpen={showQuickView}
+        onClose={handleCloseQuickView}
+        weekNumber={weekNumber}
+        games={weekGames}
+        moneyLineSelections={moneyLineSelections}
+        propBetSelections={propBetSelections}
+      />
     </>
   );
 
