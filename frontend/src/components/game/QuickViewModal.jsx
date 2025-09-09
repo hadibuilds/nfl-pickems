@@ -47,8 +47,8 @@ export default function QuickViewModal({
         </div>
 
         {/* Content */}
-        <div className="overflow-x-auto flex justify-center">
-          <table className="w-full max-w-3xl text-white">
+        <div className="overflow-x-auto">
+          <table className="w-full text-white">
             <thead>
               <tr className="border-b border-gray-600">
                 <th className="text-left py-3 px-4 font-roboto uppercase font-semibold text-sm tracking-wide" style={{color: '#F59E0B'}}>Game</th>
