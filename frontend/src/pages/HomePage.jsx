@@ -514,14 +514,15 @@ function HomePage() {
       {/* CTA */}
       <div className="flex justify-center">
         <button 
-          className="homepage-glass-section px-8 py-4 text-white font-medium tracking-wide transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none hover:scale-105"
+          className="homepage-glass-button px-8 py-4 text-white transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none"
+          style={{ opacity: 0.75, letterSpacing: '0.05rem' }}
           onClick={goToWeeks}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-300 group-hover:scale-110">
             <ellipse cx="12" cy="12" rx="6" ry="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             <path d="M12 3v18M5.5 7.5l13 0M5.5 16.5l13 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
-          <span className="text-sm font-light">View All Games</span>
+          <span className="text-lg sm:text-xl">VIEW GAMES</span>
         </button>
       </div>
     </PageLayout>
