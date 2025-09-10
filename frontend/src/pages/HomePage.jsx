@@ -522,7 +522,7 @@ function HomePage() {
             <ellipse cx="12" cy="12" rx="6" ry="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             <path d="M12 3v18M5.5 7.5l13 0M5.5 16.5l13 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
-          <span className="text-lg sm:text-xl">VIEW GAMES</span>
+          <span className="text-base sm:text-lg">VIEW GAMES</span>
         </button>
       </div>
     </PageLayout>
