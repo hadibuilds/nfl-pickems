@@ -419,7 +419,7 @@ function HomePage() {
                 </div>
               )}
             </div>
-            <button className="w-full mt-3 text-xs sm:text-sm font-medium transition-colors homepage-section-content focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 rounded-md py-1" style={{ color: '#F59E0B' }} onMouseEnter={(e) => e.target.style.color = '#FBBF24'} onMouseLeave={(e) => e.target.style.color = '#F59E0B'} onClick={() => navigate('/standings')}>
+            <button className="w-full mt-3 text-base sm:text-sm font-medium transition-colors homepage-section-content focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 rounded-md py-1" style={{ color: '#F59E0B', opacity: 0.75, letterSpacing: '0.05rem' }} onMouseEnter={(e) => e.target.style.color = '#FBBF24'} onMouseLeave={(e) => e.target.style.color = '#F59E0B'} onClick={() => navigate('/standings')}>
               View Full Standings →
             </button>
           </div>
@@ -428,7 +428,7 @@ function HomePage() {
         {/* Season Performance Rings */}
         <div className="homepage-glass-section season-performance-glass p-4">
           <div className="homepage-glass-content h-full flex flex-col">
-            <h3 className="homepage-section-title text-center">Season Performance</h3>
+            <h3 className="homepage-section-title text-center mb-4">Season Performance</h3>
             <div className="flex-1 flex flex-col justify-center">
               <div className="flex space-x-3 items-center justify-center">
               <div className="flex flex-col items-center">
@@ -448,7 +448,7 @@ function HomePage() {
                 <div className="text-2xl font-bold" style={{ color: "#F9A825" }}>
                   {seasonPerf.totalPoints || 0}
                 </div>
-                <div className="text-sm homepage-section-content" style={{ color: '#9ca3af' }}>Total Points (season)</div>
+                <div className="text-base sm:text-lg homepage-section-content" style={{ color: '#9ca3af', opacity: 0.75, letterSpacing: '0.05rem' }}>Total Points (season)</div>
               </div>
             </div>
           </div>
