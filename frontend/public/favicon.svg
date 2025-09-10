@@ -3,9 +3,4 @@
   <path d="M8 28 Q7 27 7 25 L7 8 Q7 6 9 6 L18 6 Q24 6 24 12 Q24 18 18 18 L12 18 L12 25 Q12 27 10 28 Z M12 10 L12 14 L17 14 Q20 14 20 12 Q20 10 17 10 Z" 
         fill="#000000" 
         opacity="0.9"/>
-  
-  <!-- Decorative flourish -->
-  <path d="M6 28 Q4 26 6 24 Q8 26 6 28" 
-        fill="#000000" 
-        opacity="0.6"/>
 </svg>
