@@ -419,7 +419,7 @@ function HomePage() {
                 </div>
               )}
             </div>
-            <button className="w-full mt-3 text-xs font-medium transition-colors homepage-section-content" style={{ color: '#F59E0B' }} onMouseEnter={(e) => e.target.style.color = '#FBBF24'} onMouseLeave={(e) => e.target.style.color = '#F59E0B'} onClick={() => navigate('/standings')}>
+            <button className="w-full mt-3 text-xs sm:text-sm font-medium transition-colors homepage-section-content focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 rounded-md py-1" style={{ color: '#F59E0B' }} onMouseEnter={(e) => e.target.style.color = '#FBBF24'} onMouseLeave={(e) => e.target.style.color = '#F59E0B'} onClick={() => navigate('/standings')}>
               View Full Standings →
             </button>
           </div>
