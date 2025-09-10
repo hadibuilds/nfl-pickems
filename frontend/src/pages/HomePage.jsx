@@ -419,7 +419,7 @@ function HomePage() {
                 </div>
               )}
             </div>
-            <button className="w-full mt-3 text-xs font-medium transition-colors hover:text-purple-300 homepage-section-content" style={{ color: '#8B5CF6' }} onClick={() => navigate('/standings')}>
+            <button className="w-full mt-3 text-xs font-medium transition-colors homepage-section-content" style={{ color: '#F59E0B' }} onMouseEnter={(e) => e.target.style.color = '#FBBF24'} onMouseLeave={(e) => e.target.style.color = '#F59E0B'} onClick={() => navigate('/standings')}>
               View Full Standings →
             </button>
           </div>
