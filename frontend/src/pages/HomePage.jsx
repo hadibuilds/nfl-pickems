@@ -514,24 +514,7 @@ function HomePage() {
       {/* CTA */}
       <div className="flex justify-center">
         <button 
-          className="group relative px-8 py-4 text-white font-medium tracking-wide transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none"
-          style={{
-            background: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '16px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)';
-            e.target.style.background = 'rgba(0, 0, 0, 0.7)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'translateY(0px)';
-            e.target.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
-            e.target.style.background = 'rgba(0, 0, 0, 0.6)';
-          }}
+          className="homepage-glass-section px-8 py-4 text-white font-medium tracking-wide transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none hover:scale-105"
           onClick={goToWeeks}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-300 group-hover:scale-110">
