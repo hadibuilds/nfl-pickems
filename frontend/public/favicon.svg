@@ -1,41 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <defs>
-    <!-- Brush stroke filter for organic hand-drawn effect -->
-    <filter id="roughPaper" x="0%" y="0%" width="100%" height="100%">
-      <feTurbulence baseFrequency="0.04" numOctaves="5" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1"/>
-    </filter>
-  </defs>
+  <!-- Elegant cursive "P" -->
+  <path d="M8 28 Q7 27 7 25 L7 8 Q7 6 9 6 L18 6 Q24 6 24 12 Q24 18 18 18 L12 18 L12 25 Q12 27 10 28 Z M12 10 L12 14 L17 14 Q20 14 20 12 Q20 10 17 10 Z" 
+        fill="#000000" 
+        opacity="0.9"/>
   
-  <!-- Football shape -->
-  <ellipse cx="16" cy="16" rx="7" ry="11" 
-           fill="none" 
-           stroke="#000000" 
-           stroke-width="2.5" 
-           filter="url(#roughPaper)"
-           opacity="0.9"/>
-  
-  <!-- Center seam line -->
-  <line x1="16" y1="7" x2="16" y2="25" 
-        stroke="#000000" 
-        stroke-width="1.5" 
-        filter="url(#roughPaper)"
-        opacity="0.8"/>
-  
-  <!-- Cross laces -->
-  <line x1="13" y1="12" x2="19" y2="12" 
-        stroke="#000000" 
-        stroke-width="1.2" 
-        filter="url(#roughPaper)"
-        opacity="0.7"/>
-  <line x1="13" y1="16" x2="19" y2="16" 
-        stroke="#000000" 
-        stroke-width="1.2" 
-        filter="url(#roughPaper)"
-        opacity="0.7"/>
-  <line x1="13" y1="20" x2="19" y2="20" 
-        stroke="#000000" 
-        stroke-width="1.2" 
-        filter="url(#roughPaper)"
-        opacity="0.7"/>
+  <!-- Decorative flourish -->
+  <path d="M6 28 Q4 26 6 24 Q8 26 6 28" 
+        fill="#000000" 
+        opacity="0.6"/>
 </svg>
