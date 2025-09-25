@@ -38,24 +38,24 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Enhanced scroll-to-top with multiple attempts for stubborn mobile browsers
+    // UNIVERSAL scroll-to-top solution for all browsers (Chrome, Safari, Firefox, Edge)
     const scrollToTop = () => {
-      // Method 1: Standard window scroll
+      // Method 1: Standard window scroll - works for most cases
       window.scrollTo(0, 0);
 
-      // Method 2: Document element scroll (for some mobile browsers)
+      // Method 2: Document element scroll (Chrome, Firefox)
       if (document.documentElement) {
         document.documentElement.scrollTop = 0;
         document.documentElement.scrollLeft = 0;
       }
 
-      // Method 3: Body scroll (fallback)
+      // Method 3: Body scroll (Edge, older browsers)
       if (document.body) {
         document.body.scrollTop = 0;
         document.body.scrollLeft = 0;
       }
 
-      // Method 4: For iOS Safari - force scroll with behavior
+      // Method 4: Scroll with options API (modern browsers)
       try {
         window.scrollTo({
           top: 0,
@@ -67,46 +67,80 @@ function ScrollToTop() {
         window.scrollTo(0, 0);
       }
 
-      // Method 5: Force scroll on main content containers
-      const mainElements = [
+      // Method 5: Target specific layout containers that can maintain scroll
+      const scrollableElements = [
+        // Main content containers
         document.querySelector('main'),
         document.querySelector('[role="main"]'),
         document.querySelector('.app-container'),
-        document.querySelector('#root')
-      ].filter(Boolean);
+        document.querySelector('#root'),
+        // Transform-based containers (our main content wrapper)
+        document.querySelector('.transition-transform'),
+        document.querySelector('[class*="translate"]'),
+        // CSS class-based containers
+        document.querySelector('.overflow-auto'),
+        document.querySelector('.overflow-y-auto'),
+        // Tailwind utility classes
+        ...document.querySelectorAll('[class*="overflow"]'),
+        ...document.querySelectorAll('[style*="overflow"]'),
+        // Any scrollable divs
+        ...document.querySelectorAll('div[style*="height"]')
+      ];
 
-      mainElements.forEach(element => {
-        if (element) {
+      // Remove duplicates and null values
+      const uniqueElements = [...new Set(scrollableElements)].filter(Boolean);
+
+      uniqueElements.forEach(element => {
+        try {
           element.scrollTop = 0;
           element.scrollLeft = 0;
+          // For elements that support scrollTo method
+          if (typeof element.scrollTo === 'function') {
+            element.scrollTo(0, 0);
+            element.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          }
+        } catch (e) {
+          // Ignore errors for elements that don't support these operations
         }
       });
+
+      // Method 6: Force repaint to ensure scroll position is applied
+      // This helps with Chrome and transformed elements
+      if (document.body) {
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // Trigger reflow
+        document.body.style.display = '';
+      }
     };
 
-    // Execute immediately (synchronous)
+    // Immediate execution for faster perceived scroll
     scrollToTop();
 
-    // Execute after DOM is ready
-    const timeoutId1 = setTimeout(scrollToTop, 0);
+    // Multiple execution timings to handle different loading states
+    const timeouts = [
+      setTimeout(scrollToTop, 0),    // Next tick
+      setTimeout(scrollToTop, 10),   // Very fast
+      setTimeout(scrollToTop, 50),   // Fast
+      setTimeout(scrollToTop, 100),  // Medium
+      setTimeout(scrollToTop, 250),  // Slow
+      setTimeout(scrollToTop, 500)   // Very slow (for heavy pages)
+    ];
 
-    // Execute after a small delay for slow-loading content
-    const timeoutId2 = setTimeout(scrollToTop, 100);
-
-    // Execute after content is likely loaded (for iOS)
-    const timeoutId3 = setTimeout(scrollToTop, 300);
-
-    // Use requestAnimationFrame for next paint cycle
-    const rafId = requestAnimationFrame(() => {
+    // requestAnimationFrame for render cycle synchronization
+    let rafIds = [];
+    rafIds.push(requestAnimationFrame(() => {
       scrollToTop();
-      // Double RAF for iOS Safari
-      requestAnimationFrame(scrollToTop);
-    });
+      // Double RAF for better browser compatibility
+      rafIds.push(requestAnimationFrame(() => {
+        scrollToTop();
+        // Triple RAF for really stubborn cases
+        rafIds.push(requestAnimationFrame(scrollToTop));
+      }));
+    }));
 
     return () => {
-      clearTimeout(timeoutId1);
-      clearTimeout(timeoutId2);
-      clearTimeout(timeoutId3);
-      cancelAnimationFrame(rafId);
+      timeouts.forEach(clearTimeout);
+      rafIds.forEach(cancelAnimationFrame);
     };
   }, [pathname]);
 

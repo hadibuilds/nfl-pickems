@@ -1504,10 +1504,10 @@ html {
   scroll-behavior: instant !important;
 }
 
-/* Enhanced mobile scroll fixes for iOS Safari */
+/* Enhanced scroll fixes for ALL browsers (Chrome, Safari, Firefox, Edge) */
 @media screen and (max-width: 768px) {
   html, body {
-    /* Prevent iOS Safari from bouncing */
+    /* Prevent bounce scrolling on mobile */
     overscroll-behavior: none;
     /* Force immediate scroll positioning */
     scroll-behavior: auto !important;
@@ -1526,10 +1526,38 @@ html {
   }
 }
 
+/* Universal scroll reset fixes for transform-based layouts */
+.transition-transform {
+  /* Ensure transformed elements don't maintain scroll position */
+  scroll-behavior: auto !important;
+  overflow-anchor: none; /* Prevent Chrome scroll anchoring */
+}
+
 /* Force scroll reset on route changes */
 .route-changing {
   scroll-behavior: auto !important;
   -webkit-overflow-scrolling: auto !important;
+}
+
+/* Chrome-specific fixes for scroll position */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  html, body {
+    /* Chrome scroll fixes */
+    overflow-anchor: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Target Chrome transform containers */
+  [class*="translate"], [class*="transform"] {
+    overflow-anchor: none !important;
+  }
+}
+
+/* Firefox-specific scroll fixes */
+@-moz-document url-prefix() {
+  html, body {
+    scroll-behavior: auto !important;
+  }
 }
 
 /* =================================================================
