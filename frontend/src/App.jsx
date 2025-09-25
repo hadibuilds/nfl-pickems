@@ -38,28 +38,15 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Mobile-first approach: ensure content is always visible below navbar
-    const scrollToProperTop = () => {
-      const navbar = document.querySelector('.navbar-container');
-      const navbarHeight = navbar ? navbar.offsetHeight : (window.innerWidth >= 640 ? 72 : 64);
-      const pageTopPadding = 64; // pt-16 in Tailwind
+    // Clean approach: slight offset ensures content is visible below fixed navbar
+    // This accounts for the gap between navbar height and page top padding
+    const scrollOffset = 8; // Small offset to ensure content visibility
 
-      // On mobile, add small buffer to ensure content is visible
-      // iOS Safari can have viewport quirks that affect fixed positioning
-      const isMobile = window.innerWidth < 640;
-      const mobileBuffer = isMobile ? 8 : 0; // Extra 8px buffer on mobile
-
-      const scrollTop = Math.max(0, navbarHeight - pageTopPadding + mobileBuffer);
-
-      window.scrollTo({
-        top: scrollTop,
-        left: 0,
-        behavior: 'instant'
-      });
-    };
-
-    // Execute scroll immediately
-    scrollToProperTop();
+    window.scrollTo({
+      top: scrollOffset,
+      left: 0,
+      behavior: 'instant'
+    });
   }, [pathname]);
 
   return null;
