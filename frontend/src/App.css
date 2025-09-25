@@ -1536,23 +1536,38 @@ body.is-ios {
   -webkit-overflow-scrolling: auto !important;
 }
 
-/* Chrome-specific fixes for scroll position */
+/* Chrome-specific fixes - optimize for smooth scrolling */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
-  html, body {
-    /* Chrome scroll fixes */
-    overflow-anchor: none !important;
-    scroll-behavior: auto !important;
-  }
-
-  /* Target Chrome transform containers */
+  /* Only disable scroll anchoring in Chrome, keep smooth scrolling */
   [class*="translate"], [class*="transform"] {
     overflow-anchor: none !important;
   }
+
+  /* Optimize Chrome scroll performance */
+  html, body {
+    overflow-anchor: none !important;
+    /* Chrome-specific smooth scrolling optimization */
+    scroll-behavior: smooth;
+    /* Force hardware acceleration for smoother scrolling */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    /* Better scroll performance */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Optimize Chrome transform containers */
+  .transition-transform {
+    /* Better Chrome performance for transformed elements */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+  }
 }
 
-/* Firefox-specific scroll fixes */
+/* Firefox - only disable during scroll-to-top */
 @-moz-document url-prefix() {
-  html, body {
+  .scroll-to-top-active {
     scroll-behavior: auto !important;
   }
 }
