@@ -38,15 +38,18 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Since pages use pt-16 (64px) but desktop navbar is 72px, we need to ensure
-    // scroll position accounts for the navbar height properly
+    // Mobile-first approach: ensure content is always visible below navbar
     const scrollToProperTop = () => {
       const navbar = document.querySelector('.navbar-container');
       const navbarHeight = navbar ? navbar.offsetHeight : (window.innerWidth >= 640 ? 72 : 64);
       const pageTopPadding = 64; // pt-16 in Tailwind
 
-      // If navbar is taller than page padding, we need to scroll to show content below navbar
-      const scrollTop = Math.max(0, navbarHeight - pageTopPadding);
+      // On mobile, add small buffer to ensure content is visible
+      // iOS Safari can have viewport quirks that affect fixed positioning
+      const isMobile = window.innerWidth < 640;
+      const mobileBuffer = isMobile ? 8 : 0; // Extra 8px buffer on mobile
+
+      const scrollTop = Math.max(0, navbarHeight - pageTopPadding + mobileBuffer);
 
       window.scrollTo({
         top: scrollTop,
