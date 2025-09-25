@@ -36,7 +36,45 @@ import { getCookie } from './utils/cookies';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+
+  useEffect(() => {
+    // Multiple fallback methods for reliable mobile scroll-to-top
+    const scrollToTop = () => {
+      // Method 1: Standard window scroll
+      window.scrollTo(0, 0);
+
+      // Method 2: Document element scroll (for some mobile browsers)
+      if (document.documentElement) {
+        document.documentElement.scrollTop = 0;
+      }
+
+      // Method 3: Body scroll (fallback)
+      if (document.body) {
+        document.body.scrollTop = 0;
+      }
+
+      // Method 4: For iOS Safari - force scroll with behavior
+      try {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'instant'
+        });
+      } catch (e) {
+        // Fallback if scrollTo with options not supported
+        window.scrollTo(0, 0);
+      }
+    };
+
+    // Execute immediately
+    scrollToTop();
+
+    // Also execute after a small delay for slow-loading content
+    const timeoutId = setTimeout(scrollToTop, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [pathname]);
+
   return null;
 }
 
@@ -299,14 +337,13 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh', 
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
         height: '100dvh', // Use dynamic viewport height for mobile
-        backgroundColor: '#1f1f1f', 
+        backgroundColor: '#1f1f1f',
         color: 'white',
         position: 'fixed',
         top: 0,

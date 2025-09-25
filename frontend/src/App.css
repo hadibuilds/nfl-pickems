@@ -1473,6 +1473,34 @@ a:focus-visible {
   }
 }
 /* =================================================================
+   MOBILE SCROLL-TO-TOP FIXES - iOS Safari compatibility
+   ================================================================= */
+
+/* Ensure proper scroll behavior on all devices */
+html, body, #root {
+  scroll-behavior: instant;
+  -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
+  position: relative;
+}
+
+/* iOS specific scroll fixes */
+body.is-ios {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent scroll restoration which can interfere with scroll-to-top */
+@media all {
+  * {
+    scroll-behavior: instant !important;
+  }
+}
+
+/* Override any smooth scrolling that might interfere */
+html {
+  scroll-behavior: instant !important;
+}
+
+/* =================================================================
    CLEANED TOAST STYLES - Moved from inline JSX
    ================================================================= */
 
