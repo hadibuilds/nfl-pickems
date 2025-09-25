@@ -1478,14 +1478,18 @@ a:focus-visible {
 
 /* Ensure proper scroll behavior on all devices */
 html, body, #root {
-  scroll-behavior: instant;
+  scroll-behavior: instant !important;
   -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
   position: relative;
+  overflow-x: hidden; /* Prevent horizontal scroll issues */
 }
 
 /* iOS specific scroll fixes */
 body.is-ios {
   -webkit-overflow-scrolling: touch;
+  /* Force hardware acceleration for better iOS performance */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Prevent scroll restoration which can interfere with scroll-to-top */
@@ -1498,6 +1502,34 @@ body.is-ios {
 /* Override any smooth scrolling that might interfere */
 html {
   scroll-behavior: instant !important;
+}
+
+/* Enhanced mobile scroll fixes for iOS Safari */
+@media screen and (max-width: 768px) {
+  html, body {
+    /* Prevent iOS Safari from bouncing */
+    overscroll-behavior: none;
+    /* Force immediate scroll positioning */
+    scroll-behavior: auto !important;
+  }
+
+  /* iOS specific viewport handling */
+  @supports (-webkit-touch-callout: none) {
+    html, body {
+      /* iOS Safari specific fixes */
+      -webkit-overflow-scrolling: touch;
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      /* Prevent elastic scrolling */
+      overscroll-behavior-y: none;
+    }
+  }
+}
+
+/* Force scroll reset on route changes */
+.route-changing {
+  scroll-behavior: auto !important;
+  -webkit-overflow-scrolling: auto !important;
 }
 
 /* =================================================================

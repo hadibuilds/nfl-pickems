@@ -38,7 +38,7 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Multiple fallback methods for reliable mobile scroll-to-top
+    // Enhanced scroll-to-top with multiple attempts for stubborn mobile browsers
     const scrollToTop = () => {
       // Method 1: Standard window scroll
       window.scrollTo(0, 0);
@@ -46,11 +46,13 @@ function ScrollToTop() {
       // Method 2: Document element scroll (for some mobile browsers)
       if (document.documentElement) {
         document.documentElement.scrollTop = 0;
+        document.documentElement.scrollLeft = 0;
       }
 
       // Method 3: Body scroll (fallback)
       if (document.body) {
         document.body.scrollTop = 0;
+        document.body.scrollLeft = 0;
       }
 
       // Method 4: For iOS Safari - force scroll with behavior
@@ -64,15 +66,48 @@ function ScrollToTop() {
         // Fallback if scrollTo with options not supported
         window.scrollTo(0, 0);
       }
+
+      // Method 5: Force scroll on main content containers
+      const mainElements = [
+        document.querySelector('main'),
+        document.querySelector('[role="main"]'),
+        document.querySelector('.app-container'),
+        document.querySelector('#root')
+      ].filter(Boolean);
+
+      mainElements.forEach(element => {
+        if (element) {
+          element.scrollTop = 0;
+          element.scrollLeft = 0;
+        }
+      });
     };
 
-    // Execute immediately
+    // Execute immediately (synchronous)
     scrollToTop();
 
-    // Also execute after a small delay for slow-loading content
-    const timeoutId = setTimeout(scrollToTop, 100);
+    // Execute after DOM is ready
+    const timeoutId1 = setTimeout(scrollToTop, 0);
 
-    return () => clearTimeout(timeoutId);
+    // Execute after a small delay for slow-loading content
+    const timeoutId2 = setTimeout(scrollToTop, 100);
+
+    // Execute after content is likely loaded (for iOS)
+    const timeoutId3 = setTimeout(scrollToTop, 300);
+
+    // Use requestAnimationFrame for next paint cycle
+    const rafId = requestAnimationFrame(() => {
+      scrollToTop();
+      // Double RAF for iOS Safari
+      requestAnimationFrame(scrollToTop);
+    });
+
+    return () => {
+      clearTimeout(timeoutId1);
+      clearTimeout(timeoutId2);
+      clearTimeout(timeoutId3);
+      cancelAnimationFrame(rafId);
+    };
   }, [pathname]);
 
   return null;
@@ -334,6 +369,13 @@ export default function App() {
   useEffect(() => {
     if (userInfo && !isLoading) refreshAllData();
   }, [userInfo, isLoading, refreshAllData]);
+
+  // Disable browser scroll restoration to prevent interference with our ScrollToTop
+  useEffect(() => {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+  }, []);
 
   if (isLoading) {
     return (
