@@ -38,13 +38,25 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Clean, standard approach - just scroll to top immediately
-    // Use the options API with 'instant' behavior for immediate scroll without smooth animation
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: 'instant' // This is the key - instant scroll without affecting global smooth scrolling
-    });
+    // Since pages use pt-16 (64px) but desktop navbar is 72px, we need to ensure
+    // scroll position accounts for the navbar height properly
+    const scrollToProperTop = () => {
+      const navbar = document.querySelector('.navbar-container');
+      const navbarHeight = navbar ? navbar.offsetHeight : (window.innerWidth >= 640 ? 72 : 64);
+      const pageTopPadding = 64; // pt-16 in Tailwind
+
+      // If navbar is taller than page padding, we need to scroll to show content below navbar
+      const scrollTop = Math.max(0, navbarHeight - pageTopPadding);
+
+      window.scrollTo({
+        top: scrollTop,
+        left: 0,
+        behavior: 'instant'
+      });
+    };
+
+    // Execute scroll immediately
+    scrollToProperTop();
   }, [pathname]);
 
   return null;
