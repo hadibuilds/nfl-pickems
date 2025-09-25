@@ -1492,14 +1492,7 @@ body.is-ios {
   transform: translateZ(0);
 }
 
-/* Only disable smooth scrolling during route changes for scroll-to-top */
-.scroll-to-top-active {
-  scroll-behavior: auto !important;
-}
-
-.scroll-to-top-active * {
-  scroll-behavior: auto !important;
-}
+/* No need for scroll-to-top class manipulation - using behavior: 'instant' in JS */
 
 /* Enhanced scroll fixes for ALL browsers (Chrome, Safari, Firefox, Edge) */
 @media screen and (max-width: 768px) {
@@ -1530,11 +1523,7 @@ body.is-ios {
   overflow-anchor: none; /* Prevent Chrome scroll anchoring */
 }
 
-/* Force scroll reset on route changes */
-.route-changing {
-  scroll-behavior: auto !important;
-  -webkit-overflow-scrolling: auto !important;
-}
+/* Clean approach - no CSS class manipulation needed */
 
 /* Chrome-specific fixes - optimize for smooth scrolling */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
@@ -1565,12 +1554,7 @@ body.is-ios {
   }
 }
 
-/* Firefox - only disable during scroll-to-top */
-@-moz-document url-prefix() {
-  .scroll-to-top-active {
-    scroll-behavior: auto !important;
-  }
-}
+/* Firefox works fine with the standard approach */
 
 /* =================================================================
    CLEANED TOAST STYLES - Moved from inline JSX

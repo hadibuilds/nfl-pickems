@@ -38,55 +38,13 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Temporarily disable smooth scrolling for instant scroll-to-top
-    document.documentElement.classList.add('scroll-to-top-active');
-
-    // UNIVERSAL scroll-to-top solution - simplified but effective
-    const scrollToTop = () => {
-      // Method 1: Instant scroll to top
-      window.scrollTo(0, 0);
-
-      // Method 2: Document element scroll (Chrome, Firefox)
-      if (document.documentElement) {
-        document.documentElement.scrollTop = 0;
-        document.documentElement.scrollLeft = 0;
-      }
-
-      // Method 3: Body scroll (Edge, older browsers)
-      if (document.body) {
-        document.body.scrollTop = 0;
-        document.body.scrollLeft = 0;
-      }
-
-      // Method 4: Target main content wrapper (our transform container)
-      const mainContainer = document.querySelector('.transition-transform');
-      if (mainContainer) {
-        mainContainer.scrollTop = 0;
-        mainContainer.scrollLeft = 0;
-      }
-    };
-
-    // Execute scroll immediately
-    scrollToTop();
-
-    // Execute a few more times to handle loading content
-    const timeouts = [
-      setTimeout(scrollToTop, 0),
-      setTimeout(scrollToTop, 50),
-      setTimeout(scrollToTop, 150)
-    ];
-
-    // Re-enable smooth scrolling after scroll-to-top is complete
-    const enableSmoothScroll = setTimeout(() => {
-      document.documentElement.classList.remove('scroll-to-top-active');
-    }, 200);
-
-    return () => {
-      timeouts.forEach(clearTimeout);
-      clearTimeout(enableSmoothScroll);
-      // Ensure smooth scrolling is re-enabled if component unmounts
-      document.documentElement.classList.remove('scroll-to-top-active');
-    };
+    // Clean, standard approach - just scroll to top immediately
+    // Use the options API with 'instant' behavior for immediate scroll without smooth animation
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'instant' // This is the key - instant scroll without affecting global smooth scrolling
+    });
   }, [pathname]);
 
   return null;
