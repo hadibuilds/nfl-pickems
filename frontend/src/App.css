@@ -1478,7 +1478,7 @@ a:focus-visible {
 
 /* Ensure proper scroll behavior on all devices */
 html, body, #root {
-  scroll-behavior: instant !important;
+  scroll-behavior: smooth; /* Allow smooth scrolling by default */
   -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
   position: relative;
   overflow-x: hidden; /* Prevent horizontal scroll issues */
@@ -1492,36 +1492,33 @@ body.is-ios {
   transform: translateZ(0);
 }
 
-/* Prevent scroll restoration which can interfere with scroll-to-top */
-@media all {
-  * {
-    scroll-behavior: instant !important;
-  }
+/* Only disable smooth scrolling during route changes for scroll-to-top */
+.scroll-to-top-active {
+  scroll-behavior: auto !important;
 }
 
-/* Override any smooth scrolling that might interfere */
-html {
-  scroll-behavior: instant !important;
+.scroll-to-top-active * {
+  scroll-behavior: auto !important;
 }
 
 /* Enhanced scroll fixes for ALL browsers (Chrome, Safari, Firefox, Edge) */
 @media screen and (max-width: 768px) {
   html, body {
-    /* Prevent bounce scrolling on mobile */
-    overscroll-behavior: none;
-    /* Force immediate scroll positioning */
-    scroll-behavior: auto !important;
+    /* Keep smooth scrolling for normal navigation */
+    scroll-behavior: smooth;
+    /* Preserve momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* iOS specific viewport handling */
+  /* iOS specific viewport handling - preserve natural bounce */
   @supports (-webkit-touch-callout: none) {
     html, body {
       /* iOS Safari specific fixes */
       -webkit-overflow-scrolling: touch;
       -webkit-transform: translateZ(0);
       transform: translateZ(0);
-      /* Prevent elastic scrolling */
-      overscroll-behavior-y: none;
+      /* Allow natural iOS bounce scrolling */
+      overscroll-behavior-y: auto;
     }
   }
 }
