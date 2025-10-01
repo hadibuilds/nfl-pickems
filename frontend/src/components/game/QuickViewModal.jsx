@@ -1,14 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function QuickViewModal({ 
-  isOpen, 
-  onClose, 
-  weekNumber, 
-  games = [], 
-  moneyLineSelections = {}, 
-  propBetSelections = {} 
+export default function QuickViewModal({
+  isOpen,
+  onClose,
+  weekNumber,
+  games = [],
+  moneyLineSelections = {},
+  propBetSelections = {}
 }) {
+
+  // Lock scroll when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+
+    // Lock scroll
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'contain';
+
+    return () => {
+      // Restore scroll
+      body.style.position = '';
+      body.style.top = '';
+      body.style.left = '';
+      body.style.right = '';
+      body.style.width = '';
+      body.style.overflow = '';
+      document.documentElement.style.overscrollBehavior = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -30,14 +59,21 @@ export default function QuickViewModal({
   return createPortal(
     <div
       className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[10001] backdrop-blur-sm"
-      onClick={handleBackdropClick}
+      onMouseDown={handleBackdropClick}
     >
-      <div className="bg-gradient-to-br from-[#2d2d2d] via-[#1e1e1e] to-[#2a2a2a] rounded-2xl shadow-2xl p-8 max-w-4xl w-full mx-4 max-h-[85vh] overflow-y-auto border border-white border-opacity-10">
+      <div
+        className="bg-gradient-to-br from-[#2d2d2d] via-[#1e1e1e] to-[#2a2a2a] rounded-2xl shadow-2xl p-8 max-w-4xl w-full mx-4 max-h-[85vh] overflow-y-auto border border-white border-opacity-10"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold text-white font-bebas tracking-wider uppercase">Week {weekNumber} - Quick View</h2>
           <button
-            onClick={onClose}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
             className="text-gray-400 hover:text-white transition-all duration-200 focus:outline-none p-2 rounded-full hover:bg-white hover:bg-opacity-10 active:scale-95"
             aria-label="Close modal"
           >

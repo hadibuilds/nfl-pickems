@@ -4,15 +4,44 @@
  * Provides Review and Discard options
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function NavigationWarningModal({ 
-  isOpen, 
-  draftCount, 
-  onReview, 
-  onDiscard 
+export default function NavigationWarningModal({
+  isOpen,
+  draftCount,
+  onReview,
+  onDiscard
 }) {
+  // Lock scroll when modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+
+    // Lock scroll
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'contain';
+
+    return () => {
+      // Restore scroll
+      body.style.position = '';
+      body.style.top = '';
+      body.style.left = '';
+      body.style.right = '';
+      body.style.width = '';
+      body.style.overflow = '';
+      document.documentElement.style.overscrollBehavior = '';
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -32,17 +61,23 @@ export default function NavigationWarningModal({
         </div>
         
         <div className="navigation-modal-footer">
-          <button 
+          <button
             className="navigation-modal-button review"
-            onClick={onReview}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onReview();
+            }}
           >
             Review
           </button>
-          <button 
+          <button
             className="navigation-modal-button discard"
-            onClick={onDiscard}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onDiscard();
+            }}
           >
-            Discard
+            Discard & Leave
           </button>
         </div>
       </div>

@@ -1393,13 +1393,20 @@ a:focus-visible {
 }
   
 .navigation-modal-button.discard {
-  background-color: #EF4444;
-  color: white;
+  background-color: transparent;
+  color: #EF4444;
+  border: 2px solid #EF4444;
 }
-  
+
 .navigation-modal-button.discard:hover {
-  background-color: #EF4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: #DC2626;
+  color: #DC2626;
   transform: translateY(-1px);
+}
+
+.navigation-modal-button.discard:active {
+  background-color: rgba(239, 68, 68, 0.2);
 }
   
 .navigation-modal-button:active {
