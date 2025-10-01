@@ -1223,8 +1223,15 @@ a:focus-visible {
     min-height: 42px;
     min-width: 100px;
     
-    /* Improved mobile positioning with safe area */
-    bottom: max(5vh, env(safe-area-inset-bottom, 0px) + 20px);
+    /* Better spacing for mobile browsers vs PWA */
+    bottom: max(80px, env(safe-area-inset-bottom, 0px) + 60px);
+  }
+
+  /* PWA mode - closer to bottom since no browser UI */
+  @media (display-mode: standalone) {
+    .floating-submit-button {
+      bottom: max(24px, env(safe-area-inset-bottom, 0px) + 16px) !important;
+    }
   }
 
   /* iOS-specific centering */

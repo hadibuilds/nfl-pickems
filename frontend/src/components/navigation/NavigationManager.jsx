@@ -7,14 +7,16 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNavigationBlocker } from '../../hooks/useNavigationBlocker';
 import NavigationWarningModal from './NavigationWarningModal';
 
-export default function NavigationManager({ 
-  hasUnsavedChanges, 
-  draftCount, 
-  onClearDrafts 
+export default function NavigationManager({
+  hasUnsavedChanges,
+  draftCount,
+  onClearDrafts
 }) {
+  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const [navigationOptions, setNavigationOptions] = useState({});
@@ -74,9 +76,9 @@ export default function NavigationManager({
         }, 0);
       }
     } else if (pendingNavigation) {
-      // Regular navigation
+      // Regular navigation using React Router (triggers ScrollToTop)
       setTimeout(() => {
-        window.location.href = pendingNavigation;
+        navigate(pendingNavigation);
       }, 0);
     }
     
