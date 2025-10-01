@@ -1527,7 +1527,11 @@ body.is-ios {
   overscroll-behavior-y: auto; /* Allow natural iOS bounce */
   /* iOS 26: Prevent Safari bottom address bar from pushing content */
   position: relative;
-  /* iOS 26 fix: Critical for preventing fixed element shifting */
+}
+
+/* iOS 26 Safari (browser mode only, not PWA) */
+body.is-ios:not(.is-pwa) {
+  /* iOS 26 fix: Critical for preventing fixed element shifting in browser */
   height: 100%;
   overflow: auto;
 }
@@ -1562,38 +1566,32 @@ body.is-ios {
 body.is-pwa {
   /* Hide any browser UI that might appear */
   overscroll-behavior: none;
+  /* Full viewport without browser controls */
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-/* iOS PWA: Force true fullscreen */
+/* iOS PWA: Proper fullscreen handling */
 body.is-pwa.is-ios {
-  position: fixed;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+  /* Don't use position: fixed - it breaks scrolling! */
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
 }
 
 body.is-pwa.is-ios #root {
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: none;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
 }
 
-/* Detect if running in iOS standalone mode (alternative detection) */
-@media (display-mode: standalone) and (-webkit-touch-callout: none) {
-  body {
-    /* Force full screen experience on iOS PWA */
-    position: fixed;
-    width: 100%;
+/* Standalone mode detection - lighter touch approach */
+@media (display-mode: standalone) {
+  html {
     height: 100%;
-    overflow: hidden;
   }
 
-  #root {
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 }
 
