@@ -1487,9 +1487,7 @@ html, body, #root {
 /* iOS specific scroll fixes */
 body.is-ios {
   -webkit-overflow-scrolling: touch;
-  /* Force hardware acceleration for better iOS performance */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
+  /* Removed translateZ(0) to fix fixed positioning */
 }
 
 /* No need for scroll-to-top class manipulation - using behavior: 'instant' in JS */
@@ -1508,8 +1506,7 @@ body.is-ios {
     html, body {
       /* iOS Safari specific fixes */
       -webkit-overflow-scrolling: touch;
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
+      /* Removed translateZ(0) to fix fixed positioning */
       /* Allow natural iOS bounce scrolling */
       overscroll-behavior-y: auto;
     }
@@ -1537,9 +1534,7 @@ body.is-ios {
     overflow-anchor: none !important;
     /* Chrome-specific smooth scrolling optimization */
     scroll-behavior: smooth;
-    /* Force hardware acceleration for smoother scrolling */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+    /* Removed translateZ(0) to fix fixed positioning */
     /* Better scroll performance */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
