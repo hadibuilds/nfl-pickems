@@ -236,26 +236,13 @@ export default function App() {
     }
   }, [fetchGameData, fetchUserPredictions, fetchGameResults]);
 
-  // Expose refreshAllData globally for navbar sync button
+  // Expose hasUnsavedChanges globally for navbar sync button
   useEffect(() => {
-    window.refreshAllData = async (showLoading = false) => {
-      if (showLoading) {
-        setShowFullPageLoading(true);
-      }
-      await refreshAllData();
-      if (showLoading) {
-        // Keep loading screen for a moment to avoid flash
-        setTimeout(() => {
-          setShowFullPageLoading(false);
-        }, 300);
-      }
-    };
     window.hasUnsavedChanges = () => hasUnsavedChanges;
     return () => {
-      delete window.refreshAllData;
       delete window.hasUnsavedChanges;
     };
-  }, [refreshAllData, hasUnsavedChanges]);
+  }, [hasUnsavedChanges]);
 
   // ======== SUBMIT ========
 
