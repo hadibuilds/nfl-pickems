@@ -102,7 +102,12 @@ export default function GamePage({
   return (
     <>
       {/* Main GamePage Content */}
-      <div className="pt-16 sm:pt-[72px] px-4 game-page-content">
+      <div
+        className="px-4 game-page-content"
+        style={{
+          paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))',
+        }}
+      >
         {/* Header with controls and title - Protected */}
         <ErrorBoundary level="component" customMessage="Header controls failed to load">
           <WeekHeader 

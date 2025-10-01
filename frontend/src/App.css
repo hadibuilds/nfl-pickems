@@ -659,7 +659,11 @@ a:focus-visible {
   backdrop-filter: blur(16px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+  /* Base height without safe area */
   height: 64px;
+  /* iOS safe area support - navbar grows to accommodate notch */
+  height: calc(64px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
 
   pointer-events: auto !important;
   transform: none !important;
@@ -668,10 +672,12 @@ a:focus-visible {
 @media (min-width: 640px) {
   .navbar-container {
     height: 72px;
-  
-  pointer-events: auto !important;
-  transform: none !important;
-}
+    height: calc(72px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+
+    pointer-events: auto !important;
+    transform: none !important;
+  }
 }
 
 .navbar-content {
@@ -1467,34 +1473,70 @@ a:focus-visible {
    ================================================================= */
 
 /* Base scroll behavior for all devices */
-html, body, #root {
-  -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
-  overflow-x: hidden; /* Prevent horizontal scroll */
+html {
+  /* Prevent iOS Safari from resizing viewport on scroll */
+  -webkit-text-size-adjust: 100%;
+  /* Smooth scrolling for iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  /* Allow vertical scroll */
+  overflow-y: scroll;
+  /* Force full viewport height */
+  height: 100%;
+  /* Instant scroll for ScrollToTop component */
+  scroll-behavior: auto;
+}
+
+body {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
   overflow-y: auto;
-  height: auto;
-  scroll-behavior: auto; /* Instant scroll for ScrollToTop component */
-  position: static;
+  min-height: 100vh;
+  /* Use dynamic viewport height on mobile */
+  min-height: 100dvh;
+  scroll-behavior: auto;
+  position: relative;
+  /* Prevent content from going under notch/status bar */
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
 }
 
 /* iOS specific fixes */
 body.is-ios {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: auto; /* Allow natural iOS bounce */
+  /* Prevent Safari address bar from pushing content */
+  position: relative;
 }
 
 /* iOS Web App (standalone) specific optimizations */
 @supports (-webkit-touch-callout: none) {
   body {
-    /* Support for iOS safe areas (notch, home indicator) */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    /* Support for iOS safe areas (home indicator, sides) */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    /* Don't add top padding to body - it's handled by navbar */
+  }
+}
+
+/* Desktop: Different padding-top to match larger navbar */
+@media (min-width: 640px) {
+  /* Target PageLayout and other page containers */
+  div[style*="calc(64px"] {
+    padding-top: calc(72px + env(safe-area-inset-top, 0px)) !important;
   }
 
-  /* Adjust navbar for safe area */
-  .navbar-container {
-    padding-top: env(safe-area-inset-top);
+  /* Target game-page-content specifically */
+  .game-page-content[style*="paddingTop"] {
+    padding-top: calc(72px + env(safe-area-inset-top, 0px)) !important;
   }
 }
 

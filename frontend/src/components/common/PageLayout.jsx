@@ -7,8 +7,8 @@
 
 import React from 'react';
 
-export default function PageLayout({ 
-  children, 
+export default function PageLayout({
+  children,
   className = '',
   maxWidth = 'max-w-6xl', // Standard max-width, can be overridden
   fullHeight = true,
@@ -16,14 +16,19 @@ export default function PageLayout({
   mobileFullWidth = true // New prop for mobile behavior
 }) {
   return (
-    <div 
+    <div
       className={`
-        ${fullHeight ? 'min-h-screen' : ''} 
-        pt-16 sm:pt-[72px] pb-12 
+        ${fullHeight ? 'min-h-screen' : ''}
+        pb-12
         ${mobileFullWidth ? 'px-1 sm:px-4 md:px-6' : 'px-6'}
         ${className}
       `}
-      style={{ backgroundColor, color: 'white' }}
+      style={{
+        backgroundColor,
+        color: 'white',
+        /* Dynamic padding that matches navbar height + safe area */
+        paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))',
+      }}
     >
       <div className="page-container">
         <div className={`${maxWidth} mx-auto`}>
