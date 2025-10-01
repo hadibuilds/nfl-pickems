@@ -6,23 +6,16 @@
  * Maintains all existing functionality and styling
  */
 
-import React, { useState, useEffect } from "react";
+import React, {useEffect,useRef,useState} from "react";
 import { useLocation } from "react-router-dom";
 import { useAuthWithNavigation } from "../../hooks/useAuthWithNavigation";
 import ProfileDropdown from "../navigation/ProfileDropdown";
 import whiteLogo from "../../assets/pickem2_white.png";
 
 export default function Navbar({ isOpen, setIsOpen }) {
-  const location = useLocation();
+  const navbarRef = useRef(null);
 
-  const hardScrollReset = () => {
-    const html = document.documentElement;
-    const prev = html.style.scrollBehavior;
-    html.style.scrollBehavior = 'auto';
-    (document.scrollingElement || html).scrollTo(0, 0);
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-    html.style.scrollBehavior = prev || '';
-  };
+  const location = useLocation();
   const { userInfo, logoutAndRedirect, refreshUser } = useAuthWithNavigation();
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -45,7 +38,22 @@ export default function Navbar({ isOpen, setIsOpen }) {
       };
     }
 
+    
+  useEffect(() => {
+    const setVar = () => {
+      const h = navbarRef.current?.offsetHeight || 72;
+      document.documentElement.style.setProperty('--nav-h', `${h}px`);
+    };
+    setVar();
+    window.addEventListener('resize', setVar);
+    window.addEventListener('orientationchange', setVar);
     return () => {
+      window.removeEventListener('resize', setVar);
+      window.removeEventListener('orientationchange', setVar);
+    };
+  }, []);
+
+  return () => {
       if (originalRefreshAllData) {
         window.refreshAllData = originalRefreshAllData;
       }
@@ -92,8 +100,7 @@ export default function Navbar({ isOpen, setIsOpen }) {
   const handleNavigate = (path) => {
     if (window.navigateWithConfirmation) {
       window.navigateWithConfirmation(path);
-      if (path === location.pathname) hardScrollReset();
-} else {
+    } else {
       // Fallback to normal navigation if NavigationManager not active
       window.location.href = path;
     }
