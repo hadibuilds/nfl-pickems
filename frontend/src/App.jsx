@@ -38,9 +38,27 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useLayoutEffect(() => {
-    // Clean, performance-optimized scroll-to-top for SPA navigation
-    // useLayoutEffect ensures scroll happens before browser repaint (no flash)
-    window.scrollTo(0, 0);
+    // Temporarily disable smooth scrolling to ensure instant scroll
+    const html = document.documentElement;
+    const originalScrollBehavior = html.style.scrollBehavior;
+    html.style.scrollBehavior = 'auto';
+
+    // Force scroll to top immediately - multiple approaches for maximum reliability
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    // Additional aggressive reset for any stubborn scroll positions
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      // Restore original scroll behavior after scroll is complete
+      setTimeout(() => {
+        html.style.scrollBehavior = originalScrollBehavior;
+      }, 0);
+    });
   }, [pathname]);
 
   return null;
