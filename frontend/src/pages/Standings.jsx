@@ -193,7 +193,7 @@ export default function Standings({ isAuthLoading = false }) {
 
       {/* Standings List — contained scrollbox */}
       <div className="max-w-md mx-auto">
-        <div className="overflow-y-auto space-y-3 pr-1">
+        <div className="space-y-3 pr-1">
           {sortedStandings.length === 0 ? (
             <div className="text-center py-16">
               <Trophy className="w-16 h-16 text-gray-500 mx-auto mb-4" />

@@ -14,6 +14,15 @@ import whiteLogo from "../../assets/pickem2_white.png";
 
 export default function Navbar({ isOpen, setIsOpen }) {
   const location = useLocation();
+
+  const hardScrollReset = () => {
+    const html = document.documentElement;
+    const prev = html.style.scrollBehavior;
+    html.style.scrollBehavior = 'auto';
+    (document.scrollingElement || html).scrollTo(0, 0);
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    html.style.scrollBehavior = prev || '';
+  };
   const { userInfo, logoutAndRedirect, refreshUser } = useAuthWithNavigation();
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -83,7 +92,8 @@ export default function Navbar({ isOpen, setIsOpen }) {
   const handleNavigate = (path) => {
     if (window.navigateWithConfirmation) {
       window.navigateWithConfirmation(path);
-    } else {
+      if (path === location.pathname) hardScrollReset();
+} else {
       // Fallback to normal navigation if NavigationManager not active
       window.location.href = path;
     }
