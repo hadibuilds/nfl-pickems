@@ -1,18 +1,19 @@
 /*
- * Updated Navbar Component 
+ * Updated Navbar Component
  * 🔒 NAVIGATION PROTECTED: All links use navigateWithConfirmation
  * Prevents navigation away from GamePage with unsaved picks
  * Replaced hamburger menu with ProfileDropdown
  * Maintains all existing functionality and styling
+ * ⚡ MEMOIZED: Prevents unnecessary re-renders (logo flicker fix)
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuthWithNavigation } from "../../hooks/useAuthWithNavigation";
 import ProfileDropdown from "../navigation/ProfileDropdown";
 import whiteLogo from "../../assets/pickem2_white.png";
 
-export default function Navbar({ isOpen, setIsOpen }) {
+function Navbar({ isOpen, setIsOpen }) {
   const location = useLocation();
   const { userInfo, logoutAndRedirect, refreshUser } = useAuthWithNavigation();
   const [isSyncing, setIsSyncing] = useState(false);
@@ -178,3 +179,6 @@ export default function Navbar({ isOpen, setIsOpen }) {
     </nav>
   );
 }
+
+// Export memoized version to prevent re-renders when App state changes
+export default memo(Navbar);

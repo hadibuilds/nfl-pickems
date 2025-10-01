@@ -25,11 +25,16 @@ export function initPullToRefresh() {
   function createPullIndicator() {
     const indicator = document.createElement('div');
     indicator.id = 'pull-to-refresh-indicator';
+
+    // Calculate safe starting position below notch/status bar
+    const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--viewport-offset-top') || '0');
+    const startingTop = Math.max(safeAreaTop, 0); // Start at safe area, or 0 if no safe area
+
     indicator.style.cssText = `
       position: fixed;
-      top: -60px;
+      top: ${startingTop}px;
       left: 50%;
-      transform: translateX(-50%);
+      transform: translateX(-50%) translateY(-100px);
       width: 40px;
       height: 40px;
       border-radius: 50%;
@@ -37,9 +42,10 @@ export function initPullToRefresh() {
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10000;
+      z-index: 1500;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+      opacity: 0;
     `;
     indicator.innerHTML = `
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
@@ -72,11 +78,17 @@ export function initPullToRefresh() {
       // Prevent default scrolling while pulling
       e.preventDefault();
 
-      // Update indicator position
+      // Calculate safe area offset
+      const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--viewport-offset-top') || '0');
+      const startingTop = Math.max(safeAreaTop, 0);
+
+      // Update indicator position - translateY animates from -100px up to visible
       const progress = Math.min(pullDistance / PULL_THRESHOLD, 1);
-      pullIndicator.style.top = `${-60 + (pullDistance * 0.5)}px`;
+      const indicatorOffset = Math.min(pullDistance * 0.8, 100); // Slide down as you pull
+
+      pullIndicator.style.top = `${startingTop}px`;
+      pullIndicator.style.transform = `translateX(-50%) translateY(${indicatorOffset - 100}px) rotate(${pullDistance * 2}deg)`;
       pullIndicator.style.opacity = progress;
-      pullIndicator.style.transform = `translateX(-50%) rotate(${pullDistance * 2}deg)`;
 
       // Change color when threshold reached
       if (pullDistance >= PULL_THRESHOLD) {
@@ -91,10 +103,13 @@ export function initPullToRefresh() {
     if (!isPulling) return;
 
     const pullDistance = currentY - startY;
+    const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--viewport-offset-top') || '0');
+    const startingTop = Math.max(safeAreaTop, 0);
 
     if (pullDistance >= PULL_THRESHOLD) {
-      // Trigger refresh
-      pullIndicator.style.top = '20px';
+      // Trigger refresh - show at final visible position
+      pullIndicator.style.top = `${startingTop + 10}px`;
+      pullIndicator.style.transform = 'translateX(-50%) translateY(0) rotate(360deg)';
       pullIndicator.querySelector('svg').style.animation = 'spin 1s linear infinite';
 
       // Reload after brief delay
@@ -102,10 +117,10 @@ export function initPullToRefresh() {
         window.location.reload();
       }, 300);
     } else {
-      // Reset indicator
-      pullIndicator.style.top = '-60px';
+      // Reset indicator - hide above view
+      pullIndicator.style.top = `${startingTop}px`;
+      pullIndicator.style.transform = 'translateX(-50%) translateY(-100px) rotate(0deg)';
       pullIndicator.style.opacity = '0';
-      pullIndicator.style.transform = 'translateX(-50%) rotate(0deg)';
     }
 
     isPulling = false;

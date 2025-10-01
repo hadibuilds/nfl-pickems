@@ -1322,6 +1322,8 @@ a:focus-visible {
   justify-content: center;
   z-index: 10000;
   animation: fadeIn 0.2s ease-out;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
   
 .navigation-modal {

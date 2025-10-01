@@ -60,6 +60,10 @@ export default function QuickViewModal({
     <div
       className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[10001] backdrop-blur-sm"
       onMouseDown={handleBackdropClick}
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
     >
       <div
         className="bg-gradient-to-br from-[#2d2d2d] via-[#1e1e1e] to-[#2a2a2a] rounded-2xl shadow-2xl p-8 max-w-4xl w-full mx-4 max-h-[85vh] overflow-y-auto border border-white border-opacity-10"
