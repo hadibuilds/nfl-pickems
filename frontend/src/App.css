@@ -690,7 +690,7 @@ a:focus-visible {
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 10001;
+  z-index: 1000;
   background-color: rgba(30, 30, 32, 0.7);
   backdrop-filter: blur(16px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
