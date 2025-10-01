@@ -56,8 +56,13 @@ export default function Navbar({ isOpen, setIsOpen }) {
       // Show the navigation warning modal to let user decide
       window.navigateWithConfirmation(window.location.pathname, { isRefresh: true });
     } else {
-      // No unsaved changes - perform full page reload like browser refresh
-      window.location.reload();
+      // No unsaved changes - trigger refresh with full loading screen
+      if (window.refreshAllData) {
+        window.refreshAllData(true); // Pass true to show full page loading
+      } else {
+        // Fallback to page reload if refreshAllData not available
+        window.location.reload();
+      }
     }
   };
 

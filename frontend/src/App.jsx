@@ -45,6 +45,7 @@ export default function App() {
   const [gameResults, setGameResults] = useState({});
   const [isOpen, setIsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showFullPageLoading, setShowFullPageLoading] = useState(false);
 
   // Draft system
   const [draftPicks, setDraftPicks] = useState({});
@@ -204,7 +205,18 @@ export default function App() {
 
   // Expose refreshAllData globally for navbar sync button
   useEffect(() => {
-    window.refreshAllData = refreshAllData;
+    window.refreshAllData = async (showLoading = false) => {
+      if (showLoading) {
+        setShowFullPageLoading(true);
+      }
+      await refreshAllData();
+      if (showLoading) {
+        // Keep loading screen for a moment to avoid flash
+        setTimeout(() => {
+          setShowFullPageLoading(false);
+        }, 300);
+      }
+    };
     window.hasUnsavedChanges = () => hasUnsavedChanges;
     return () => {
       delete window.refreshAllData;
@@ -303,32 +315,40 @@ export default function App() {
     }
   }, []);
 
+  // Full page loading screen component
+  const FullPageLoading = () => (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100dvh',
+      backgroundColor: '#1f1f1f',
+      color: 'white',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 99999
+    }}>
+      <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mb-6"></div>
+      <div className="text-2xl font-light text-white tracking-wide mb-2">Hang tight</div>
+      <div className="text-sm font-medium text-purple-300 tracking-widest uppercase opacity-75">Loading your experience</div>
+    </div>
+  );
+
+  // Show loading screen on initial load
   if (isLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100dvh', // Use dynamic viewport height for mobile
-        backgroundColor: '#1f1f1f',
-        color: 'white',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0
-      }}>
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mb-6"></div>
-        <div className="text-2xl font-light text-white tracking-wide mb-2">Hang tight</div>
-        <div className="text-sm font-medium text-purple-300 tracking-widest uppercase opacity-75">Loading your experience</div>
-      </div>
-    );
+    return <FullPageLoading />;
   }
 
   return (
     <ThemeProvider>
       <Router>
+        {/* Show full page loading screen when syncing */}
+        {showFullPageLoading && <FullPageLoading />}
+
         <NavigationManager hasUnsavedChanges={hasUnsavedChanges} draftCount={draftCount} onClearDrafts={clearDrafts} />
         <ScrollToTop />
         <Navbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
