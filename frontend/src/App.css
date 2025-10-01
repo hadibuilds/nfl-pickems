@@ -696,12 +696,18 @@ a:focus-visible {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   height: 64px;
+
+  pointer-events: auto !important;
+  transform: none !important;
 }
 
 @media (min-width: 640px) {
   .navbar-container {
     height: 72px;
-  }
+  
+  pointer-events: auto !important;
+  transform: none !important;
+}
 }
 
 .navbar-content {
@@ -1478,11 +1484,14 @@ a:focus-visible {
 
 /* Ensure proper scroll behavior on all devices */
 html, body, #root {
-  scroll-behavior: smooth; /* Re-enable smooth scrolling */
+  /* Re-enable smooth scrolling */
   -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
-  position: relative;
   overflow-x: hidden; /* Prevent horizontal scroll issues */
-}
+
+  position: static !important;
+  overflow-y: auto;
+  height: auto;
+  scroll-behavior: auto !important;}
 
 /* iOS specific scroll fixes */
 body.is-ios {
@@ -1496,7 +1505,7 @@ body.is-ios {
 @media screen and (max-width: 768px) {
   html, body {
     /* Re-enable smooth scrolling for mobile */
-    scroll-behavior: smooth;
+    scroll-behavior: auto !important;
     /* Preserve momentum scrolling on iOS */
     -webkit-overflow-scrolling: touch;
   }
@@ -1533,7 +1542,7 @@ body.is-ios {
   html, body {
     overflow-anchor: none !important;
     /* Re-enable smooth scrolling for Chrome */
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     /* Removed translateZ(0) to fix fixed positioning */
     /* Better scroll performance */
     -webkit-backface-visibility: hidden;
@@ -2894,16 +2903,3 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
     margin-bottom: 12px;
   }
 }
-
-/* Navbar-aware scroll offsets */
-html { scroll-padding-top: var(--nav-h, 72px); }
-
-
-/* Desktop-only smooth scrolling */
-@media (min-width: 769px) {
-  html, body, #root { scroll-behavior: smooth; }
-}
-
-
-/* Prevent SPA hover carry-over during route swaps */
-.disable-hover * { pointer-events: none !important; }
