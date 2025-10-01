@@ -38,12 +38,20 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useLayoutEffect(() => {
-    // Mobile-specific aggressive scroll reset
+    // Aggressive scroll reset for all containers
     const resetScroll = () => {
-      // Reset all possible scroll containers
+      // Reset main scroll containers
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
+
+      // Reset any nested scroll containers that might interfere
+      const scrollableElements = document.querySelectorAll('[class*="overflow-y-auto"], .page-container, .recent-games-scrollable');
+      scrollableElements.forEach(el => {
+        if (el.scrollTop !== undefined) {
+          el.scrollTop = 0;
+        }
+      });
 
       // iOS Safari specific fixes
       if (window.navigator.userAgent.includes('Safari')) {
@@ -54,11 +62,11 @@ function ScrollToTop() {
     // Immediate reset
     resetScroll();
 
-    // Secondary reset after frame paint (mobile timing issues)
+    // Secondary reset after DOM is fully rendered
     requestAnimationFrame(() => {
       resetScroll();
 
-      // Triple check for stubborn mobile browsers
+      // Final check for stubborn cases
       setTimeout(() => {
         resetScroll();
       }, 10);
