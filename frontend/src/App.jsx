@@ -38,13 +38,30 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useLayoutEffect(() => {
-    console.log('ScrollToTop triggered for:', pathname);
-    console.log('Current scroll position before:', window.scrollY);
-
-    // Use requestAnimationFrame to ensure DOM is ready
-    requestAnimationFrame(() => {
+    // Mobile-specific aggressive scroll reset
+    const resetScroll = () => {
+      // Reset all possible scroll containers
       window.scrollTo(0, 0);
-      console.log('Scroll position after scrollTo:', window.scrollY);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      // iOS Safari specific fixes
+      if (window.navigator.userAgent.includes('Safari')) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+    };
+
+    // Immediate reset
+    resetScroll();
+
+    // Secondary reset after frame paint (mobile timing issues)
+    requestAnimationFrame(() => {
+      resetScroll();
+
+      // Triple check for stubborn mobile browsers
+      setTimeout(() => {
+        resetScroll();
+      }, 10);
     });
   }, [pathname]);
 
