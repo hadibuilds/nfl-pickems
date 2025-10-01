@@ -38,7 +38,14 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useLayoutEffect(() => {
-    window.scrollTo(0, 0);
+    console.log('ScrollToTop triggered for:', pathname);
+    console.log('Current scroll position before:', window.scrollY);
+
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      console.log('Scroll position after scrollTo:', window.scrollY);
+    });
   }, [pathname]);
 
   return null;
