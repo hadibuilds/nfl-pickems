@@ -1545,13 +1545,8 @@ body.is-ios {
     backface-visibility: hidden;
   }
 
-  /* Optimize Chrome transform containers */
-  .transition-transform {
-    /* Better Chrome performance for transformed elements */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    will-change: transform;
-  }
+  /* Remove problematic transform that creates stacking context */
+  /* .transition-transform optimization removed to fix fixed positioning */
 }
 
 /* Firefox works fine with the standard approach */
