@@ -38,18 +38,11 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Calculate proper scroll position to ensure content is visible below navbar
-    // Navbar heights: 64px mobile, 72px desktop
-    // Page padding-top: 64px (pt-16)
-    // Small buffer ensures perfect positioning
-    const navbarHeight = window.innerWidth >= 640 ? 72 : 64;
-    const pageTopPadding = 64; // pt-16 in Tailwind
-    const buffer = 8; // Small buffer for perfect positioning
-
-    const scrollTop = Math.max(0, navbarHeight - pageTopPadding + buffer);
-
+    // Always scroll to the very top (0,0) on navigation
+    // This ensures fixed positioned elements appear in viewport
+    // and page headers are visible from the start
     window.scrollTo({
-      top: scrollTop,
+      top: 0,
       left: 0,
       behavior: 'instant'
     });

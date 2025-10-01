@@ -310,7 +310,7 @@ function HomePage() {
 
   if (!userInfo) {
     return (
-      <div className="pt-16">
+      <div className="pt-16 sm:pt-[72px]">
         <h2>you are not logged in</h2>
         <p className="text-center text-small"><a href="/login" style={{ color: '#8B5CF6', fontSize: '16px' }}>Login</a></p>
         <p className="text-center text-small"><a href="/signup" style={{ color: '#8B5CF6', fontSize: '16px' }}>Sign Up</a></p>
