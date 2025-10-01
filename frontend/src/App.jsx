@@ -38,14 +38,31 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Always scroll to the very top (0,0) on navigation
-    // Pages have proper padding (pt-16 sm:pt-[72px]) to account for navbar
-    // Fixed elements work correctly since no transforms create stacking contexts
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: 'instant'
-    });
+    // Enhanced scroll-to-top for SPA navigation, especially on mobile
+    const scrollToTop = () => {
+      // Method 1: Standard window scroll
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'instant'
+      });
+
+      // Method 2: Ensure document elements are also reset (mobile Safari)
+      if (document.documentElement) {
+        document.documentElement.scrollTop = 0;
+      }
+      if (document.body) {
+        document.body.scrollTop = 0;
+      }
+    };
+
+    // Execute immediately
+    scrollToTop();
+
+    // Execute again after a brief delay for mobile SPA navigation
+    const timeoutId = setTimeout(scrollToTop, 50);
+
+    return () => clearTimeout(timeoutId);
   }, [pathname]);
 
   return null;

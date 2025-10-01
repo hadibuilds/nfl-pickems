@@ -119,7 +119,7 @@ export default function WeekSelector({
   };
 
   return (
-    <div className="min-h-screen pt-20 sm:pt-24 pb-12 px-1 sm:px-4 md:px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
+    <div className="min-h-screen pt-16 sm:pt-[72px] pb-12 px-1 sm:px-4 md:px-6" style={{ backgroundColor: '#1E1E20', color: 'white' }}>
       <div className="page-container">
         <div className="max-w-6xl mx-auto">
           <div className="mx-auto mb-6 text-center">
