@@ -7,7 +7,7 @@
  * ⚡ MEMOIZED: Prevents unnecessary re-renders (logo flicker fix)
  */
 
-import React, { useState, useEffect, memo } from "react";
+import React, { memo } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuthWithNavigation } from "../../hooks/useAuthWithNavigation";
 import ProfileDropdown from "../navigation/ProfileDropdown";
@@ -15,52 +15,11 @@ import whiteLogo from "../../assets/pickem2_white.png";
 
 function Navbar({ isOpen, setIsOpen }) {
   const location = useLocation();
-  const { userInfo, logoutAndRedirect, refreshUser } = useAuthWithNavigation();
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  // Listen for refresh activity to show spinner
-  useEffect(() => {
-    const originalRefreshAllData = window.refreshAllData;
-    
-    if (originalRefreshAllData) {
-      window.refreshAllData = async () => {
-        console.log('Navbar: refreshAllData called, setting spinner');
-        setIsSyncing(true);
-        try {
-          await originalRefreshAllData();
-        } finally {
-          setTimeout(() => {
-            console.log('Navbar: refresh complete, hiding spinner');
-            setIsSyncing(false);
-          }, 500);
-        }
-      };
-    }
-
-    return () => {
-      if (originalRefreshAllData) {
-        window.refreshAllData = originalRefreshAllData;
-      }
-    };
-  }, []);
+  const { userInfo, logoutAndRedirect } = useAuthWithNavigation();
 
   const handleLogout = async () => {
     await logoutAndRedirect('/login');
     setIsOpen(false);
-  };
-
-  const handleSync = () => {
-    if (isSyncing) return;
-
-    // Check if there are unsaved changes
-    if (window.navigateWithConfirmation && typeof window.hasUnsavedChanges === 'function' && window.hasUnsavedChanges()) {
-      // Show the navigation warning modal to let user decide
-      window.navigateWithConfirmation(window.location.pathname, { isRefresh: true });
-    } else {
-      // No unsaved changes - perform FULL page reload (like native pull-to-refresh)
-      // This completely resets the app state, clears everything, and starts fresh
-      window.location.reload();
-    }
   };
 
   // 🔒 PROTECTED NAVIGATION: Use navigateWithConfirmation if available
@@ -127,50 +86,7 @@ function Navbar({ isOpen, setIsOpen }) {
           )}
           
           {userInfo && (
-            <div className="profile-dropdown-container" style={{ display: 'flex', alignItems: 'center' }}>
-              {/* Sync Button */}
-              <button
-                onClick={handleSync}
-                disabled={isSyncing}
-                className="sync-button"
-                title="Refresh profile data"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: isSyncing ? '#8B5CF6' : '#9CA3AF',
-                  cursor: isSyncing ? 'not-allowed' : 'pointer',
-                  padding: '8px',
-                  borderRadius: '6px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'color 0.2s ease',
-                  marginRight: '8px',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSyncing) e.target.style.color = '#D1D5DB';
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSyncing) e.target.style.color = '#9CA3AF';
-                }}
-              >
-                <svg
-                  className={isSyncing ? 'animate-spin' : ''}
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                  <path d="M21 3v5h-5" />
-                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                  <path d="M3 21v-5h5" />
-                </svg>
-              </button>
+            <div className="profile-dropdown-container">
               <ProfileDropdown />
             </div>
           )}
