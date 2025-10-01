@@ -105,16 +105,32 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
     return <div className="w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center text-xs font-bold text-white">{rank}</div>;
   };
 
+  // Get ring color based on position
+  const getRingColor = (tier) => {
+    if (tier === 1) return '#FFD700'; // gold
+    if (tier === 2) return '#C0C0C0'; // silver
+    if (tier === 3) return '#CD7F32'; // bronze
+    return undefined; // no ring for 4+
+  };
+
   return (
-    <div className={`flex items-center justify-between p-3 rounded-lg ${entry.isCurrentUser ? 'bg-purple-500/20 border border-purple-500/30' : 'hover:bg-gray-700/50'}`}>
+    <div className={`flex items-center justify-between p-3 rounded-lg ${entry.isCurrentUser ? 'bg-purple-500/20 border border-purple-500/30' : ''}`}>
       <div className="flex items-center space-x-3">
-        <UserAvatar username={entry.username} first_name={entry.first_name} last_name={entry.last_name} profilePicture={entry.avatar} size="sm" className="w-8 h-8 flex-shrink-0" />
+        <UserAvatar
+          username={entry.username}
+          first_name={entry.first_name}
+          last_name={entry.last_name}
+          profilePicture={entry.avatar}
+          size="sm"
+          className="w-8 h-8 flex-shrink-0"
+          ringColor={getRingColor(medalTier)}
+        />
         <div className="flex items-center justify-center">{renderRankBadge(medalTier)}</div>
         <div>
-          <div className={`font-medium text-sm ${entry.isCurrentUser ? 'text-purple-300' : 'text-white'}`}>
+          <div className={`font-medium text-sm ${entry.isCurrentUser ? 'text-purple-300' : 'text-white'} select-none`}>
             {capitalizeFirstLetter(entry.first_name || entry.username)}
           </div>
-          <div className="text-xs" style={{ color: '#9ca3af' }}>{entry.total_points ?? entry.points ?? 0} points</div>
+          <div className="text-xs select-none" style={{ color: '#9ca3af' }}>{entry.total_points ?? entry.points ?? 0} points</div>
         </div>
       </div>
       <div className="flex items-center text-sm">
@@ -368,14 +384,14 @@ function HomePage() {
           clickable={true}
           onClick={() => navigate(`/week/${userData.currentWeek}`)}
         />
-        <StatCard 
-          title="Points Behind" 
-          value={userData.pointsFromLeader ?? '—'} 
-          subtitle="from 1st place" 
-          icon={Footprints} 
+        <StatCard
+          title="Points Behind"
+          value={userData.pointsFromLeader ?? '—'}
+          subtitle="from 1st place"
+          icon={Footprints}
           color="orange"
           clickable={true}
-          onClick={() => navigate('/peek')}
+          onClick={() => navigate('/standings')}
         />
         <StatCard title="Best Category" value={!seasonPerf.loaded ? '—' : (userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A')} subtitle={!seasonPerf.loaded ? '—' : `${userData.bestCategoryAccuracy || 0}% accuracy`} icon={ThumbsUp} color="blue" />
       </div>
