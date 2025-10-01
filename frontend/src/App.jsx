@@ -39,8 +39,8 @@ function ScrollToTop() {
 
   useEffect(() => {
     // Always scroll to the very top (0,0) on navigation
-    // This ensures fixed positioned elements appear in viewport
-    // and page headers are visible from the start
+    // Pages have proper padding (pt-16 sm:pt-[72px]) to account for navbar
+    // Fixed elements work correctly since no transforms create stacking contexts
     window.scrollTo({
       top: 0,
       left: 0,

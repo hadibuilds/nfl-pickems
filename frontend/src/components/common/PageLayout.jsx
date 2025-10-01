@@ -19,7 +19,7 @@ export default function PageLayout({
     <div 
       className={`
         ${fullHeight ? 'min-h-screen' : ''} 
-        pt-16 sm:pt-[72px] pb-12 
+        pt-20 sm:pt-24 pb-12 
         ${mobileFullWidth ? 'px-1 sm:px-4 md:px-6' : 'px-6'}
         ${className}
       `}
