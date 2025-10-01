@@ -1078,7 +1078,7 @@ a:focus-visible {
 /* Week dates */
 .week-dates {
   font-family: 'roboto';
-  font-size: clamp(0.75rem, 4vw, 1.3rem);
+  font-size: clamp(0.75rem, 4vw, 0.95rem);
   font-weight: 500;
   align-items: flex-end;
   text-align: right;
