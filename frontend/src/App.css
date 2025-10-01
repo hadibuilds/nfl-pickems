@@ -427,7 +427,7 @@
   color: white;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease;
   box-sizing: border-box;
   font-size: 0.95rem;
   min-width: 80px;
@@ -441,56 +441,34 @@
   text-transform: uppercase;
 }
 
-/* Active state for touch feedback */
-.team-button:active, .propbet-button:active {
-  transform: scale(0.97);
-  background-color: #8B5CF6;
+/* Active state for touch feedback - ONLY on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .team-button:not(:disabled):active,
+  .propbet-button:not(:disabled):active {
+    transform: scale(0.95);
+  }
 }
 
 /* CRITICAL: Only apply hover effects on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
-  .team-button:hover,
-  .propbet-button:hover {
+  /* Base button hover - ONLY for enabled buttons on non-touch devices */
+  .team-button:not(:disabled):not(.selected):hover,
+  .propbet-button:not(:disabled):not(.selected):hover {
     background-color: #8B5CF6;
     transform: translateY(-1px);
   }
 
-  /* Base button hover - ONLY for enabled buttons on non-touch devices */
-  .team-button:not(:disabled):hover,
-  .propbet-button:not(:disabled):hover {
-    background-color: #8B5CF6 !important;
-    transform: translateY(-1px) !important;
-  }
-
   /* Hover states for selected buttons on non-touch devices */
-  .team-button.selected:hover, 
-  .propbet-button.selected:hover {
-    background-color: #7C3AED;
-  }
-
-  /* Hover states for disabled buttons on non-touch devices */
-  .team-button:disabled:hover, 
-  .propbet-button:disabled:hover {
-    background-color: #555555 !important;
-    transform: none !important;
-  }
-
-  .team-button.selected:disabled:hover, 
-  .propbet-button.selected:disabled:hover {
-    background-color: #7C3AED !important;
-    transform: none !important;
+  .team-button.selected:not(:disabled):hover,
+  .propbet-button.selected:not(:disabled):hover {
+    background-color: #6B21A8;
   }
 
   /* Keep selected styling even when disabled on non-touch devices */
-  .team-button.selected:not(.draft):hover,
-  .propbet-button.selected:not(.draft):hover {
-    background-color: #7C3AED !important; /* Keep the same purple */
-    transform: none !important; /* No movement either */
-  }
-
-  .team-button.selected.draft:hover,
-  .propbet-button.selected.draft:hover {
-    background-color: #7C3AED !important; /* Keep purple, normal selected hover */
+  .team-button.selected:disabled:hover,
+  .propbet-button.selected:disabled:hover {
+    background-color: #7C3AED;
+    transform: none;
   }
 }
 
@@ -503,35 +481,21 @@
 
 /* Disabled button states - works on all devices */
 .team-button:disabled, .propbet-button:disabled {
-  background-color: #555555 !important;
-  color: #999999 !important;
-  cursor: not-allowed !important;
-  transform: none !important;
-  border-color: #555555 !important;
-}
-
-/* COMPLETELY disable ALL pointer events on disabled buttons to prevent iOS issues */
-.team-button:disabled,
-.propbet-button:disabled {
-  pointer-events: none !important;
-}
-
-.team-button:disabled:hover,
-.propbet-button:disabled:hover,
-.team-button[disabled]:hover,
-.propbet-button[disabled]:hover {
-  background-color: inherit !important;
-  transform: none !important;
-  cursor: not-allowed !important;
-  pointer-events: none !important;
+  background-color: #555555;
+  color: #999999;
+  cursor: not-allowed;
+  transform: none;
+  border-color: #555555;
+  pointer-events: none;
 }
 
 /* Keep selected styling even when disabled */
 .team-button.selected:disabled, .propbet-button.selected:disabled {
-  background-color: #7C3AED !important;
-  color: white !important;
-  border-color: #7C3AED !important;
-  opacity: 0.8;
+  background-color: #7C3AED;
+  color: white;
+  border-color: #7C3AED;
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 /* Correct prediction styling */
@@ -1509,6 +1473,22 @@ html, body, #root {
 body.is-ios {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: auto; /* Allow natural iOS bounce */
+}
+
+/* iOS Web App (standalone) specific optimizations */
+@supports (-webkit-touch-callout: none) {
+  body {
+    /* Support for iOS safe areas (notch, home indicator) */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Adjust navbar for safe area */
+  .navbar-container {
+    padding-top: env(safe-area-inset-top);
+  }
 }
 
 /* Prevent Chrome scroll anchoring on transformed elements */
