@@ -8,22 +8,32 @@ export default function ScrollToTop() {
     // iOS Safari and modern browsers need different approaches
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-    // Method 1: Direct scroll (works on most browsers)
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    // Force body to be scrollable (in case dropdown or modal interfered)
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
 
-    // Method 2: Use scrollingElement (preferred modern approach)
-    if (document.scrollingElement) {
-      document.scrollingElement.scrollTop = 0;
-    }
+    const performScroll = () => {
+      // Method 1: Direct scroll (works on most browsers)
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
 
-    // iOS specific: Sometimes needs a slight delay
+      // Method 2: Use scrollingElement (preferred modern approach)
+      if (document.scrollingElement) {
+        document.scrollingElement.scrollTop = 0;
+      }
+    };
+
+    // Immediate scroll
+    performScroll();
+
+    // iOS specific: Multiple attempts to ensure scroll happens
     if (isIOS) {
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-      }, 0);
+      // First attempt after microtask
+      setTimeout(() => performScroll(), 0);
+
+      // Second attempt after dropdown animation (300ms)
+      setTimeout(() => performScroll(), 300);
     }
   }, [pathname, search, hash]);
 

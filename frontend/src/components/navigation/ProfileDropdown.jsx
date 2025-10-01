@@ -63,13 +63,19 @@ export default function ProfileDropdown() {
 
   // 🔒 PROTECTED NAVIGATION: Use navigateWithConfirmation if available
   const handleNavigate = (path) => {
+    // CRITICAL: Close dropdown FIRST and wait for animation to complete
+    // This prevents iOS Safari scroll issues when navigating
     setIsOpen(false);
-    if (window.navigateWithConfirmation) {
-      window.navigateWithConfirmation(path);
-    } else {
-      // Fallback to normal navigation if NavigationManager not active
-      window.location.href = path;
-    }
+
+    // Wait for dropdown animation to finish (200ms from CSS) plus buffer
+    setTimeout(() => {
+      if (window.navigateWithConfirmation) {
+        window.navigateWithConfirmation(path);
+      } else {
+        // Fallback to normal navigation if NavigationManager not active
+        window.location.href = path;
+      }
+    }, 250);
   };
 
   // 🔒 PROTECTED LINK: Custom Link component that respects navigation blocking

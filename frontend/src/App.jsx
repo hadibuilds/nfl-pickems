@@ -205,10 +205,12 @@ export default function App() {
   // Expose refreshAllData globally for navbar sync button
   useEffect(() => {
     window.refreshAllData = refreshAllData;
+    window.hasUnsavedChanges = () => hasUnsavedChanges;
     return () => {
       delete window.refreshAllData;
+      delete window.hasUnsavedChanges;
     };
-  }, [refreshAllData]);
+  }, [refreshAllData, hasUnsavedChanges]);
 
   // ======== SUBMIT ========
 

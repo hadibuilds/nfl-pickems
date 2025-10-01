@@ -48,34 +48,16 @@ export default function Navbar({ isOpen, setIsOpen }) {
     setIsOpen(false);
   };
 
-  const handleSync = async () => {
-    console.log('Sync button clicked', { isSyncing });
+  const handleSync = () => {
     if (isSyncing) return;
-    
-    console.log('Navigation system available:', !!window.navigateWithConfirmation);
-    console.log('RefreshAllData available:', !!window.refreshAllData);
-    
-    // Always try to refresh through the navigation system first
-    if (window.navigateWithConfirmation) {
-      // This will either trigger the modal (if unsaved picks) or refresh immediately
-      console.log('Using navigateWithConfirmation for sync');
+
+    // Check if there are unsaved changes
+    if (window.navigateWithConfirmation && typeof window.hasUnsavedChanges === 'function' && window.hasUnsavedChanges()) {
+      // Show the navigation warning modal to let user decide
       window.navigateWithConfirmation(window.location.pathname, { isRefresh: true });
     } else {
-      // Fallback: direct refresh if navigation system isn't available
-      console.log('Using direct refresh fallback');
-      if (window.refreshAllData) {
-        setIsSyncing(true);
-        try {
-          await window.refreshAllData();
-          setTimeout(() => setIsSyncing(false), 500);
-        } catch (error) {
-          console.error('Sync failed:', error);
-          setIsSyncing(false);
-        }
-      } else {
-        console.log('No refresh function available, using page reload');
-        window.location.reload();
-      }
+      // No unsaved changes - perform full page reload like browser refresh
+      window.location.reload();
     }
   };
 

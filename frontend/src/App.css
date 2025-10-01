@@ -2021,6 +2021,9 @@ body.is-ios {
   /* HeroUI-style spring animation */
   animation: heroUIDropdownEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-origin: top right;
+  /* CRITICAL: Prevent iOS scroll issues when dropdown is open */
+  pointer-events: auto;
+  will-change: opacity, transform;
 }
 
 /* HeroUI-inspired spring enter animation */
