@@ -149,14 +149,8 @@ export default function WeekSelector({
                   <div key={week} className="week-card-wrapper">
                     <Link
                       to={`/week/${week}`}
-                      className="week-card"
-                      style={{ 
-                        backgroundColor: styles.backgroundColor,
-                        borderColor: styles.borderColor,
-                        color: styles.textColor
-                      }}
-                      onMouseEnter={(e) => { e.target.style.backgroundColor = styles.hoverColor; }}
-                      onMouseLeave={(e) => { e.target.style.backgroundColor = styles.backgroundColor; }}
+                      className={`week-card week-card-${weekStatus.status}`}
+                      data-status={weekStatus.status}
                     >
                       <div className="week-card-content">
                         <div className="week-card-header">

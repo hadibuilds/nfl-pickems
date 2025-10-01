@@ -5,18 +5,26 @@ export default function ScrollToTop() {
   const { pathname, search, hash } = useLocation();
 
   useLayoutEffect(() => {
-    const html = document.documentElement;
-    const prev = html.style.scrollBehavior;
-    // Disable smooth scrolling during the jump to avoid races
-    html.style.scrollBehavior = 'auto';
+    // iOS Safari and modern browsers need different approaches
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-    // Reset the real root
-    (document.scrollingElement || html).scrollTo(0, 0);
-    // Also call window for broader compatibility
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    // Method 1: Direct scroll (works on most browsers)
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 
-    // Restore prior behavior
-    html.style.scrollBehavior = prev || '';
+    // Method 2: Use scrollingElement (preferred modern approach)
+    if (document.scrollingElement) {
+      document.scrollingElement.scrollTop = 0;
+    }
+
+    // iOS specific: Sometimes needs a slight delay
+    if (isIOS) {
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+      }, 0);
+    }
   }, [pathname, search, hash]);
 
   return null;

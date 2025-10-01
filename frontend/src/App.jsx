@@ -11,8 +11,8 @@
  * FIXED: iOS double tap issue by removing global touch handlers
  */
 
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
-import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 import Navbar from './components/common/Navbar';
@@ -34,47 +34,8 @@ import { useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { getCookie } from './utils/cookies';
 
-function ScrollToTop() {
-  const { pathname } = useLocation();
-
-  useLayoutEffect(() => {
-    // Aggressive scroll reset for all containers
-    const resetScroll = () => {
-      // Reset main scroll containers with instant behavior to override smooth scroll
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-
-      // Reset any nested scroll containers that might interfere
-      const scrollableElements = document.querySelectorAll('[class*="overflow-y-auto"], .page-container, .recent-games-scrollable');
-      scrollableElements.forEach(el => {
-        if (el.scrollTop !== undefined) {
-          el.scrollTop = 0;
-        }
-      });
-
-      // iOS Safari specific fixes
-      if (window.navigator.userAgent.includes('Safari')) {
-        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      }
-    };
-
-    // Immediate reset
-    resetScroll();
-
-    // Secondary reset after DOM is fully rendered
-    requestAnimationFrame(() => {
-      resetScroll();
-
-      // Final check for stubborn cases
-      setTimeout(() => {
-        resetScroll();
-      }, 10);
-    });
-  }, [pathname]);
-
-  return null;
-}
+// Import the dedicated ScrollToTop component instead of inline version
+import ScrollToTop from './components/common/ScrollToTop';
 
 export default function App() {
   const { userInfo, isLoading } = useAuth();

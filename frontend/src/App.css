@@ -1028,8 +1028,21 @@ a:focus-visible {
 /* Hover effects for non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   .week-card:hover {
-    transform: translateY(-4px);  
+    transform: translateY(-4px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Status-specific hover colors */
+  .week-card-completed:hover {
+    background-color: #047857 !important;
+  }
+
+  .week-card-current:hover {
+    background-color: #7C3AED !important;
+  }
+
+  .week-card-upcoming:hover {
+    background-color: #4B5563 !important;
   }
 }
 
@@ -1479,81 +1492,29 @@ a:focus-visible {
   }
 }
 /* =================================================================
-   MOBILE SCROLL-TO-TOP FIXES - iOS Safari compatibility
+   SCROLL BEHAVIOR - Unified configuration
    ================================================================= */
 
-/* Ensure proper scroll behavior on all devices */
+/* Base scroll behavior for all devices */
 html, body, #root {
-  /* Re-enable smooth scrolling */
   -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
-  overflow-x: hidden; /* Prevent horizontal scroll issues */
-
-  position: static !important;
+  overflow-x: hidden; /* Prevent horizontal scroll */
   overflow-y: auto;
   height: auto;
-  scroll-behavior: auto !important;}
+  scroll-behavior: auto; /* Instant scroll for ScrollToTop component */
+  position: static;
+}
 
-/* iOS specific scroll fixes */
+/* iOS specific fixes */
 body.is-ios {
   -webkit-overflow-scrolling: touch;
-  /* Removed translateZ(0) to fix fixed positioning */
+  overscroll-behavior-y: auto; /* Allow natural iOS bounce */
 }
 
-/* No need for scroll-to-top class manipulation - using behavior: 'instant' in JS */
-
-/* Enhanced scroll fixes for ALL browsers (Chrome, Safari, Firefox, Edge) */
-@media screen and (max-width: 768px) {
-  html, body {
-    /* Re-enable smooth scrolling for mobile */
-    scroll-behavior: auto !important;
-    /* Preserve momentum scrolling on iOS */
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* iOS specific viewport handling - preserve natural bounce */
-  @supports (-webkit-touch-callout: none) {
-    html, body {
-      /* iOS Safari specific fixes */
-      -webkit-overflow-scrolling: touch;
-      /* Removed translateZ(0) to fix fixed positioning */
-      /* Allow natural iOS bounce scrolling */
-      overscroll-behavior-y: auto;
-    }
-  }
+/* Prevent Chrome scroll anchoring on transformed elements */
+[class*="translate"], [class*="transform"] {
+  overflow-anchor: none;
 }
-
-/* Universal scroll reset fixes for transform-based layouts */
-.transition-transform {
-  /* Ensure transformed elements don't maintain scroll position */
-  scroll-behavior: auto !important;
-  overflow-anchor: none; /* Prevent Chrome scroll anchoring */
-}
-
-/* Clean approach - no CSS class manipulation needed */
-
-/* Chrome-specific fixes - optimize for smooth scrolling */
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
-  /* Only disable scroll anchoring in Chrome, keep smooth scrolling */
-  [class*="translate"], [class*="transform"] {
-    overflow-anchor: none !important;
-  }
-
-  /* Optimize Chrome scroll performance */
-  html, body {
-    overflow-anchor: none !important;
-    /* Re-enable smooth scrolling for Chrome */
-    scroll-behavior: auto;
-    /* Removed translateZ(0) to fix fixed positioning */
-    /* Better scroll performance */
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-
-  /* Remove problematic transform that creates stacking context */
-  /* .transition-transform optimization removed to fix fixed positioning */
-}
-
-/* Firefox works fine with the standard approach */
 
 /* =================================================================
    CLEANED TOAST STYLES - Moved from inline JSX
