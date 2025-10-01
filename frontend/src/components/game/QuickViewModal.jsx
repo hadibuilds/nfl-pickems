@@ -26,6 +26,9 @@ export default function QuickViewModal({
     body.style.overflow = 'hidden';
     document.documentElement.style.overscrollBehavior = 'contain';
 
+    // Disable pull-to-refresh while modal is open
+    body.dataset.modalOpen = 'true';
+
     return () => {
       // Restore scroll
       body.style.position = '';
@@ -35,6 +38,7 @@ export default function QuickViewModal({
       body.style.width = '';
       body.style.overflow = '';
       document.documentElement.style.overscrollBehavior = '';
+      delete body.dataset.modalOpen;
       window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
@@ -61,12 +65,12 @@ export default function QuickViewModal({
       className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[10001] backdrop-blur-sm"
       onMouseDown={handleBackdropClick}
       style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingTop: 'max(env(safe-area-inset-top, 0px), 50px)',
+        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 20px)',
       }}
     >
       <div
-        className="bg-gradient-to-br from-[#2d2d2d] via-[#1e1e1e] to-[#2a2a2a] rounded-2xl shadow-2xl p-8 max-w-4xl w-full mx-4 max-h-[85vh] overflow-y-auto border border-white border-opacity-10"
+        className="bg-gradient-to-br from-[#2d2d2d] via-[#1e1e1e] to-[#2a2a2a] rounded-2xl shadow-2xl p-8 max-w-4xl w-full mx-4 max-h-[75vh] overflow-y-auto border border-white border-opacity-10"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}

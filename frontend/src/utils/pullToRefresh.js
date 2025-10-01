@@ -26,9 +26,10 @@ export function initPullToRefresh() {
     const indicator = document.createElement('div');
     indicator.id = 'pull-to-refresh-indicator';
 
-    // Calculate safe starting position below notch/status bar
+    // Calculate position below navbar (64px base + safe area)
     const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--viewport-offset-top') || '0');
-    const startingTop = Math.max(safeAreaTop, 0); // Start at safe area, or 0 if no safe area
+    const navbarHeight = 64;
+    const startingTop = navbarHeight + safeAreaTop;
 
     indicator.style.cssText = `
       position: fixed;
@@ -57,6 +58,9 @@ export function initPullToRefresh() {
   }
 
   function handleTouchStart(e) {
+    // Don't trigger if modal is open
+    if (document.body.dataset.modalOpen === 'true') return;
+
     // Only trigger if at top of page
     if (window.scrollY > 10) return;
 
@@ -78,9 +82,10 @@ export function initPullToRefresh() {
       // Prevent default scrolling while pulling
       e.preventDefault();
 
-      // Calculate safe area offset
+      // Calculate position below navbar
       const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--viewport-offset-top') || '0');
-      const startingTop = Math.max(safeAreaTop, 0);
+      const navbarHeight = 64;
+      const startingTop = navbarHeight + safeAreaTop;
 
       // Update indicator position - translateY animates from -100px up to visible
       const progress = Math.min(pullDistance / PULL_THRESHOLD, 1);
@@ -104,10 +109,11 @@ export function initPullToRefresh() {
 
     const pullDistance = currentY - startY;
     const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--viewport-offset-top') || '0');
-    const startingTop = Math.max(safeAreaTop, 0);
+    const navbarHeight = 64;
+    const startingTop = navbarHeight + safeAreaTop;
 
     if (pullDistance >= PULL_THRESHOLD) {
-      // Trigger refresh - show at final visible position
+      // Trigger refresh - show at final visible position below navbar
       pullIndicator.style.top = `${startingTop + 10}px`;
       pullIndicator.style.transform = 'translateX(-50%) translateY(0) rotate(360deg)';
       pullIndicator.querySelector('svg').style.animation = 'spin 1s linear infinite';
@@ -117,7 +123,7 @@ export function initPullToRefresh() {
         window.location.reload();
       }, 300);
     } else {
-      // Reset indicator - hide above view
+      // Reset indicator - hide above navbar
       pullIndicator.style.top = `${startingTop}px`;
       pullIndicator.style.transform = 'translateX(-50%) translateY(-100px) rotate(0deg)';
       pullIndicator.style.opacity = '0';

@@ -29,6 +29,9 @@ export default function NavigationWarningModal({
     body.style.overflow = 'hidden';
     document.documentElement.style.overscrollBehavior = 'contain';
 
+    // Disable pull-to-refresh while modal is open
+    body.dataset.modalOpen = 'true';
+
     return () => {
       // Restore scroll
       body.style.position = '';
@@ -38,6 +41,7 @@ export default function NavigationWarningModal({
       body.style.width = '';
       body.style.overflow = '';
       document.documentElement.style.overscrollBehavior = '';
+      delete body.dataset.modalOpen;
       window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
