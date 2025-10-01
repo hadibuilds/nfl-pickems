@@ -1529,9 +1529,10 @@ body.is-ios {
   position: relative;
 }
 
-/* iOS 26 Safari (browser mode only, not PWA) */
+/* iOS Safari (browser mode only, not PWA) - works on iOS 15+ */
 body.is-ios:not(.is-pwa) {
   /* iOS 26 fix: Critical for preventing fixed element shifting in browser */
+  /* Also safe for iOS 15-25: height: 100% doesn't break older versions */
   height: 100%;
   overflow: auto;
 }
@@ -1571,11 +1572,14 @@ body.is-pwa {
   min-height: 100dvh;
 }
 
-/* iOS PWA: Proper fullscreen handling */
+/* iOS PWA: Proper fullscreen handling - works on ALL iPhones/iPads */
 body.is-pwa.is-ios {
   /* Don't use position: fixed - it breaks scrolling! */
-  min-height: 100dvh;
+  /* 100dvh: iOS 15.4+ (iPhone 13, 14, 15, 16, iPad Air 5th gen+) */
+  /* -webkit-fill-available: Fallback for iOS 13-15.3 (older devices) */
+  min-height: 100vh; /* Safest fallback for ancient iOS */
   min-height: -webkit-fill-available;
+  min-height: 100dvh;
 }
 
 body.is-pwa.is-ios #root {

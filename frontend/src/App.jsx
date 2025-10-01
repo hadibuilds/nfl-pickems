@@ -37,6 +37,9 @@ import { getCookie } from './utils/cookies';
 // Import the dedicated ScrollToTop component instead of inline version
 import ScrollToTop from './components/common/ScrollToTop';
 
+// Import pull-to-refresh for PWA
+import { initPullToRefresh } from './utils/pullToRefresh';
+
 export default function App() {
   const { userInfo, isLoading } = useAuth();
   const [games, setGames] = useState([]);
@@ -68,6 +71,10 @@ export default function App() {
     if (isStandalone) {
       document.body.classList.add('is-pwa');
       console.log('Running in PWA/standalone mode');
+
+      // Initialize pull-to-refresh for PWA
+      const cleanup = initPullToRefresh();
+      return cleanup;
     }
 
     if (isAndroid) {
