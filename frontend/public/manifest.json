@@ -1,0 +1,26 @@
+{
+  "name": "Pickems",
+  "short_name": "Pickems",
+  "description": "NFL Pick'em game - Make your picks and compete!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1f1f1f",
+  "theme_color": "#1f1f1f",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["sports", "games"],
+  "prefer_related_applications": false
+}

@@ -10,15 +10,26 @@
     <link rel="alternate icon" href="/favicon.ico" />
     <link rel="mask-icon" href="/favicon.svg" color="#000000" />
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
     <!-- iOS Web App Optimizations -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Pickems" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
 
-    <!-- iOS Safe Area Support -->
+    <!-- Mobile Web App Meta -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Pickems" />
+
+    <!-- Theme & Safe Area -->
     <meta name="theme-color" content="#1f1f1f" />
     <meta name="format-detection" content="telephone=no" />
+
+    <!-- Prevent address bar from showing in PWA mode -->
+    <meta name="theme-color" content="#1f1f1f" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#1f1f1f" media="(prefers-color-scheme: light)" />
 
     <!-- Fonts -->
     <link href="https://api.fontshare.com/v2/css?f[]=general-sans@1&display=swap" rel="stylesheet">

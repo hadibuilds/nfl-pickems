@@ -1550,6 +1550,53 @@ body.is-ios {
   }
 }
 
+/* Hide address bar in standalone/PWA mode */
+@media (display-mode: standalone) {
+  /* In true PWA mode - no address bar should ever show */
+  html, body {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* PWA Mode - Full app experience, no browser controls */
+body.is-pwa {
+  /* Hide any browser UI that might appear */
+  overscroll-behavior: none;
+}
+
+/* iOS PWA: Force true fullscreen */
+body.is-pwa.is-ios {
+  position: fixed;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body.is-pwa.is-ios #root {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+}
+
+/* Detect if running in iOS standalone mode (alternative detection) */
+@media (display-mode: standalone) and (-webkit-touch-callout: none) {
+  body {
+    /* Force full screen experience on iOS PWA */
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* Desktop: Different padding-top to match larger navbar */
 @media (min-width: 640px) {
   /* Target PageLayout and other page containers */

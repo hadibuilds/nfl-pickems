@@ -60,6 +60,16 @@ export default function App() {
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const isAndroid = /android/i.test(navigator.userAgent);
 
+    // Detect if running as installed PWA/web app
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                         window.navigator.standalone === true || // iOS
+                         document.referrer.includes('android-app://'); // Android TWA
+
+    if (isStandalone) {
+      document.body.classList.add('is-pwa');
+      console.log('Running in PWA/standalone mode');
+    }
+
     if (isAndroid) {
       document.body.classList.add('is-android');
       document.body.classList.remove('is-ios');
