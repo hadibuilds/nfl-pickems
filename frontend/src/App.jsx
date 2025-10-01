@@ -38,11 +38,7 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useLayoutEffect(() => {
-    // Disable smooth scroll globally during navigation
-    document.documentElement.style.scrollBehavior = 'auto';
     window.scrollTo(0, 0);
-    // Re-enable smooth scroll for in-page navigation
-    document.documentElement.style.scrollBehavior = 'smooth';
   }, [pathname]);
 
   return null;
