@@ -40,8 +40,8 @@ function ScrollToTop() {
   useLayoutEffect(() => {
     // Aggressive scroll reset for all containers
     const resetScroll = () => {
-      // Reset main scroll containers
-      window.scrollTo(0, 0);
+      // Reset main scroll containers with instant behavior to override smooth scroll
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
 

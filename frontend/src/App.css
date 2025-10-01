@@ -1478,6 +1478,7 @@ a:focus-visible {
 
 /* Ensure proper scroll behavior on all devices */
 html, body, #root {
+  scroll-behavior: smooth; /* Re-enable smooth scrolling */
   -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
   position: relative;
   overflow-x: hidden; /* Prevent horizontal scroll issues */
@@ -1494,6 +1495,8 @@ body.is-ios {
 /* Enhanced scroll fixes for ALL browsers (Chrome, Safari, Firefox, Edge) */
 @media screen and (max-width: 768px) {
   html, body {
+    /* Re-enable smooth scrolling for mobile */
+    scroll-behavior: smooth;
     /* Preserve momentum scrolling on iOS */
     -webkit-overflow-scrolling: touch;
   }
@@ -1529,6 +1532,8 @@ body.is-ios {
   /* Optimize Chrome scroll performance */
   html, body {
     overflow-anchor: none !important;
+    /* Re-enable smooth scrolling for Chrome */
+    scroll-behavior: smooth;
     /* Removed translateZ(0) to fix fixed positioning */
     /* Better scroll performance */
     -webkit-backface-visibility: hidden;
