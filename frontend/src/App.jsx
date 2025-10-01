@@ -38,31 +38,50 @@ function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Enhanced scroll-to-top for SPA navigation, especially on mobile
+    // Comprehensive scroll-to-top for SPA navigation across all browsers/devices
     const scrollToTop = () => {
-      // Method 1: Standard window scroll
+      // Method 1: Standard window scroll (works in most cases)
+      window.scrollTo(0, 0);
+
+      // Method 2: Modern browsers with options API
       window.scrollTo({
         top: 0,
         left: 0,
         behavior: 'instant'
       });
 
-      // Method 2: Ensure document elements are also reset (mobile Safari)
+      // Method 3: Direct DOM manipulation for stubborn browsers
       if (document.documentElement) {
         document.documentElement.scrollTop = 0;
+        document.documentElement.scrollLeft = 0;
       }
       if (document.body) {
         document.body.scrollTop = 0;
+        document.body.scrollLeft = 0;
       }
+
+      // Method 4: Force scroll on main containers
+      const containers = document.querySelectorAll('.page-container, [class*="page"], main');
+      containers.forEach(container => {
+        if (container.scrollTop > 0) {
+          container.scrollTop = 0;
+        }
+      });
     };
 
-    // Execute immediately
+    // Execute immediately (synchronous)
     scrollToTop();
 
-    // Execute again after a brief delay for mobile SPA navigation
-    const timeoutId = setTimeout(scrollToTop, 50);
+    // Execute again after DOM updates (asynchronous)
+    const timeouts = [
+      setTimeout(scrollToTop, 0),
+      setTimeout(scrollToTop, 10),
+      setTimeout(scrollToTop, 50)
+    ];
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      timeouts.forEach(clearTimeout);
+    };
   }, [pathname]);
 
   return null;
