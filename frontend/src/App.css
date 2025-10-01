@@ -1154,7 +1154,7 @@ a:focus-visible {
    FLOATING SUBMIT BUTTON STYLES
    ================================================================= */
 
-/* Enhanced responsive floating submit button - optimal proportions across all devices */
+/* Enhanced responsive floating submit button - optimal proportions across all devices  */
 .floating-submit-button {
   position: fixed;
   /* iOS 26: Account for bottom address bar */
