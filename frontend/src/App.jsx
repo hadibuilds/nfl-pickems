@@ -57,12 +57,45 @@ export default function App() {
   const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    if (/android/i.test(navigator.userAgent)) {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isAndroid = /android/i.test(navigator.userAgent);
+
+    if (isAndroid) {
       document.body.classList.add('is-android');
       document.body.classList.remove('is-ios');
-    } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    } else if (isIOS) {
       document.body.classList.add('is-ios');
       document.body.classList.remove('is-android');
+
+      // iOS 26 Safari bottom address bar fix
+      // Prevent fixed elements from shifting when address bar moves
+      const iOS26Fix = () => {
+        // Use visualViewport API to handle iOS 26's bottom toolbar
+        if (window.visualViewport) {
+          const viewport = window.visualViewport;
+
+          const handleViewportChange = () => {
+            // Calculate offset caused by address bar
+            const offsetTop = viewport.offsetTop;
+            const offsetBottom = window.innerHeight - (viewport.height + offsetTop);
+
+            // Update CSS custom property for dynamic adjustments
+            document.documentElement.style.setProperty('--viewport-offset-top', `${offsetTop}px`);
+            document.documentElement.style.setProperty('--viewport-offset-bottom', `${offsetBottom}px`);
+          };
+
+          viewport.addEventListener('resize', handleViewportChange);
+          viewport.addEventListener('scroll', handleViewportChange);
+          handleViewportChange(); // Initial call
+
+          return () => {
+            viewport.removeEventListener('resize', handleViewportChange);
+            viewport.removeEventListener('scroll', handleViewportChange);
+          };
+        }
+      };
+
+      return iOS26Fix();
     }
   }, []);
 

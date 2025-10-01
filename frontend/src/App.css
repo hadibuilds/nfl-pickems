@@ -667,6 +667,15 @@ a:focus-visible {
 
   pointer-events: auto !important;
   transform: none !important;
+
+  /* iOS 26 fix: Prevent navbar from shifting with bottom address bar */
+  will-change: transform;
+}
+
+/* iOS 26 Safari: Force navbar to stay at true viewport top */
+.is-ios .navbar-container {
+  position: fixed;
+  top: max(0px, var(--viewport-offset-top, 0px));
 }
 
 @media (min-width: 640px) {
@@ -1148,7 +1157,8 @@ a:focus-visible {
 /* Enhanced responsive floating submit button - optimal proportions across all devices */
 .floating-submit-button {
   position: fixed;
-  bottom: max(24px, env(safe-area-inset-bottom, 0px) + 16px);
+  /* iOS 26: Account for bottom address bar */
+  bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px + var(--viewport-offset-bottom, 0px)));
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
@@ -1163,7 +1173,10 @@ a:focus-visible {
   font-family: inherit;
   outline: none;
   transition: all 0.2s ease;
-  
+
+  /* iOS 26 fix: Prevent button from shifting */
+  will-change: transform;
+
   /* Improved touch interaction */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -1512,8 +1525,18 @@ body {
 body.is-ios {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: auto; /* Allow natural iOS bounce */
-  /* Prevent Safari address bar from pushing content */
+  /* iOS 26: Prevent Safari bottom address bar from pushing content */
   position: relative;
+  /* iOS 26 fix: Critical for preventing fixed element shifting */
+  height: 100%;
+  overflow: auto;
+}
+
+/* iOS 26: Compensate for visualViewport changes */
+.is-ios #root {
+  /* Ensure content container adjusts to visual viewport */
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
 }
 
 /* iOS Web App (standalone) specific optimizations */
