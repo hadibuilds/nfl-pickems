@@ -165,8 +165,9 @@ class OptimizedWindowCalculator:
         # 0) Authorization (if actor provided)
         _assert_permission(self.actor)
 
-        # 1) Throttle (de-bounce bursts)
-        if _throttle_should_skip(self.window_id):
+        # 1) Throttle (de-bounce bursts) - skip throttle for staff/admin manual actions
+        is_staff = self.actor and (getattr(self.actor, 'is_staff', False) or getattr(self.actor, 'is_superuser', False))
+        if not is_staff and _throttle_should_skip(self.window_id):
             logger.info("Recompute for window %s skipped by throttle.", self.window_id)
             return
 
