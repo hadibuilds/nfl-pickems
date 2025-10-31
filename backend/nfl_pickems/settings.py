@@ -209,6 +209,10 @@ DJANGO_ADMIN_USERNAME = os.getenv("DJANGO_ADMIN_USERNAME")
 DJANGO_ADMIN_PASSWORD = os.getenv("DJANGO_ADMIN_PASSWORD")
 VITE_API_URL = os.getenv("VITE_API_URL", "https://api.pickems.fun")
 
+# ─── Scoring Configuration ───────────────────────────────────────────────────
+# Week when moneyline predictions increase from 1pt to 2pts
+MONEYLINE_POINTS_INCREASE_WEEK = int(os.getenv("MONEYLINE_POINTS_INCREASE_WEEK", "9"))
+
 # Validate required environment variables (skip during collectstatic)
 import sys
 RUNNING_COLLECTSTATIC = 'collectstatic' in sys.argv

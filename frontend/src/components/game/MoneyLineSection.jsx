@@ -51,8 +51,8 @@ export default function MoneyLineSection({
             gap: '8px'
           }}
         >
-          <img 
-            src={getTeamLogo(game.away_team)} 
+          <img
+            src={getTeamLogo(game.away_team)}
             alt={`${game.away_team} logo`}
             style={{
               width: '65px',
@@ -84,8 +84,8 @@ export default function MoneyLineSection({
             gap: '8px'
           }}
         >
-          <img 
-            src={getTeamLogo(game.home_team)} 
+          <img
+            src={getTeamLogo(game.home_team)}
             alt={`${game.home_team} logo`}
             style={{
               width: '65px',

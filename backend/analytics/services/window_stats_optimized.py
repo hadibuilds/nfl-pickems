@@ -20,7 +20,15 @@ from analytics.models import UserWindowStat
 logger = logging.getLogger(__name__)
 
 # --------------------------- scoring & behavior ----------------------------
-ML_POINTS = 1   # points per correct moneyline prediction
+def get_moneyline_points(week: int) -> int:
+    """
+    Return moneyline points based on week number.
+    Weeks before MONEYLINE_POINTS_INCREASE_WEEK: 1 point
+    Week MONEYLINE_POINTS_INCREASE_WEEK and after: 2 points
+    """
+    cutoff_week = getattr(settings, 'MONEYLINE_POINTS_INCREASE_WEEK', 9)
+    return 2 if week >= cutoff_week else 1
+
 PB_POINTS = 2   # points per correct prop-bet prediction
 
 # Slot ordering for same-date windows (used for chronological sort stability)
@@ -256,8 +264,13 @@ class OptimizedWindowCalculator:
           - users who made predictions in the current window,
           - anyone who appeared in previous or any season window (idempotent backfills).
         """
-        # Resolve the games in this window once
-        game_ids = list(Game.objects.filter(window_id=self.window_id).values_list("id", flat=True))
+        # Resolve the games in this window once and get the week number
+        games = Game.objects.filter(window_id=self.window_id).only("id", "week")
+        game_ids = [g.id for g in games]
+
+        # Get week number (all games in a window should have same week)
+        week = games[0].week if games else 1
+        ml_points = get_moneyline_points(week)
 
         # Users who actively touched this window (made any predictions here)
         current_window_users: Set[int] = set()
@@ -321,8 +334,8 @@ class OptimizedWindowCalculator:
         # Assemble user deltas
         user_deltas: List[UserDelta] = []
         for user_id in relevant_user_ids:
-            # Window points for this user
-            window_points = ml_correct.get(user_id, 0) * ML_POINTS + pb_correct.get(user_id, 0) * PB_POINTS
+            # Window points for this user (using week-based ML points)
+            window_points = ml_correct.get(user_id, 0) * ml_points + pb_correct.get(user_id, 0) * PB_POINTS
 
             # New cumulative = previous cumulative + this window points
             prev_cume = prev_cume_map.get(user_id, 0)
@@ -344,7 +357,13 @@ class OptimizedWindowCalculator:
             return
 
         # Precompute correct counts again restricted to the users included in deltas
-        game_ids = list(Game.objects.filter(window_id=self.window_id).values_list("id", flat=True))
+        games = Game.objects.filter(window_id=self.window_id).only("id", "week")
+        game_ids = [g.id for g in games]
+
+        # Get week number for this window
+        week = games[0].week if games else 1
+        ml_points = get_moneyline_points(week)
+
         user_ids = [ud.user_id for ud in user_deltas]
 
         ml_correct_map = dict(
@@ -363,7 +382,7 @@ class OptimizedWindowCalculator:
         for ud in user_deltas:
             mlc = ml_correct_map.get(ud.user_id, 0)
             pbc = pb_correct_map.get(ud.user_id, 0)
-            window_points = mlc * ML_POINTS + pbc * PB_POINTS
+            window_points = mlc * ml_points + pbc * PB_POINTS
 
             stats_to_upsert.append(UserWindowStat(
                 user_id=ud.user_id,

@@ -86,7 +86,12 @@ class Game(models.Model):
             ),
             models.CheckConstraint(
                 name="chk_winner_is_team",
-                check=(Q(winner__isnull=True) | Q(winner=F("home_team")) | Q(winner=F("away_team"))),
+                check=(
+                    Q(winner__isnull=True) |
+                    Q(winner=F("home_team")) |
+                    Q(winner=F("away_team")) |
+                    Q(winner="TIE")
+                ),
             ),
         ]
         indexes = [

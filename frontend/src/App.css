@@ -130,7 +130,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
@@ -138,6 +138,12 @@
   font-size: 1.3rem;
   font-weight: 600;
   color: white;
+}
+
+.game-box .team-record {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-weight: 500;
 }
 
 .game-box .vs-separator {

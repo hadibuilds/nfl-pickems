@@ -49,9 +49,15 @@ export default function GameInfoSection({ game }) {
       )}
       
       <div className="team-matchup">
+        {game.away_team_record && game.away_team_record !== '0-0' && (
+          <span className="team-record">({game.away_team_record})</span>
+        )}
         <span className="team-matchup-text">{game.away_team}</span>
         <span className="vs-separator">@</span>
         <span className="team-matchup-text">{game.home_team}</span>
+        {game.home_team_record && game.home_team_record !== '0-0' && (
+          <span className="team-record">({game.home_team_record})</span>
+        )}
       </div>
       
       <div className="game-details">
