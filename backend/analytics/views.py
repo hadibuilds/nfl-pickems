@@ -583,8 +583,11 @@ def recent_results(request):
                     prop_correct_count += 1
                     prop_points += PB_POINTS
         
-        # Calculate total points and status
-        ml_points = ML_POINTS if ml_correct else 0
+        # Calculate total points and status with week-based moneyline scoring
+        from django.conf import settings
+        cutoff_week = getattr(settings, 'MONEYLINE_POINTS_INCREASE_WEEK', 9)
+        ml_point_value = 2 if game.week >= cutoff_week else 1
+        ml_points = ml_point_value if ml_correct else 0
         total_points = ml_points + prop_points
         
         # Determine correct status (full/partial/none)
@@ -661,22 +664,27 @@ def calculate_truth_points(user, season=None):
     if season is None:
         season = _current_season()
     
-    # MONEYLINE TRUTH
+    # MONEYLINE TRUTH with week-based scoring
+    from django.conf import settings
+    cutoff_week = getattr(settings, 'MONEYLINE_POINTS_INCREASE_WEEK', 9)
+
     ml_predictions = MoneyLinePrediction.objects.filter(
         user=user,
         game__season=season,
         game__winner__isnull=False  # Only count finalized games
-    )
-    
+    ).select_related('game')
+
     ml_correct = 0
     ml_total_finalized = 0
-    
+    ml_points = 0
+
     for pred in ml_predictions:
         ml_total_finalized += 1
         if pred.predicted_winner == pred.game.winner:
             ml_correct += 1
-    
-    ml_points = ml_correct * ML_POINTS
+            # Calculate points based on week
+            ml_point_value = 2 if pred.game.week >= cutoff_week else 1
+            ml_points += ml_point_value
     
     # PROP BET TRUTH
     prop_predictions = PropBetPrediction.objects.filter(
