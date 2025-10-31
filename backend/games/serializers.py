@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Game, PropBet
 from django.utils.timezone import now
 from django.db.models import Q, Count, Case, When, IntegerField
+from django.core.cache import cache
 
 class PropBetSerializer(serializers.ModelSerializer):
     option_a = serializers.SerializerMethodField()
@@ -31,6 +32,12 @@ class GameSerializer(serializers.ModelSerializer):
 
     def _get_team_record(self, team_name, season, current_week):
         """Calculate team's W-L-T record for games before the current week in this season."""
+        # Cache key for this team's record up to this week
+        cache_key = f"team_record:{season}:{team_name}:week{current_week}"
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+
         # Get all games for this team in this season before the current week
         team_games = Game.objects.filter(
             season=season,
@@ -48,8 +55,13 @@ class GameSerializer(serializers.ModelSerializer):
 
         # Only include ties in record if team has at least one tie
         if ties > 0:
-            return f"{wins}-{losses}-{ties}"
-        return f"{wins}-{losses}"
+            result = f"{wins}-{losses}-{ties}"
+        else:
+            result = f"{wins}-{losses}"
+
+        # Cache for 5 minutes
+        cache.set(cache_key, result, 300)
+        return result
 
     def get_home_team_record(self, obj):
         """Get home team's record going into this game."""
