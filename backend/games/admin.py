@@ -135,7 +135,7 @@ class WindowAdmin(admin.ModelAdmin):
     list_display = ("season", "date", "slot", "is_complete", "completed_at", "updated_at")
     list_filter = ("season", "slot", "is_complete")
     search_fields = ("date",)
-    actions = ["refresh_status", "recompute_selected_windows"]
+    actions = ["refresh_status", "recompute_selected_windows", "refresh_all_team_records"]
 
     @admin.action(description="Refresh status (recompute window stats)")
     def refresh_status(self, request, queryset):
@@ -164,6 +164,44 @@ class WindowAdmin(admin.ModelAdmin):
                     logger.exception("Manual recompute failed for window %s", wid)
         transaction.on_commit(_do)
         self.message_user(request, f"Scheduled recompute for {len(affected_ids)} window(s).", messages.SUCCESS)
+
+    @admin.action(description="Refresh all team records (season-wide)")
+    def refresh_all_team_records(self, request, queryset):
+        """Clear and recalculate all team records for all games in the selected windows' seasons."""
+        from django.core.cache import cache
+        from .serializers import GameSerializer
+
+        seasons = {w.season for w in queryset}
+
+        def _do():
+            for season in seasons:
+                # Get all games in this season
+                all_games = Game.objects.filter(season=season).values_list(
+                    'home_team', 'away_team', 'week', 'season'
+                ).distinct()
+
+                serializer = GameSerializer()
+                count = 0
+
+                for home_team, away_team, week, season_year in all_games:
+                    # Clear existing cache
+                    for team in [home_team, away_team]:
+                        cache_key = f"team_record:{season_year}:{team}:week{week}"
+                        cache.delete(cache_key)
+
+                    # Recalculate and cache
+                    serializer._get_team_record(home_team, season_year, week)
+                    serializer._get_team_record(away_team, season_year, week)
+                    count += 2
+
+                logger.info(f"Refreshed {count} team records for season {season}")
+
+        transaction.on_commit(_do)
+        self.message_user(
+            request,
+            f"Scheduled team record refresh for season(s): {', '.join(map(str, seasons))}",
+            messages.SUCCESS
+        )
 
 
 @admin.register(Game)
