@@ -155,19 +155,34 @@ class Game(models.Model):
                 )
             )
 
-        # Clear team record cache for affected teams for all future weeks
-        # This ensures records update when you enter results
-        def _clear_team_record_cache():
+        # Clear team record cache for affected teams and pre-warm cache for all teams
+        # This ensures records are ready for users without slow page loads
+        def _refresh_team_record_cache():
+            from .serializers import GameSerializer
+
+            # Clear cache for teams in this game for all future weeks
             for team in [self.home_team, self.away_team]:
-                # Clear cache for this week and all future weeks
                 for future_week in range(self.week + 1, 19):  # NFL has max 18 weeks
                     cache_key = f"team_record:{self.season}:{team}:week{future_week}"
                     cache.delete(cache_key)
 
+            # Pre-warm cache: get all unique teams playing in future weeks
+            future_games = Game.objects.filter(
+                season=self.season,
+                week__gte=self.week + 1
+            ).values_list('home_team', 'away_team', 'week', 'season').distinct()
+
+            # Calculate and cache records for all teams in background
+            serializer = GameSerializer()
+            for home_team, away_team, week, season in future_games:
+                # This will calculate and cache if not already cached
+                serializer._get_team_record(home_team, season, week)
+                serializer._get_team_record(away_team, season, week)
+
         # Recompute stats for this window (log on failure instead of crashing admin)
         def _safe_recompute():
             try:
-                _clear_team_record_cache()
+                _refresh_team_record_cache()
                 recompute_window_optimized(self.window_id)
             except Exception:
                 logger.exception("Window recompute failed for window_id=%s (game_id=%s)", self.window_id, self.pk)
