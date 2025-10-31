@@ -19,14 +19,11 @@ class PropBetSerializer(serializers.ModelSerializer):
 class GameSerializer(serializers.ModelSerializer):
     prop_bets = PropBetSerializer(many=True, read_only=True)
     locked = serializers.SerializerMethodField()
-    # DISABLED: Team records causing performance issues
-    # home_team_record = serializers.SerializerMethodField()
-    # away_team_record = serializers.SerializerMethodField()
 
     class Meta:
         model = Game
-        fields = ['id', 'week', 'home_team', 'away_team', 'start_time', 'locked', 'winner', 'prop_bets']
-        # DISABLED: 'home_team_record', 'away_team_record'
+        fields = ['id', 'week', 'home_team', 'away_team', 'start_time', 'locked', 'winner',
+                  'prop_bets', 'home_team_record', 'away_team_record']
 
     def get_locked(self, obj):
         return obj.is_locked

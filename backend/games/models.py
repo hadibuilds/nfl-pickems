@@ -74,6 +74,10 @@ class Game(models.Model):
     winner = models.CharField(max_length=50, null=True, blank=True)
     window = models.ForeignKey(Window, on_delete=models.PROTECT, related_name="games")
 
+    # Team records going into this game (pre-calculated for performance)
+    home_team_record = models.CharField(max_length=20, blank=True, default="", help_text="W-L or W-L-T")
+    away_team_record = models.CharField(max_length=20, blank=True, default="", help_text="W-L or W-L-T")
+
     class Meta:
         constraints = [
             UniqueConstraint(
