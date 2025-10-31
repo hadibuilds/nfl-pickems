@@ -17,7 +17,7 @@ export default function WeekHeader({ weekNumber, onBack, onQuickView }) {
         
         {/* Page title - absolutely centered within the max-w-4xl container */}
         <h1 className="absolute left-1/2 transform -translate-x-1/2 text-5xl sm:text-6xl md:text-7xl text-white font-bebas tracking-wider">
-          Week {weekNumber}
+          Week {weekNumber || '...'}
         </h1>
 
         {/* Quick View button - positioned on right - only show if onQuickView is provided */}

@@ -132,7 +132,11 @@ export default function GamePage({
         )}
 
         {/* Games grid - Each game card individually protected */}
-        {weekGames.length === 0 ? (
+        {games.length === 0 ? (
+          <p className="text-center" style={{ color: '#9ca3af' }}>
+            Loading games...
+          </p>
+        ) : weekGames.length === 0 ? (
           <p className="text-center" style={{ color: '#9ca3af' }}>
             No games available for this week.
           </p>
