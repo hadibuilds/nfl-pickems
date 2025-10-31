@@ -33,6 +33,7 @@ class GameSerializer(serializers.ModelSerializer):
     def _get_team_record(self, team_name, season, current_week):
         """Calculate team's W-L-T record for games before the current week in this season."""
         # Cache key for this team's record up to this week
+        # Cache indefinitely - only cleared when game results are entered
         cache_key = f"team_record:{season}:{team_name}:week{current_week}"
         cached = cache.get(cache_key)
         if cached:
@@ -59,8 +60,8 @@ class GameSerializer(serializers.ModelSerializer):
         else:
             result = f"{wins}-{losses}"
 
-        # Cache for 5 minutes
-        cache.set(cache_key, result, 300)
+        # Cache for 7 days (records don't change until you enter new results)
+        cache.set(cache_key, result, 60 * 60 * 24 * 7)
         return result
 
     def get_home_team_record(self, obj):
