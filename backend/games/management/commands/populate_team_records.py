@@ -11,47 +11,48 @@ from django.db.models import Q
 
 
 # Week 9 records (going into week 9)
+# Using team abbreviations as they appear in the database
 WEEK_9_RECORDS = {
     # NFC EAST
-    "Philadelphia Eagles": "6-2",
-    "Dallas Cowboys": "3-4-1",
-    "Washington Commanders": "3-5",
-    "New York Giants": "2-6",
+    "PHI": "6-2",
+    "DAL": "3-4-1",
+    "WAS": "3-5",
+    "NYG": "2-6",
     # NFC NORTH
-    "Green Bay Packers": "5-1-1",
-    "Detroit Lions": "5-2",
-    "Chicago Bears": "4-3",
-    "Minnesota Vikings": "3-4",
+    "GB": "5-1-1",
+    "DET": "5-2",
+    "CHI": "4-3",
+    "MIN": "3-4",
     # NFC SOUTH
-    "Tampa Bay Buccaneers": "6-2",
-    "Carolina Panthers": "4-4",
-    "Atlanta Falcons": "3-4",
-    "New Orleans Saints": "1-7",
+    "TB": "6-2",
+    "CAR": "4-4",
+    "ATL": "3-4",
+    "NO": "1-7",
     # NFC WEST
-    "Seattle Seahawks": "5-2",
-    "Los Angeles Rams": "5-2",
-    "San Francisco 49ers": "5-3",
-    "Arizona Cardinals": "2-5",
+    "SEA": "5-2",
+    "LAR": "5-2",
+    "SF": "5-3",
+    "ARI": "2-5",
     # AFC EAST
-    "New England Patriots": "6-2",
-    "Buffalo Bills": "5-2",
-    "Miami Dolphins": "2-6",
-    "New York Jets": "1-7",
+    "NE": "6-2",
+    "BUF": "5-2",
+    "MIA": "2-6",
+    "NYJ": "1-7",
     # AFC NORTH
-    "Pittsburgh Steelers": "4-3",
-    "Cincinnati Bengals": "3-5",
-    "Baltimore Ravens": "2-5",
-    "Cleveland Browns": "2-6",
+    "PIT": "4-3",
+    "CIN": "3-5",
+    "BAL": "2-5",
+    "CLE": "2-6",
     # AFC SOUTH
-    "Indianapolis Colts": "7-1",
-    "Jacksonville Jaguars": "4-3",
-    "Houston Texans": "3-4",
-    "Tennessee Titans": "1-7",
+    "IND": "7-1",
+    "JAX": "4-3",
+    "HOU": "3-4",
+    "TEN": "1-7",
     # AFC WEST
-    "Denver Broncos": "6-2",
-    "Los Angeles Chargers": "5-3",
-    "Kansas City Chiefs": "5-3",
-    "Las Vegas Raiders": "2-5",
+    "DEN": "6-2",
+    "LAC": "5-3",
+    "KC": "5-3",
+    "LV": "2-5",
 }
 
 
