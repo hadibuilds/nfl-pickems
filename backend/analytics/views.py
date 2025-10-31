@@ -215,16 +215,22 @@ def leaderboard(request):
     users = User.objects.all()
     
     for user in users:
-        # Calculate LIVE total points
-        ml_points = (
-            MoneyLinePrediction.objects
-            .filter(
-                user=user,
-                game__season=season,
-                game__winner__isnull=False,  # Only finalized games
-                predicted_winner=F("game__winner")
-            )
-            .count() * ML_POINTS
+        # Calculate LIVE total points with week-based moneyline scoring
+        from django.conf import settings
+        cutoff_week = getattr(settings, 'MONEYLINE_POINTS_INCREASE_WEEK', 9)
+
+        # Get correct moneyline predictions with their weeks
+        correct_ml_predictions = MoneyLinePrediction.objects.filter(
+            user=user,
+            game__season=season,
+            game__winner__isnull=False,  # Only finalized games
+            predicted_winner=F("game__winner")
+        ).values_list('game__week', flat=True)
+
+        # Calculate points based on week
+        ml_points = sum(
+            2 if week >= cutoff_week else 1
+            for week in correct_ml_predictions
         )
         
         prop_points = (

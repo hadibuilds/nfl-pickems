@@ -53,6 +53,11 @@ export default function ResultBanner({
   originalSubmittedPropBets, // saved prop answers by prop_bet.id (first prop per game)
   gameResults = {},
 }) {
+  // Get week number from games (all games in this view should be same week)
+  const weekNumber = games.length > 0 ? games[0].week : 1;
+  // Moneyline points: 2pts for week 9+, 1pt before
+  const moneylinePointValue = weekNumber >= 9 ? 2 : 1;
+
   // Moneyline summary (uses SAVED picks only)
   const calculateMoneyLineResults = () => {
     const totalMoneyLineGames = games.length;
@@ -79,7 +84,7 @@ export default function ResultBanner({
       total: totalMoneyLineGames,
       correct: correctMoneyLinePicks,
       withResults: gamesWithResults.length,
-      points: correctMoneyLinePicks * 1,
+      points: correctMoneyLinePicks * moneylinePointValue,
     };
   };
 

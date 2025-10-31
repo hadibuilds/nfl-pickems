@@ -1,36 +1,41 @@
 /*
  * Enhanced ProgressIndicator Component
  * Displays pick completion progress and points earned
- * Moneyline picks = 1 point, Prop bets = 2 points
+ * Moneyline picks = 1pt (weeks 1-8) or 2pts (week 9+), Prop bets = 2 points
  * Shows separate tracking for games vs props and total points earned
  */
 
 import React from 'react';
 
-export default function ProgressIndicator({ 
-  games, 
-  moneyLineSelections, 
+export default function ProgressIndicator({
+  games,
+  moneyLineSelections,
   propBetSelections,
   gameResults = {} // Object with game results for point calculation
 }) {
+  // Get week number from games (all games in this view should be same week)
+  const weekNumber = games.length > 0 ? games[0].week : 1;
+  // Moneyline points: 2pts for week 9+, 1pt before
+  const moneylinePointValue = weekNumber >= 9 ? 2 : 1;
+
   // Calculate moneyline progress and points
   const calculateMoneyLineProgress = () => {
     const totalMoneyLineGames = games.length;
-    const madeMoneyLineSelections = games.filter(game => 
+    const madeMoneyLineSelections = games.filter(game =>
       moneyLineSelections[game.id]
     ).length;
-    
+
     // Calculate points earned from correct moneyline picks
     const correctMoneyLinePicks = games.filter(game => {
       const userPick = moneyLineSelections[game.id];
       const actualWinner = gameResults[game.id]?.winner;
       return userPick && actualWinner && userPick === actualWinner;
     }).length;
-    
-    return { 
-      made: madeMoneyLineSelections, 
+
+    return {
+      made: madeMoneyLineSelections,
       total: totalMoneyLineGames,
-      points: correctMoneyLinePicks * 1
+      points: correctMoneyLinePicks * moneylinePointValue
     };
   };
 
@@ -62,14 +67,14 @@ export default function ProgressIndicator({
   const calculateOverallProgress = () => {
     const moneyLineProgress = calculateMoneyLineProgress();
     const propBetProgress = calculatePropBetProgress();
-    
+
     const totalPossiblePicks = moneyLineProgress.total + propBetProgress.total;
     const totalMadePicks = moneyLineProgress.made + propBetProgress.made;
-    const totalPossiblePoints = (moneyLineProgress.total * 1) + (propBetProgress.total * 2);
+    const totalPossiblePoints = (moneyLineProgress.total * moneylinePointValue) + (propBetProgress.total * 2);
     const totalEarnedPoints = moneyLineProgress.points + propBetProgress.points;
-    
-    return { 
-      made: totalMadePicks, 
+
+    return {
+      made: totalMadePicks,
       total: totalPossiblePicks,
       points: totalEarnedPoints,
       maxPoints: totalPossiblePoints
