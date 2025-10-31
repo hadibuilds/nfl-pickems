@@ -159,34 +159,57 @@ class Game(models.Model):
                 )
             )
 
-        # Clear team record cache for affected teams and pre-warm cache for all teams
-        # This ensures records are ready for users without slow page loads
-        def _refresh_team_record_cache():
-            from .serializers import GameSerializer
+        # Update team records for next week's games when this game is finalized
+        def _update_team_records_for_next_week():
+            """
+            When a game result is entered, update the team records for both teams
+            in all games they play in future weeks.
+            """
+            next_week = self.week + 1
 
-            # Clear cache for teams in this game for all future weeks
-            for team in [self.home_team, self.away_team]:
-                for future_week in range(self.week + 1, 19):  # NFL has max 18 weeks
-                    cache_key = f"team_record:{self.season}:{team}:week{future_week}"
-                    cache.delete(cache_key)
-
-            # Pre-warm cache: get all unique teams playing in future weeks
-            future_games = Game.objects.filter(
+            # Get games for both teams in the next week
+            next_week_games = Game.objects.filter(
                 season=self.season,
-                week__gte=self.week + 1
-            ).values_list('home_team', 'away_team', 'week', 'season').distinct()
+                week=next_week
+            ).filter(
+                Q(home_team=self.home_team) | Q(away_team=self.home_team) |
+                Q(home_team=self.away_team) | Q(away_team=self.away_team)
+            )
 
-            # Calculate and cache records for all teams in background
-            serializer = GameSerializer()
-            for home_team, away_team, week, season in future_games:
-                # This will calculate and cache if not already cached
-                serializer._get_team_record(home_team, season, week)
-                serializer._get_team_record(away_team, season, week)
+            for game in next_week_games:
+                # Calculate updated records for this team going into next week
+                for team in [game.home_team, game.away_team]:
+                    record = _calculate_team_record(team, self.season, next_week)
+                    if team == game.home_team:
+                        game.home_team_record = record
+                    else:
+                        game.away_team_record = record
+
+                game.save(update_fields=['home_team_record', 'away_team_record'])
+
+        def _calculate_team_record(team_name: str, season: int, up_to_week: int) -> str:
+            """Calculate W-L-T record for a team up to (but not including) a given week."""
+            team_games = Game.objects.filter(
+                season=season,
+                week__lt=up_to_week,
+                winner__isnull=False
+            ).filter(
+                Q(home_team=team_name) | Q(away_team=team_name)
+            )
+
+            wins = team_games.filter(winner=team_name).count()
+            ties = team_games.filter(winner="TIE").count()
+            total = team_games.count()
+            losses = total - wins - ties
+
+            if ties > 0:
+                return f"{wins}-{losses}-{ties}"
+            return f"{wins}-{losses}"
 
         # Recompute stats for this window (log on failure instead of crashing admin)
         def _safe_recompute():
             try:
-                _refresh_team_record_cache()
+                _update_team_records_for_next_week()
                 recompute_window_optimized(self.window_id)
             except Exception:
                 logger.exception("Window recompute failed for window_id=%s (game_id=%s)", self.window_id, self.pk)
