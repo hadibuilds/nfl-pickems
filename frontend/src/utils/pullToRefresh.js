@@ -45,9 +45,9 @@ export function initPullToRefresh() {
 
     indicator.style.cssText = `
       position: fixed;
-      top: ${navbarBottomPosition}px;
+      top: 0;
       left: 50%;
-      transform: translateX(-50%) translateY(-50px) scale(0.8);
+      transform: translateX(-50%) translateY(-60px) scale(0.8);
       width: 40px;
       height: 40px;
       border-radius: 50%;
@@ -113,14 +113,23 @@ export function initPullToRefresh() {
         bodyElement.style.transform = `translateY(${resistedDistance}px)`;
       }
 
-      // Update indicator - slide down from hidden position above navbar
-      // Starts at -50px (hidden), slides to 10px (visible below navbar) as you pull
-      const indicatorY = Math.max(-50, (resistedDistance - 60)); // Reveals as you pull
-      const scale = 0.8 + (progress * 0.2); // Grows from 0.8 to 1.0
+      // Update indicator - slide down from hidden position above screen
+      const navbar = document.querySelector('.navbar-container');
+      let targetPosition = 64;
+      if (navbar) {
+        const navbarRect = navbar.getBoundingClientRect();
+        targetPosition = navbarRect.bottom + 15;
+      }
+
+      // Map pull distance (with actual pull, not resisted) to indicator position
+      // When pullDistance >= PULL_THRESHOLD, indicator should be at targetPosition
+      const progressForPosition = Math.min(pullDistance / PULL_THRESHOLD, 1);
+      const indicatorY = -60 + (progressForPosition * (targetPosition + 60));
+      const scale = 0.8 + (progressForPosition * 0.2); // Grows from 0.8 to 1.0
       const rotation = pullDistance * 1.5; // Subtle rotation
 
       pullIndicator.style.transform = `translateX(-50%) translateY(${indicatorY}px) scale(${scale}) rotate(${rotation}deg)`;
-      pullIndicator.style.opacity = Math.min(progress * 1.2, 1);
+      pullIndicator.style.opacity = Math.min(progressForPosition * 1.2, 1);
 
       // Change color when threshold reached
       if (pullDistance >= PULL_THRESHOLD) {
@@ -139,9 +148,17 @@ export function initPullToRefresh() {
     const pullDistance = currentY - startY;
 
     if (pullDistance >= PULL_THRESHOLD) {
+      // Get final spinner position below navbar
+      const navbar = document.querySelector('.navbar-container');
+      let finalPosition = 74;
+      if (navbar) {
+        const navbarRect = navbar.getBoundingClientRect();
+        finalPosition = navbarRect.bottom + 15;
+      }
+
       // Trigger refresh - position spinner below navbar and spin
       pullIndicator.style.transition = 'transform 0.3s ease';
-      pullIndicator.style.transform = 'translateX(-50%) translateY(15px) scale(1) rotate(360deg)';
+      pullIndicator.style.transform = `translateX(-50%) translateY(${finalPosition}px) scale(1) rotate(360deg)`;
       pullIndicator.querySelector('svg').style.animation = 'spin 1s linear infinite';
 
       // Keep body slightly down during reload (shows spinner in gap)
@@ -157,7 +174,7 @@ export function initPullToRefresh() {
     } else {
       // Elastic bounce-back animation
       pullIndicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
-      pullIndicator.style.transform = 'translateX(-50%) translateY(-50px) scale(0.8) rotate(0deg)';
+      pullIndicator.style.transform = 'translateX(-50%) translateY(-60px) scale(0.8) rotate(0deg)';
       pullIndicator.style.opacity = '0';
 
       // Reset body position with bounce
