@@ -114,14 +114,15 @@ export function initPullToRefresh() {
       }
 
       // Update indicator - slide down from hidden position
-      // Starts at -80px (hidden above navbar), slides to +15px (visible below navbar)
-      const progressForPosition = Math.min(pullDistance / PULL_THRESHOLD, 1);
-      const indicatorY = -80 + (progressForPosition * 95); // -80px to +15px = 95px range
-      const scale = 0.8 + (progressForPosition * 0.2); // Grows from 0.8 to 1.0
+      // Allow spinner to continue moving slightly beyond threshold for natural feel
+      const progressForPosition = Math.min(pullDistance / MAX_PULL, 1);
+      // Map to -80px (hidden) to +20px (slightly below final position)
+      const indicatorY = -80 + (progressForPosition * 100);
+      const scale = 0.8 + (Math.min(pullDistance / PULL_THRESHOLD, 1) * 0.2); // Grows from 0.8 to 1.0
       const rotation = pullDistance * 1.5; // Subtle rotation
 
       pullIndicator.style.transform = `translateX(-50%) translateY(${indicatorY}px) scale(${scale}) rotate(${rotation}deg)`;
-      pullIndicator.style.opacity = Math.min(progressForPosition * 1.2, 1);
+      pullIndicator.style.opacity = Math.min(progressForPosition * 1.5, 1);
 
       // Change color when threshold reached
       if (pullDistance >= PULL_THRESHOLD) {
