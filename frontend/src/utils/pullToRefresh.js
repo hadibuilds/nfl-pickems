@@ -47,7 +47,7 @@ export function initPullToRefresh() {
       position: fixed;
       top: ${navbarBottomPosition}px;
       left: 50%;
-      transform: translateX(-50%) translateY(-60px) scale(0.8);
+      transform: translateX(-50%) translateY(0px) scale(0.8);
       width: 40px;
       height: 40px;
       border-radius: 50%;
@@ -113,11 +113,10 @@ export function initPullToRefresh() {
         bodyElement.style.transform = `translateY(${resistedDistance}px)`;
       }
 
-      // Update indicator - slide down from hidden position just above navbar
-      // Allow spinner to continue moving slightly beyond threshold for natural feel
+      // Update indicator - starts at navbar bottom (0px), slides down as you pull
       const progressForPosition = Math.min(pullDistance / MAX_PULL, 1);
-      // Map to -60px (hidden above navbar) to +20px (slightly below navbar)
-      const indicatorY = -60 + (progressForPosition * 80);
+      // Map to 0px (at navbar bottom, hidden by opacity) to +30px (visible below navbar)
+      const indicatorY = progressForPosition * 30;
       const scale = 0.8 + (Math.min(pullDistance / PULL_THRESHOLD, 1) * 0.2); // Grows from 0.8 to 1.0
       const rotation = pullDistance * 1.5; // Subtle rotation
 
@@ -141,9 +140,9 @@ export function initPullToRefresh() {
     const pullDistance = currentY - startY;
 
     if (pullDistance >= PULL_THRESHOLD) {
-      // Trigger refresh - position spinner at final position (15px below navbar) and spin
+      // Trigger refresh - position spinner at final position (25px below navbar) and spin
       pullIndicator.style.transition = 'transform 0.3s ease';
-      pullIndicator.style.transform = 'translateX(-50%) translateY(15px) scale(1) rotate(360deg)';
+      pullIndicator.style.transform = 'translateX(-50%) translateY(25px) scale(1) rotate(360deg)';
       pullIndicator.querySelector('svg').style.animation = 'spin 1s linear infinite';
 
       // Keep body slightly down during reload (shows spinner in gap)
@@ -159,7 +158,7 @@ export function initPullToRefresh() {
     } else {
       // Elastic bounce-back animation
       pullIndicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
-      pullIndicator.style.transform = 'translateX(-50%) translateY(-60px) scale(0.8) rotate(0deg)';
+      pullIndicator.style.transform = 'translateX(-50%) translateY(0px) scale(0.8) rotate(0deg)';
       pullIndicator.style.opacity = '0';
 
       // Reset body position with bounce
