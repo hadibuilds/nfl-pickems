@@ -106,7 +106,7 @@ export default function PasswordResetConfirmPage() {
 
   if (isValidating) {
     return (
-      <div className="w-full flex items-start justify-center px-6 pt-20 pb-12" style={{ backgroundColor: '#1E1E20' }}>
+      <div className="w-full flex items-start justify-center px-6 pb-12" style={{ backgroundColor: '#1E1E20', paddingTop: 'max(5rem, env(safe-area-inset-top) + 1.5rem)' }}>
         <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] p-8 sm:p-10 rounded-xl shadow-md text-base" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="text-center">
             <div className="inline-flex items-center justify-center">
@@ -124,7 +124,7 @@ export default function PasswordResetConfirmPage() {
 
   if (!isValidLink) {
     return (
-      <div className="w-full flex items-start justify-center px-6 pt-20 pb-12" style={{ backgroundColor: '#1E1E20' }}>
+      <div className="w-full flex items-start justify-center px-6 pb-12" style={{ backgroundColor: '#1E1E20', paddingTop: 'max(5rem, env(safe-area-inset-top) + 1.5rem)' }}>
         <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] p-8 sm:p-10 rounded-xl shadow-md text-base" style={{ backgroundColor: '#2d2d2d' }}>
           <div className="text-center mb-6">
             <h2 className="text-4xl font-bold text-white mb-4">Invalid Reset Link</h2>
@@ -149,7 +149,7 @@ export default function PasswordResetConfirmPage() {
   }
 
   return (
-    <div className="w-full flex items-start justify-center px-6 pt-20 pb-12" style={{ backgroundColor: '#1E1E20' }}>
+    <div className="w-full flex items-start justify-center px-6 pb-12" style={{ backgroundColor: '#1E1E20', paddingTop: 'max(5rem, env(safe-area-inset-top) + 1.5rem)' }}>
       <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] p-8 sm:p-10 rounded-xl shadow-md text-base" style={{ backgroundColor: '#2d2d2d' }}>
         <div className="text-center mb-6">
           <h2 className="text-4xl font-bold text-white mb-4">Set a New Password</h2>

@@ -3,6 +3,18 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load .env.development if it exists (for local development)
+env_file = BASE_DIR.parent / '.env.development'
+if env_file.exists():
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                # Only set if not already set (environment takes precedence)
+                if key not in os.environ:
+                    os.environ[key] = value
+
 # ─── Core toggles ────────────────────────────────────────────────────────────
 DJANGO_ENV = os.getenv("DJANGO_ENV", "dev").lower()  # dev | prod
 DEBUG = os.getenv("DEBUG", "True" if DJANGO_ENV == "dev" else "False").lower() == "true"
@@ -33,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
     "corsheaders",
     "accounts",
     "games",
@@ -126,6 +139,7 @@ if USE_CLOUD_STORAGE:
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
 else:
     STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
         "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}
     }
     MEDIA_ROOT = os.getenv("MEDIA_ROOT", str(BASE_DIR / "media"))

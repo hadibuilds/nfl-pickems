@@ -148,11 +148,9 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
 
 function HomePage() {
   const { userInfo, navigate } = useAuthWithNavigation();
-  // legacy hook still used for error/loading guards; we’ll overlay our own data
-  const { dashboardData, error } = useDashboardData(userInfo, {
-    loadGranular: true,
-    includeLeaderboard: false,
-  });
+  // Disabled useDashboardData - HomePage fetches its own data directly
+  const [error, setError] = useState(null);
+  const dashboardData = { user_data: {} };
 
   // Local home data overlayed onto existing UI bindings
   const [homeUserData, setHomeUserData] = useState({
@@ -182,6 +180,12 @@ function HomePage() {
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const API_BASE = import.meta.env.VITE_API_URL;
+
+  // Build a medal/rank list for helpers, preserving trend
+  const standingsForMedals = useMemo(() => {
+    const sorted = [...standings].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
+    return sorted.map(s => ({ username: s.username, total_points: s.total_points }));
+  }, [standings]);
 
   // 1) Stats header + Season performance + Leaderboard (sequential calls)
   useEffect(() => {
@@ -346,12 +350,6 @@ function HomePage() {
       </PageLayout>
     );
   }
-
-  // Build a medal/rank list for helpers, preserving trend
-  const standingsForMedals = useMemo(() => {
-    const sorted = [...standings].sort((a, b) => (b.total_points ?? 0) - (a.total_points ?? 0));
-    return sorted.map(s => ({ username: s.username, total_points: s.total_points }));
-  }, [standings]);
 
   const goToWeeks = () => {
     navigate('/weeks');
