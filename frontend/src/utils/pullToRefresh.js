@@ -140,15 +140,15 @@ export function initPullToRefresh() {
     const pullDistance = currentY - startY;
 
     if (pullDistance >= PULL_THRESHOLD) {
-      // Trigger refresh - position spinner at final position (25px below navbar) and spin
+      // Trigger refresh - position spinner at final position (20px below navbar) and spin
       pullIndicator.style.transition = 'transform 0.3s ease';
-      pullIndicator.style.transform = 'translateX(-50%) translateY(25px) scale(1) rotate(360deg)';
+      pullIndicator.style.transform = 'translateX(-50%) translateY(20px) scale(1) rotate(360deg)';
       pullIndicator.querySelector('svg').style.animation = 'spin 1s linear infinite';
 
-      // Keep body slightly down during reload (shows spinner in gap)
+      // Keep body further down during reload (shows spinner in gap with more space)
       if (bodyElement) {
         bodyElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        bodyElement.style.transform = 'translateY(30px)';
+        bodyElement.style.transform = 'translateY(60px)';
       }
 
       // Reload after brief delay
