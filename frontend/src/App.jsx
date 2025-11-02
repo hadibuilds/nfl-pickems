@@ -11,7 +11,7 @@
  * FIXED: iOS double tap issue by removing global touch handlers
  */
 
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
@@ -39,6 +39,22 @@ import ScrollToTop from './components/common/ScrollToTop';
 
 // Import pull-to-refresh for PWA
 import { initPullToRefresh } from './utils/pullToRefresh';
+
+// Conditional Navbar wrapper - hides navbar on auth pages
+function ConditionalNavbar({ userInfo, isOpen, setIsOpen }) {
+  const location = useLocation();
+  const authPages = ['/login', '/signup', '/password-reset', '/password-reset-confirm'];
+
+  // Check if current path starts with any auth page path
+  const isAuthPage = authPages.some(path => location.pathname.startsWith(path));
+
+  // Don't render navbar on auth pages
+  if (isAuthPage) {
+    return null;
+  }
+
+  return <Navbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />;
+}
 
 export default function App() {
   const { userInfo, isLoading } = useAuth();
@@ -388,7 +404,7 @@ export default function App() {
 
         <NavigationManager hasUnsavedChanges={hasUnsavedChanges} draftCount={draftCount} onClearDrafts={clearDrafts} />
         <ScrollToTop />
-        <Navbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
+        <ConditionalNavbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={isOpen ? "transition-transform duration-300 -translate-x-[40vw]" : ""}>
           <Routes>
             <Route
