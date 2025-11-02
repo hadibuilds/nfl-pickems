@@ -145,10 +145,10 @@ export function initPullToRefresh() {
       pullIndicator.style.transform = 'translateX(-50%) translateY(20px) scale(1) rotate(360deg)';
       pullIndicator.querySelector('svg').style.animation = 'spin 1s linear infinite';
 
-      // Keep body further down during reload (shows spinner in gap with more space)
+      // Keep body pushed down slightly to show spinner with space
       if (bodyElement) {
         bodyElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        bodyElement.style.transform = 'translateY(60px)';
+        bodyElement.style.transform = 'translateY(50px)'; // 50px gap between spinner and body
       }
 
       // Reload after brief delay
