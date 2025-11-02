@@ -28,16 +28,24 @@ export function initPullToRefresh() {
     const indicator = document.createElement('div');
     indicator.id = 'pull-to-refresh-indicator';
 
-    // Position below navbar - calculate navbar height + safe area
-    const navbarHeight = 64;
-    const safeAreaTop = getComputedStyle(document.documentElement)
-      .getPropertyValue('padding-top')
-      .replace('px', '') || 0;
-    const belowNavbar = navbarHeight + parseInt(safeAreaTop);
+    // Dynamically get navbar height from actual navbar element
+    const navbar = document.querySelector('.navbar-container');
+    let navbarBottomPosition = 64; // Default fallback
+
+    if (navbar) {
+      // Get the actual bottom position of navbar (includes safe area)
+      const navbarRect = navbar.getBoundingClientRect();
+      navbarBottomPosition = navbarRect.bottom;
+    } else {
+      // No navbar (auth pages) - just use safe area inset
+      const safeAreaTop = getComputedStyle(document.documentElement)
+        .getPropertyValue('env(safe-area-inset-top)') || '0px';
+      navbarBottomPosition = parseInt(safeAreaTop) || 0;
+    }
 
     indicator.style.cssText = `
       position: fixed;
-      top: ${belowNavbar}px;
+      top: ${navbarBottomPosition}px;
       left: 50%;
       transform: translateX(-50%) translateY(-50px) scale(0.8);
       width: 40px;
