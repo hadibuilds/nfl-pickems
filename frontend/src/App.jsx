@@ -405,7 +405,7 @@ export default function App() {
         <NavigationManager hasUnsavedChanges={hasUnsavedChanges} draftCount={draftCount} onClearDrafts={clearDrafts} />
         <ScrollToTop />
         <ConditionalNavbar userInfo={userInfo} isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div className={isOpen ? "transition-transform duration-300 -translate-x-[40vw]" : ""}>
+        <div id="page-content" className={isOpen ? "transition-transform duration-300 -translate-x-[40vw]" : ""}>
           <Routes>
             <Route
               path="/"

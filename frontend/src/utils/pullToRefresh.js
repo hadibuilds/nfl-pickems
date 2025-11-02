@@ -76,9 +76,10 @@ export function initPullToRefresh() {
       pullIndicator = createPullIndicator();
     }
 
-    // Get the main content body (everything that should move)
+    // Get the main content body (everything BELOW navbar that should move)
     if (!bodyElement) {
-      bodyElement = document.getElementById('root');
+      // Target the page-content div (contains Routes, but not Navbar)
+      bodyElement = document.getElementById('page-content');
       if (bodyElement) {
         bodyElement.style.transition = 'transform 0.1s ease-out';
       }
