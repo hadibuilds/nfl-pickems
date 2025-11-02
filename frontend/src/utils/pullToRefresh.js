@@ -28,11 +28,18 @@ export function initPullToRefresh() {
     const indicator = document.createElement('div');
     indicator.id = 'pull-to-refresh-indicator';
 
+    // Position below navbar - calculate navbar height + safe area
+    const navbarHeight = 64;
+    const safeAreaTop = getComputedStyle(document.documentElement)
+      .getPropertyValue('padding-top')
+      .replace('px', '') || 0;
+    const belowNavbar = navbarHeight + parseInt(safeAreaTop);
+
     indicator.style.cssText = `
       position: fixed;
-      top: 20px;
+      top: ${belowNavbar}px;
       left: 50%;
-      transform: translateX(-50%) translateY(-60px) scale(0.8);
+      transform: translateX(-50%) translateY(-50px) scale(0.8);
       width: 40px;
       height: 40px;
       border-radius: 50%;
@@ -40,7 +47,7 @@ export function initPullToRefresh() {
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 9999;
+      z-index: 1000;
       transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out;
       box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
       opacity: 0;
@@ -97,8 +104,9 @@ export function initPullToRefresh() {
         bodyElement.style.transform = `translateY(${resistedDistance}px)`;
       }
 
-      // Update indicator position and scale
-      const indicatorY = Math.min(resistedDistance - 20, 30); // Reveals from top
+      // Update indicator - slide down from hidden position above navbar
+      // Starts at -50px (hidden), slides to 10px (visible below navbar) as you pull
+      const indicatorY = Math.max(-50, (resistedDistance - 60)); // Reveals as you pull
       const scale = 0.8 + (progress * 0.2); // Grows from 0.8 to 1.0
       const rotation = pullDistance * 1.5; // Subtle rotation
 
@@ -122,15 +130,15 @@ export function initPullToRefresh() {
     const pullDistance = currentY - startY;
 
     if (pullDistance >= PULL_THRESHOLD) {
-      // Trigger refresh - hold body position and spin indicator
+      // Trigger refresh - position spinner below navbar and spin
       pullIndicator.style.transition = 'transform 0.3s ease';
-      pullIndicator.style.transform = 'translateX(-50%) translateY(30px) scale(1) rotate(360deg)';
+      pullIndicator.style.transform = 'translateX(-50%) translateY(15px) scale(1) rotate(360deg)';
       pullIndicator.querySelector('svg').style.animation = 'spin 1s linear infinite';
 
-      // Keep body slightly down during reload
+      // Keep body slightly down during reload (shows spinner in gap)
       if (bodyElement) {
         bodyElement.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        bodyElement.style.transform = 'translateY(20px)';
+        bodyElement.style.transform = 'translateY(30px)';
       }
 
       // Reload after brief delay
@@ -140,7 +148,7 @@ export function initPullToRefresh() {
     } else {
       // Elastic bounce-back animation
       pullIndicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
-      pullIndicator.style.transform = 'translateX(-50%) translateY(-60px) scale(0.8) rotate(0deg)';
+      pullIndicator.style.transform = 'translateX(-50%) translateY(-50px) scale(0.8) rotate(0deg)';
       pullIndicator.style.opacity = '0';
 
       // Reset body position with bounce
