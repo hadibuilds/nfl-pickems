@@ -63,10 +63,12 @@ export default function WeekSelector({
 
     if (allGamesHaveResults) {
       let totalPoints = 0;
+      const moneylinePointValue = weekNumber >= 9 ? 2 : 1; // Week 9+ gets 2 points for moneyline
+
       weekGames.forEach(game => {
         const userMoneyLinePick = moneyLineSelections[game.id];
         const actualWinner = gameResults[game.id]?.winner;
-        if (userMoneyLinePick === actualWinner) totalPoints += 1;
+        if (userMoneyLinePick === actualWinner) totalPoints += moneylinePointValue;
 
         if (game.prop_bets?.length > 0) {
           const userPropPick = propBetSelections[game.prop_bets[0].id];
