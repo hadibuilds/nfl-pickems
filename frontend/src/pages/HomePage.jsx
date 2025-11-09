@@ -69,7 +69,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
   const CardContent = () => (
     <>
       {weekBadge && (
-        <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded text-[10px] bg-black bg-opacity-20 backdrop-blur-sm" style={{ opacity: 0.6 }}>
+        <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-black bg-opacity-20 backdrop-blur-sm" style={{ opacity: 0.6 }}>
           Week {weekBadge}
         </div>
       )}
@@ -420,7 +420,9 @@ function HomePage() {
             userData.bestCategory === 'Moneyline' ? '$-Line' :
             userData.bestCategory === 'PropBet' ? 'Prop Bet' :
             userData.bestCategory === 'Prop Bets' ? 'Prop Bets' :
-            userData.bestCategory === 'Point Spread' ? 'Point Spread' :
+            userData.bestCategory === 'Point Spread' ? 'Spread' :
+            userData.bestCategory === 'Over/Under' ? 'O/U' :
+            userData.bestCategory === 'Take-the-Bait' ? 'T-T-B' :
             userData.bestCategory || 'N/A'
           )}
           subtitle={!seasonPerf.loaded ? '—' : `${userData.bestCategoryAccuracy || 0}% accuracy`}
