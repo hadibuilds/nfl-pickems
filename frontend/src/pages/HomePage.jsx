@@ -51,7 +51,7 @@ const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage 
   );
 };
 
-const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", onClick, clickable = false }) => {
+const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", onClick, clickable = false, weekBadge }) => {
   const colorClasses = {
     blue: "from-blue-500 via-blue-600 to-indigo-700",
     purple: "from-purple-500 via-purple-600 to-violet-700",
@@ -68,13 +68,18 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
     red: "hover:shadow-red-500/50"
   };
 
-  const baseClasses = `bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-5 text-white shadow-lg transition-all duration-300 focus:outline-none`;
+  const baseClasses = `relative bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-5 text-white shadow-lg transition-all duration-300 focus:outline-none`;
   const interactiveClasses = clickable
     ? `${baseClasses} cursor-pointer hover:scale-[1.02] hover:shadow-2xl ${shadowColors[color]}`
     : baseClasses;
 
   const CardContent = () => (
     <>
+      {weekBadge && (
+        <div className="absolute top-3 right-3 px-2 py-0.5 rounded text-xs font-medium bg-black bg-opacity-30 backdrop-blur-sm">
+          Week {weekBadge}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-2">
         <Icon className="w-6 h-6 opacity-90" strokeWidth={2} />
         {trend && trend !== 'same' && (
@@ -374,8 +379,8 @@ function HomePage() {
   return (
     <PageLayout>
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="font-bebas text-4xl sm:text-5xl md:text-6xl font-bold mb-2 tracking-wider">
+      <div className="mb-3 text-center">
+        <h1 className="font-bebas text-3xl sm:text-4xl font-bold tracking-wider uppercase">
           Welcome back, <span style={{
             background: 'linear-gradient(to right, #FF1CF7, #b249f8)',
             WebkitBackgroundClip: 'text',
@@ -383,22 +388,20 @@ function HomePage() {
             backgroundClip: 'text'
           }}>{userInfo.first_name || userInfo.username}</span>!
         </h1>
-        <p style={{ color: '#9ca3af', fontSize: '14px' }}>
-          Week {userData.currentWeek} • Ready to make your picks?
-        </p>
       </div>
 
-      {/* Weekly/Live Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      {/* Season Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={userData.currentWeek >= 2 && rankMeta.rankChange !== 0 ? `${rankMeta.rankChange > 0 ? '+' : ''}${rankMeta.rankChange} this week` : ""} icon={Trophy} trend={userData.currentWeek >= 2 ? rankMeta.trend : 'same'} color="green" />
-        <StatCard 
-          title="Pending Picks" 
-          value={userData.pendingPicks ?? '—'} 
-          subtitle="for this week" 
-          icon={Clock} 
-          color="purple" 
+        <StatCard
+          title="Pending Picks"
+          value={userData.pendingPicks ?? '—'}
+          subtitle="This week"
+          icon={Clock}
+          color="purple"
           clickable={true}
           onClick={() => navigate(`/week/${userData.currentWeek}`)}
+          weekBadge={userData.currentWeek}
         />
         <StatCard
           title="Points Behind"
@@ -413,7 +416,7 @@ function HomePage() {
       </div>
 
       {/* Leaderboard + Season Performance */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 homepage-grid-equal-height">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 homepage-grid-equal-height">
         {/* Leaderboard (with trend arrows) */}
         <div className="homepage-glass-section p-4">
           <div className="homepage-glass-content">
