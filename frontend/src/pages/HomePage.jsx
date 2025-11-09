@@ -523,17 +523,16 @@ function HomePage() {
               <h3 className="homepage-section-title">Recent Games</h3>
               <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
             </div>
-            <div 
-              className="space-y-3 recent-games-scrollable homepage-section-content" 
-              style={{ 
-                flex: '1 1 0%',
+            <div
+              className="space-y-2 recent-games-scrollable homepage-section-content"
+              style={{
+                maxHeight: '200px',
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 paddingRight: '4px',
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#4B5563 #2d2d2d',
-                WebkitOverflowScrolling: 'touch',
-                minHeight: '0'
+                WebkitOverflowScrolling: 'touch'
               }}
             >
               {(userData?.recentGames || []).map(game => {
@@ -548,7 +547,7 @@ function HomePage() {
                 const badge = isGreen ? '✓' : isYellow ? '◐' : '✗';
 
                 return (
-                  <div key={game.id} className={`p-3 rounded-lg border-l-4 transition-all duration-200 ${borderColor}`} style={{ backgroundColor: 'rgba(42, 42, 42, 0.5)' }}>
+                  <div key={game.id} className={`p-2.5 rounded-lg border-l-4 transition-all duration-200 ${borderColor}`} style={{ backgroundColor: 'rgba(42, 42, 42, 0.5)' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="text-sm font-medium homepage-section-content" style={{ color: '#9ca3af' }}>{game.awayTeam} @ {game.homeTeam}</div>
