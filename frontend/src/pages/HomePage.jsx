@@ -75,17 +75,17 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
 
   const CardContent = () => (
     <>
-      <div className="flex items-center justify-between mb-3">
-        <Icon className="w-7 h-7 opacity-90" strokeWidth={2} />
+      <div className="flex items-center justify-between mb-2">
+        <Icon className="w-6 h-6 opacity-90" strokeWidth={2} />
         {trend && trend !== 'same' && (
           <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
             {trend === 'up' ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
           </div>
         )}
       </div>
-      <div className={`font-bold mb-2 font-sans ${value?.length > 6 ? 'text-2xl' : 'text-4xl'}`}>{value}</div>
-      <div className="text-base font-medium opacity-95 font-sans">{title}</div>
-      {subtitle && <div className="text-sm opacity-80 mt-2 font-sans">{subtitle}</div>}
+      <div className={`font-bold mb-1 font-sans leading-tight ${value?.length > 6 ? 'text-xl' : 'text-3xl'}`}>{value}</div>
+      <div className="text-sm font-medium opacity-95 font-sans">{title}</div>
+      {subtitle && <div className="text-xs opacity-80 mt-1 font-sans">{subtitle}</div>}
     </>
   );
   
