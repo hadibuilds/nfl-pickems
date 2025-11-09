@@ -81,9 +81,9 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
           </div>
         )}
       </div>
-      <div className={`font-semibold mb-1 font-sans leading-tight ${value?.length > 6 ? 'text-2xl' : 'text-[28px] md:text-[32px]'}`}>{value}</div>
-      <div className="font-medium opacity-80 font-sans" style={{ fontSize: '13px' }}>{title}</div>
-      {subtitle && <div className="opacity-70 mt-1 font-sans" style={{ fontSize: '11px' }}>{subtitle}</div>}
+      <div className={`font-semibold mb-1 leading-tight ${value?.length > 6 ? 'text-2xl' : 'text-[28px] md:text-[32px]'}`}>{value}</div>
+      <div className="font-medium opacity-80" style={{ fontSize: '13px' }}>{title}</div>
+      {subtitle && <div className="opacity-70 mt-1" style={{ fontSize: '11px' }}>{subtitle}</div>}
     </>
   );
   
