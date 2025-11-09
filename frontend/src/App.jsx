@@ -16,6 +16,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 import Navbar from './components/common/Navbar';
+import BottomNav from './components/common/BottomNav';
 import HomePage from './pages/HomePage';
 import GamePage from './pages/GamePage';
 import LoginPage from './pages/LoginPage';
@@ -84,9 +85,12 @@ export default function App() {
                          window.navigator.standalone === true || // iOS
                          document.referrer.includes('android-app://'); // Android TWA
 
-    if (isStandalone) {
+    // 🔧 DEV MODE: Force PWA mode for testing (check URL param)
+    const forcePWA = new URLSearchParams(window.location.search).get('pwa') === 'true';
+
+    if (isStandalone || forcePWA) {
       document.body.classList.add('is-pwa');
-      console.log('Running in PWA/standalone mode');
+      console.log('Running in PWA/standalone mode' + (forcePWA ? ' (forced for dev)' : ''));
 
       // Initialize pull-to-refresh for PWA
       const cleanup = initPullToRefresh();
@@ -544,6 +548,9 @@ export default function App() {
           }}
           containerClassName="toast-container"
         />
+
+        {/* Bottom Navigation - Only shows on mobile PWA */}
+        {userInfo && <BottomNav />}
       </Router>
     </ThemeProvider>
   );

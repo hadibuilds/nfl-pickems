@@ -53,12 +53,25 @@ const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage 
 
 const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", onClick, clickable = false }) => {
   const colorClasses = {
-    blue: "from-blue-500 to-blue-600", purple: "from-purple-500 to-purple-600",
-    green: "from-green-500 to-green-600", orange: "from-orange-500 to-orange-600", red: "from-red-500 to-red-500"
+    blue: "from-blue-500 via-blue-600 to-indigo-700",
+    purple: "from-purple-500 via-purple-600 to-violet-700",
+    green: "from-green-500 via-emerald-600 to-teal-700",
+    orange: "from-orange-500 via-amber-600 to-yellow-700",
+    red: "from-red-500 via-rose-600 to-pink-700"
   };
-  
-  const baseClasses = `bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-6 text-white shadow-lg transition-all duration-200`;
-  const interactiveClasses = clickable ? `${baseClasses} cursor-pointer hover:scale-105 hover:shadow-xl active:scale-95` : baseClasses;
+
+  const shadowColors = {
+    blue: "hover:shadow-blue-500/50",
+    purple: "hover:shadow-purple-500/50",
+    green: "hover:shadow-green-500/50",
+    orange: "hover:shadow-orange-500/50",
+    red: "hover:shadow-red-500/50"
+  };
+
+  const baseClasses = `bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-6 text-white shadow-lg transition-all duration-300`;
+  const interactiveClasses = clickable
+    ? `${baseClasses} cursor-pointer hover:scale-[1.02] hover:shadow-2xl ${shadowColors[color]} active:scale-95`
+    : baseClasses;
   
   const CardContent = () => (
     <>
