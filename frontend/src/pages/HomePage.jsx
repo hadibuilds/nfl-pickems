@@ -574,7 +574,7 @@ function HomePage() {
       </div>
 
         {/* View Weeks Button */}
-        <div className="flex justify-center" style={{ marginTop: '24px', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
+        <div className="flex justify-center view-weeks-wrapper" style={{ marginTop: '24px' }}>
           <button
             className="homepage-glass-button px-8 py-4 text-white transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none font-roboto font-semibold"
             style={{ letterSpacing: '0.1rem' }}

@@ -2685,6 +2685,18 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   }
 }
 
+/* View Weeks button padding - less for PWA, more for mobile browsers */
+.view-weeks-wrapper {
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+}
+
+/* PWA standalone mode - reduce bottom padding */
+@media (display-mode: standalone) {
+  .view-weeks-wrapper {
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* Mobile specific adjustments */
 @media (max-width: 768px) {
   .homepage-glass-section {
