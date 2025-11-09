@@ -300,7 +300,9 @@ function SubmitPicksButton({
           transition: all 0.2s ease;
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 8px;
+          min-width: 140px;
         }
 
         .modal-button.secondary {
