@@ -68,24 +68,24 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
     red: "hover:shadow-red-500/50"
   };
 
-  const baseClasses = `bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-6 text-white shadow-lg transition-all duration-300 focus:outline-none`;
+  const baseClasses = `bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-5 text-white shadow-lg transition-all duration-300 focus:outline-none`;
   const interactiveClasses = clickable
-    ? `${baseClasses} cursor-pointer hover:scale-[1.02] hover:shadow-2xl ${shadowColors[color]} active:scale-95`
+    ? `${baseClasses} cursor-pointer hover:scale-[1.02] hover:shadow-2xl ${shadowColors[color]}`
     : baseClasses;
-  
+
   const CardContent = () => (
     <>
-      <div className="flex items-center justify-between mb-2">
-        <Icon className="w-8 h-8 opacity-80" />
+      <div className="flex items-center justify-between mb-3">
+        <Icon className="w-7 h-7 opacity-90" strokeWidth={2} />
         {trend && trend !== 'same' && (
           <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
             {trend === 'up' ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
           </div>
         )}
       </div>
-      <div className={`font-bold mb-1 ${value?.length > 6 ? 'text-xl' : 'text-3xl'}`}>{value}</div>
-      <div className="text-sm opacity-90">{title}</div>
-      {subtitle && <div className="text-xs opacity-70 mt-1">{subtitle}</div>}
+      <div className={`font-bold mb-2 font-sans ${value?.length > 6 ? 'text-2xl' : 'text-4xl'}`}>{value}</div>
+      <div className="text-base font-medium opacity-95 font-sans">{title}</div>
+      {subtitle && <div className="text-sm opacity-80 mt-2 font-sans">{subtitle}</div>}
     </>
   );
   
