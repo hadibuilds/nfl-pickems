@@ -68,7 +68,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
     red: "hover:shadow-red-500/50"
   };
 
-  const baseClasses = `bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-6 text-white shadow-lg transition-all duration-300`;
+  const baseClasses = `bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-6 text-white shadow-lg transition-all duration-300 focus:outline-none`;
   const interactiveClasses = clickable
     ? `${baseClasses} cursor-pointer hover:scale-[1.02] hover:shadow-2xl ${shadowColors[color]} active:scale-95`
     : baseClasses;
@@ -376,7 +376,12 @@ function HomePage() {
       {/* Header */}
       <div className="mb-6 text-center">
         <h1 className="font-bebas text-4xl sm:text-5xl md:text-6xl font-bold mb-2 tracking-wider">
-          Welcome back, <span style={{ color: '#8B5CF6' }}>{userInfo.first_name || userInfo.username}</span>!
+          Welcome back, <span style={{
+            background: 'linear-gradient(to right, #FF1CF7, #b249f8)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>{userInfo.first_name || userInfo.username}</span>!
         </h1>
         <p style={{ color: '#9ca3af', fontSize: '14px' }}>
           Week {userData.currentWeek} • Ready to make your picks?
@@ -540,16 +545,16 @@ function HomePage() {
 
       {/* CTA */}
       <div className="flex justify-center">
-        <button 
-          className="homepage-glass-button px-8 py-4 text-white transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none"
-          style={{ opacity: 0.75, letterSpacing: '0.05rem' }}
+        <button
+          className="homepage-glass-button px-8 py-4 text-white transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none font-roboto font-semibold"
+          style={{ letterSpacing: '0.1rem' }}
           onClick={goToWeeks}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-300 group-hover:scale-110">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-300">
             <ellipse cx="12" cy="12" rx="6" ry="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             <path d="M12 3v18M5.5 7.5l13 0M5.5 16.5l13 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
-          <span className="text-base">VIEW GAMES</span>
+          <span className="text-sm uppercase">View Weeks</span>
         </button>
       </div>
     </PageLayout>

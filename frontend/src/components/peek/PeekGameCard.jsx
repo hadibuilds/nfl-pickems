@@ -4,13 +4,14 @@ import PeekPicksSection from './PeekPicksSection';
 
 export default function PeekGameCard({ game, peekData }) {
   return (
-    <div 
+    <div
       className="game-box locked"
       style={{
-        border: '1px solid #444',
+        border: '1px solid rgba(139, 92, 246, 0.25)',
         borderRadius: '8px',
         backgroundColor: '#2d2d2d',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
       }}
     >
       {/* Top section - Game info (reuse existing component) */}

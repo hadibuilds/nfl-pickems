@@ -2524,16 +2524,18 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 
 /* Base glassmorphism styling for homepage sections */
 .homepage-glass-section {
-  background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 50%, #2a2a2a 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(45, 45, 50, 0.95) 0%, rgba(30, 30, 35, 0.9) 50%, rgba(42, 42, 47, 0.95) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(68, 68, 68, 0.4);
   border-radius: 20px;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    0 1px 0px rgba(255, 255, 255, 0.06) inset,
-    0 -1px 0px rgba(0, 0, 0, 0.2) inset,
-    0 0 20px rgba(139, 92, 246, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(68, 68, 68, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2565,16 +2567,6 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
     0 0 24px rgba(139, 92, 246, 0.12);
 }
 
-.homepage-glass-section:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.4),
-    0 1px 0px rgba(255, 255, 255, 0.08) inset,
-    0 -1px 0px rgba(0, 0, 0, 0.25) inset,
-    0 0 25px rgba(139, 92, 246, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
 /* Subtle animated gradient overlay */
 .homepage-glass-section::before {
   content: '';
@@ -2584,18 +2576,14 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   width: 100%;
   height: 100%;
   background: linear-gradient(
-    90deg, 
-    transparent, 
-    rgba(139, 92, 246, 0.06), 
+    90deg,
+    transparent,
+    rgba(139, 92, 246, 0.06),
     transparent
   );
   animation: slide-glass 4s ease-in-out infinite;
   opacity: 0;
   transition: opacity 0.3s ease;
-}
-
-.homepage-glass-section:hover::before {
-  opacity: 1;
 }
 
 /* Mobile specific: Apply hover-like styling to avatar section only */
@@ -2617,23 +2605,18 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 
 /* Season performance specific styling - purple theme */
 .season-performance-glass {
-  background: linear-gradient(135deg, #2a1f3d 0%, #1a1625 50%, #241a35 100%);
-  border: 1px solid rgba(139, 92, 246, 0.15);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 1px 0px rgba(139, 92, 246, 0.08) inset,
-    0 -1px 0px rgba(0, 0, 0, 0.3) inset,
-    0 0 20px rgba(139, 92, 246, 0.12);
+  background:
+    radial-gradient(circle at 30% 40%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 70%, rgba(124, 58, 237, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 100%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(42, 31, 61, 0.95) 0%, rgba(26, 22, 37, 0.9) 50%, rgba(36, 26, 53, 0.95) 100%);
+  border: 1px solid rgba(68, 68, 68, 0.4);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(68, 68, 68, 0.2),
+    inset 0 1px 0 rgba(167, 139, 250, 0.15);
 }
 
-.season-performance-glass:hover {
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.45),
-    0 1px 0px rgba(139, 92, 246, 0.12) inset,
-    0 -1px 0px rgba(0, 0, 0, 0.35) inset,
-    0 0 30px rgba(139, 92, 246, 0.18);
-}
 
 /* Leaderboard specific styling - gold theme */
 .leaderboard-gold-tint {
@@ -2702,22 +2685,18 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
     border-radius: 16px;
     padding: clamp(0.75rem, 3vw, 1rem) !important;
   }
-  
+
   .homepage-section-title {
     font-size: clamp(0.875rem, 3vw, 1rem) !important;
     margin-bottom: clamp(0.5rem, 1.5vw, 0.75rem) !important;
   }
-  
-  .homepage-glass-section:hover {
-    transform: translateY(-1px); /* Reduced movement on mobile */
-  }
-  
+
   /* Ensure equal height on mobile grid */
   .homepage-grid-equal-height {
     grid-template-columns: 1fr;
     gap: clamp(0.75rem, 3vw, 1rem);
   }
-  
+
   /* Mobile season performance rings - keep horizontal */
   .season-performance-glass .flex.space-x-4 {
     flex-direction: row;
@@ -2749,15 +2728,11 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
     border-radius: 20px;
     padding: 1rem !important;
   }
-  
-  .homepage-glass-section:hover {
-    transform: translateY(-3px); /* More dramatic on desktop */
-  }
-  
+
   .homepage-section-title {
     font-size: 1.125rem !important;
   }
-  
+
   .homepage-grid-equal-height {
     gap: 0.75rem;
   }
@@ -2797,6 +2772,59 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 }
 
 /* =================================================================
+   QUICKVIEW MODAL STYLES
+   ================================================================= */
+
+.quickview-modal-content {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(251, 146, 60, 0.08) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(45, 45, 50, 0.98) 0%, rgba(30, 30, 35, 0.95) 50%, rgba(42, 42, 47, 0.98) 100%);
+  border-radius: 12px;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(68, 68, 68, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(68, 68, 68, 0.4);
+  padding: 20px;
+  max-width: 500px;
+  width: auto;
+  margin: 0 16px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.quickview-close-btn {
+  color: #9ca3af;
+  transition: all 0.2s ease;
+  outline: none;
+  padding: 8px;
+  border-radius: 9999px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.quickview-close-btn:active {
+  transform: scale(0.95);
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.quickview-table-header {
+  border-bottom: 2px solid rgba(68, 68, 68, 0.5);
+}
+
+.quickview-table-header th {
+  color: #A78BFA;
+}
+
+.quickview-table-row {
+  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+  transition: all 0.2s ease;
+}
+
+/* =================================================================
    PEEK PAGE STYLES - GameCard-inspired layout
    ================================================================= */
 
@@ -2820,22 +2848,20 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   padding: 12px;
   border-radius: 8px;
   background-color: #383850;
-  border: 2px solid transparent;
+  border: 2px solid rgba(107, 114, 128, 0.4);
   min-height: 100px;
 }
 
-.team-option {
-  border-color: #6B7280; /* Default neutral gray border for all containers */
-}
-
 /* Results state - green border for correct choice */
-.team-option.correct, .prop-option.correct {
-  border-color: #10B981 !important; /* Green for correct choice */
+.team-option.correct {
+  border-color: #10B981 !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
 /* Results state - red border for incorrect choice */
-.team-option.incorrect, .prop-option.incorrect {
-  border-color: #EF4444 !important; /* Red for incorrect choice */
+.team-option.incorrect {
+  border-color: #EF4444 !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
 }
 
 .team-option .team-name {
@@ -2905,23 +2931,20 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   padding: 12px;
   border-radius: 8px;
   background-color: #383850;
-  border: 2px solid transparent;
+  border: 2px solid rgba(107, 114, 128, 0.4);
   min-height: 100px;
-}
-
-.prop-option {
-  border-color: #6B7280; /* Default neutral gray border for all containers */
 }
 
 /* Results state - green border for correct choice */
 .prop-option.correct {
-  border-color: #10B981 !important; /* Green for correct choice */
+  border-color: #10B981 !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
-/* Add this if you want red borders for wrong answers */
-.team-option.incorrect,
+/* Red borders for wrong answers */
 .prop-option.incorrect {
-  border-color: #EF4444 !important; /* Red for incorrect choice */
+  border-color: #EF4444 !important;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
 }
 
 .prop-option .option-name {
@@ -2999,7 +3022,7 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   background: rgba(20, 20, 22, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  border-top: 1px solid rgba(68, 68, 68, 0.3);
   display: flex;
   justify-content: space-around;
   align-items: center;

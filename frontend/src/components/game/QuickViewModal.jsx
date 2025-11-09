@@ -70,22 +70,22 @@ export default function QuickViewModal({
       }}
     >
       <div
-        className="bg-gradient-to-br from-[#2d2d2d] via-[#1e1e1e] to-[#2a2a2a] rounded-2xl shadow-2xl p-8 max-w-4xl w-full mx-4 max-h-[75vh] overflow-y-auto border border-white border-opacity-10"
+        className="quickview-modal-content"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-white font-bebas tracking-wider uppercase">Week {weekNumber} - Quick View</h2>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-2xl font-bold text-white font-bebas tracking-wider uppercase">Week {weekNumber} - Quick View</h2>
           <button
             onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onClose();
             }}
-            className="text-gray-400 hover:text-white transition-all duration-200 focus:outline-none p-2 rounded-full hover:bg-white hover:bg-opacity-10 active:scale-95"
+            className="quickview-close-btn"
             aria-label="Close modal"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -95,10 +95,10 @@ export default function QuickViewModal({
         <div className="overflow-x-auto">
           <table className="w-full text-white">
             <thead>
-              <tr className="border-b-2 border-[#F59E0B] border-opacity-30">
-                <th className="text-left py-4 px-4 font-roboto uppercase font-bold text-base tracking-wide text-[#F59E0B]">Game</th>
-                <th className="text-center py-4 px-4 font-roboto uppercase font-bold text-base tracking-wide text-[#F59E0B]">$</th>
-                <th className="text-center py-4 px-4 font-roboto uppercase font-bold text-base tracking-wide text-[#F59E0B]">Prop</th>
+              <tr className="quickview-table-header">
+                <th className="text-left py-3 px-3 font-roboto uppercase font-bold text-sm tracking-wide">Game</th>
+                <th className="text-center py-3 px-3 font-roboto uppercase font-bold text-sm tracking-wide">$</th>
+                <th className="text-center py-3 px-3 font-roboto uppercase font-bold text-sm tracking-wide">Prop</th>
               </tr>
             </thead>
             <tbody>
@@ -106,16 +106,16 @@ export default function QuickViewModal({
                 games.map((game, index) => (
                   <tr
                     key={game.id}
-                    className="border-b border-gray-700 border-opacity-50 transition-all duration-200 hover:bg-white hover:bg-opacity-5"
+                    className="quickview-table-row"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <td className="py-4 px-4 font-semibold font-roboto uppercase text-white">
+                    <td className="py-3 px-3 font-semibold font-roboto uppercase text-white text-sm">
                       {game.away_team} @ {game.home_team}
                     </td>
-                    <td className="py-4 px-4 font-roboto uppercase font-bold text-white text-center text-lg" style={{letterSpacing: '0.05rem'}}>
+                    <td className="py-3 px-3 font-roboto uppercase font-bold text-white text-center" style={{letterSpacing: '0.05rem'}}>
                       {moneyLineSelections[game.id] || <span className="text-gray-600">—</span>}
                     </td>
-                    <td className="py-4 px-4 font-roboto uppercase font-bold text-white text-center text-lg" style={{letterSpacing: '0.05rem'}}>
+                    <td className="py-3 px-3 font-roboto uppercase font-bold text-white text-center" style={{letterSpacing: '0.05rem'}}>
                       {getPropBetPick(game) === '—' ? <span className="text-gray-600">—</span> : getPropBetPick(game)}
                     </td>
                   </tr>
