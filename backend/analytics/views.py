@@ -343,7 +343,7 @@ def accuracy_summary(request):
     )
     ml_accuracy = (ml_correct / total_ml_resolved) if total_ml_resolved else 0.0
 
-    # Props
+    # Props - overall
     total_pb_resolved = PropBet.objects.filter(game__season=season, correct_answer__isnull=False).count()
     pb_correct = (
         PropBetPrediction.objects
@@ -357,6 +357,45 @@ def accuracy_summary(request):
         if total_pb_resolved else 0
     )
     pb_accuracy = (pb_correct / total_pb_resolved) if total_pb_resolved else 0.0
+
+    # Props - by category (optimized with aggregation)
+    from django.db.models import Q, Case, When, IntegerField, Count
+
+    # Get counts of resolved propbets per category in one query
+    resolved_by_category = (
+        PropBet.objects
+        .filter(game__season=season, correct_answer__isnull=False)
+        .values('category')
+        .annotate(total=Count('id'))
+    )
+    resolved_counts = {item['category']: item['total'] for item in resolved_by_category}
+
+    # Get counts of correct predictions per category in one query
+    correct_by_category = (
+        PropBetPrediction.objects
+        .filter(
+            user=user,
+            prop_bet__game__season=season,
+            prop_bet__correct_answer__isnull=False,
+            answer=F("prop_bet__correct_answer"),
+        )
+        .values('prop_bet__category')
+        .annotate(correct=Count('id'))
+    )
+    correct_counts = {item['prop_bet__category']: item['correct'] for item in correct_by_category}
+
+    # Build response
+    prop_categories = {}
+    for category_key, category_label in [("over_under", "Over/Under"), ("point_spread", "Point Spread"), ("take_the_bait", "Take-the-Bait")]:
+        cat_resolved = resolved_counts.get(category_key, 0)
+        cat_correct = correct_counts.get(category_key, 0)
+        cat_accuracy = (cat_correct / cat_resolved) if cat_resolved else 0.0
+        prop_categories[category_key] = {
+            "label": category_label,
+            "correct": int(cat_correct),
+            "totalResolved": int(cat_resolved),
+            "accuracy": round(cat_accuracy, 4)
+        }
 
     # Overall
     overall_total = total_ml_resolved + total_pb_resolved
@@ -379,6 +418,8 @@ def accuracy_summary(request):
         "propBetCorrect": int(pb_correct),
         "propBetTotalResolved": int(total_pb_resolved),
         "propBetAccuracy": round(pb_accuracy, 4),
+
+        "propCategories": prop_categories,
 
         "overallCorrect": int(overall_correct),
         "overallTotalResolved": int(overall_total),

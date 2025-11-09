@@ -24,29 +24,22 @@ import {
 } from '../components/standings/rankingUtils.jsx';
 import { getCookie } from '../utils/cookies';
 
-const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, showPercentage = true, fontSize = 'text-2xl' }) => {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const strokeDasharray = `${circumference} ${circumference}`;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+const PerformanceBar = ({ label, percentage, color = "#8B5CF6" }) => {
+  const displayPercentage = Math.round(Number(percentage) || 0);
+
   return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg className="transform -rotate-90" width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={radius} stroke="rgba(139, 92, 246, 0.1)" strokeWidth={strokeWidth} fill="transparent" />
-        <circle cx={size / 2} cy={size / 2} r={radius} stroke="url(#gradient)" strokeWidth={strokeWidth} fill="transparent"
-          strokeDasharray={strokeDasharray} strokeDashoffset={strokeDashoffset} strokeLinecap="round"
-          className="transition-all duration-1000 ease-out" />
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#8B5CF6" /><stop offset="100%" stopColor="#7C3AED" />
-          </linearGradient>
-        </defs>
-      </svg>
-      {showPercentage && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`font-bold text-white ${fontSize}`}>{Math.round(Number(percentage))}%</span>
-        </div>
-      )}
+    <div className="flex items-center justify-between gap-3">
+      <div className="text-xs font-medium opacity-70 min-w-[90px] text-left">{label}</div>
+      <div className="flex-1 relative h-2 bg-gray-800 rounded-full overflow-hidden">
+        <div
+          className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
+          style={{
+            width: `${displayPercentage}%`,
+            background: `linear-gradient(to right, ${color}, ${color}dd)`
+          }}
+        />
+      </div>
+      <div className="text-xs font-semibold min-w-[35px] text-right">{displayPercentage}%</div>
     </div>
   );
 };
@@ -68,7 +61,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
     red: "hover:shadow-red-500/50"
   };
 
-  const baseClasses = `relative bg-gradient-to-br ${colorClasses[color]} rounded-2xl p-5 text-white shadow-lg transition-all duration-300 focus:outline-none`;
+  const baseClasses = `relative bg-gradient-to-br ${colorClasses[color]} rounded-2xl text-white shadow-lg transition-all duration-300 focus:outline-none p-4 md:p-[18px]`;
   const interactiveClasses = clickable
     ? `${baseClasses} cursor-pointer hover:scale-[1.02] hover:shadow-2xl ${shadowColors[color]}`
     : baseClasses;
@@ -76,21 +69,21 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
   const CardContent = () => (
     <>
       {weekBadge && (
-        <div className="absolute top-3 right-3 px-2 py-0.5 rounded text-xs font-medium bg-black bg-opacity-30 backdrop-blur-sm">
+        <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded text-[10px] bg-black bg-opacity-20 backdrop-blur-sm" style={{ opacity: 0.6 }}>
           Week {weekBadge}
         </div>
       )}
       <div className="flex items-center justify-between mb-2">
-        <Icon className="w-6 h-6 opacity-90" strokeWidth={2} />
+        <Icon className="w-5 h-5 opacity-90" strokeWidth={1.5} />
         {trend && trend !== 'same' && (
           <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
             {trend === 'up' ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
           </div>
         )}
       </div>
-      <div className={`font-bold mb-1 font-sans leading-tight ${value?.length > 6 ? 'text-xl' : 'text-3xl'}`}>{value}</div>
-      <div className="text-sm font-medium opacity-95 font-sans">{title}</div>
-      {subtitle && <div className="text-xs opacity-80 mt-1 font-sans">{subtitle}</div>}
+      <div className={`font-semibold mb-1 font-sans leading-tight ${value?.length > 6 ? 'text-2xl' : 'text-[28px] md:text-[32px]'}`}>{value}</div>
+      <div className="font-medium opacity-80 font-sans" style={{ fontSize: '13px' }}>{title}</div>
+      {subtitle && <div className="opacity-70 mt-1 font-sans" style={{ fontSize: '11px' }}>{subtitle}</div>}
     </>
   );
   
@@ -182,7 +175,14 @@ function HomePage() {
   });
 
   // Season (snapshot) performance rings
-  const [seasonPerf, setSeasonPerf] = useState({ overall: 0, ml: 0, prop: 0, totalPoints: 0, loaded: false });
+  const [seasonPerf, setSeasonPerf] = useState({
+    overall: 0,
+    ml: 0,
+    prop: 0,
+    totalPoints: 0,
+    loaded: false,
+    propCategories: {}
+  });
 
   // Weekly rank trend for the stat card (keep default for now)
   const [rankMeta, setRankMeta] = useState({ trend: 'same', rankChange: 0 });
@@ -226,13 +226,14 @@ function HomePage() {
         if (!accRes.ok) throw new Error('accuracy_summary failed');
         const acc = await accRes.json();
 
-        // season rings
+        // season performance data
         setSeasonPerf({
           overall: Number((acc?.overallAccuracy ?? 0) * 100),
           ml: Number((acc?.moneylineAccuracy ?? 0) * 100),
           prop: Number((acc?.propBetAccuracy ?? 0) * 100),
           totalPoints: Number(acc?.totalPoints ?? 0),
-          loaded: true
+          loaded: true,
+          propCategories: acc?.propCategories || {}
         });
 
         // best category + header tiles
@@ -378,25 +379,26 @@ function HomePage() {
 
   return (
     <PageLayout>
-      {/* Header */}
-      <div className="mb-3 text-center">
-        <h1 className="font-bebas text-3xl sm:text-4xl font-bold tracking-wider uppercase">
-          Welcome back, <span style={{
-            background: 'linear-gradient(to right, #FF1CF7, #b249f8)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>{userInfo.first_name || userInfo.username}</span>!
-        </h1>
-      </div>
+      <div className="max-w-[1280px] mx-auto">
+        {/* Header */}
+        <div style={{ marginBottom: '16px' }} className="text-center md:text-left">
+          <h1 className="font-bebas text-3xl sm:text-4xl font-bold tracking-wider uppercase">
+            Welcome back, <span style={{
+              background: 'linear-gradient(to right, #FF1CF7, #b249f8)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>{userInfo.first_name || userInfo.username}</span>!
+          </h1>
+        </div>
 
-      {/* Season Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        {/* Season Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3" style={{ marginBottom: '16px' }}>
         <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={userData.currentWeek >= 2 && rankMeta.rankChange !== 0 ? `${rankMeta.rankChange > 0 ? '+' : ''}${rankMeta.rankChange} this week` : ""} icon={Trophy} trend={userData.currentWeek >= 2 ? rankMeta.trend : 'same'} color="green" />
         <StatCard
           title="Pending Picks"
           value={userData.pendingPicks ?? '—'}
-          subtitle="This week"
+          subtitle=""
           icon={Clock}
           color="purple"
           clickable={true}
@@ -404,19 +406,25 @@ function HomePage() {
           weekBadge={userData.currentWeek}
         />
         <StatCard
-          title="Points Behind"
+          title="Points Behind 1st"
           value={userData.pointsFromLeader ?? '—'}
-          subtitle="from 1st place"
+          subtitle=""
           icon={Footprints}
           color="orange"
           clickable={true}
           onClick={() => navigate('/standings')}
         />
-        <StatCard title="Best Category" value={!seasonPerf.loaded ? '—' : (userData.bestCategory === 'Moneyline' ? '$-line' : userData.bestCategory || 'N/A')} subtitle={!seasonPerf.loaded ? '—' : `${userData.bestCategoryAccuracy || 0}% accuracy`} icon={ThumbsUp} color="blue" />
+        <StatCard
+          title="Best Category"
+          value={!seasonPerf.loaded ? '—' : (userData.bestCategory === 'Moneyline' ? 'Moneyline' : userData.bestCategory === 'PropBet' ? 'Prop Bet' : userData.bestCategory || 'N/A')}
+          subtitle={!seasonPerf.loaded ? '—' : `${userData.bestCategoryAccuracy || 0}% accuracy`}
+          icon={ThumbsUp}
+          color="blue"
+        />
       </div>
 
-      {/* Leaderboard + Season Performance */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 homepage-grid-equal-height">
+        {/* Leaderboard + Season Performance */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 homepage-grid-equal-height">
         {/* Leaderboard (with trend arrows) */}
         <div className="homepage-glass-section p-4">
           <div className="homepage-glass-content">
@@ -460,37 +468,50 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Season Performance Rings */}
+        {/* Season Performance */}
         <div className="homepage-glass-section season-performance-glass p-4">
           <div className="homepage-glass-content h-full flex flex-col">
-            <h3 className="homepage-section-title text-center mb-4">Season Performance</h3>
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="flex space-x-3 items-center justify-center">
-              <div className="flex flex-col items-center">
-                <ProgressRing percentage={seasonPerf.overall || 0} size={80} strokeWidth={6} fontSize="text-base" />
-                <div className="mt-2 text-center"><div className="text-xs font-bold" style={{ color: '#C2185B' }}>Overall</div></div>
-              </div>
-              <div className="flex flex-col items-center">
-                <ProgressRing percentage={seasonPerf.ml || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
-                <div className="mt-2 text-center"><div className="text-xs font-bold text-green-400">Moneyline</div></div>
-              </div>
-              <div className="flex flex-col items-center">
-                <ProgressRing percentage={seasonPerf.prop || 0} size={80} strokeWidth={6} showPercentage fontSize="text-base" />
-                <div className="mt-2 text-center"><div className="text-xs font-bold text-blue-400">Prop Bets</div></div>
-              </div>
+            <h3 className="homepage-section-title mb-3">Season Performance</h3>
+            <div className="flex-1 flex flex-col justify-center space-y-2.5">
+              <PerformanceBar
+                label="Moneyline"
+                percentage={seasonPerf.ml || 0}
+                color="#10B981"
+              />
+              <PerformanceBar
+                label="Point Spread"
+                percentage={(seasonPerf.propCategories?.point_spread?.accuracy || 0) * 100}
+                color="#3B82F6"
+              />
+              <PerformanceBar
+                label="Over/Under"
+                percentage={(seasonPerf.propCategories?.over_under?.accuracy || 0) * 100}
+                color="#F59E0B"
+              />
+              <PerformanceBar
+                label="Take-the-Bait"
+                percentage={(seasonPerf.propCategories?.take_the_bait?.accuracy || 0) * 100}
+                color="#EF4444"
+              />
+              <PerformanceBar
+                label="Overall"
+                percentage={seasonPerf.overall || 0}
+                color="#8B5CF6"
+              />
             </div>
-              <div className="mt-4 text-center">
-                <div className="text-2xl font-bold" style={{ color: "#F9A825" }}>
+            <div className="mt-3 pt-3 border-t border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-medium opacity-70">Total Points</div>
+                <div className="text-lg font-bold" style={{ color: "#F9A825" }}>
                   {seasonPerf.totalPoints || 0}
                 </div>
-                <div className="text-base sm:text-lg homepage-section-content" style={{ color: '#9ca3af', opacity: 0.75, letterSpacing: '0.05rem' }}>Total Points (season)</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Recent Games */}
-        <div className="homepage-glass-section p-4" style={{ height: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <div className="homepage-glass-section p-4">
           <div className="homepage-glass-content">
             <div className="flex items-center justify-between">
               <h3 className="homepage-section-title">Recent Games</h3>
@@ -514,15 +535,14 @@ function HomePage() {
                 const status = game.correctStatus || (game.correct ? 'full' : 'none');
                 const isGreen = status === 'full';
                 const isYellow = status === 'partial';
-                
+
                 const borderColor = isGreen ? 'border-green-500' : isYellow ? 'border-yellow-500' : 'border-red-500';
-                const bgColor = isGreen ? 'rgba(16, 185, 129, 0.1)' : isYellow ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)';
                 const badgeBg = isGreen ? 'bg-green-500/20' : isYellow ? 'bg-yellow-500/20' : 'bg-red-500/20';
                 const badgeText = isGreen ? 'text-green-300' : isYellow ? 'text-yellow-300' : 'text-red-300';
                 const badge = isGreen ? '✓' : isYellow ? '◐' : '✗';
-                
+
                 return (
-                  <div key={game.id} className={`p-4 rounded-lg border-l-4 transition-all duration-200 ${borderColor}`} style={{ backgroundColor: bgColor }}>
+                  <div key={game.id} className={`p-3 rounded-lg border-l-4 transition-all duration-200 ${borderColor}`} style={{ backgroundColor: 'rgba(42, 42, 42, 0.5)' }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="text-sm font-medium homepage-section-content" style={{ color: '#9ca3af' }}>{game.awayTeam} @ {game.homeTeam}</div>
@@ -546,19 +566,20 @@ function HomePage() {
         </div>
       </div>
 
-      {/* CTA */}
-      <div className="flex justify-center">
-        <button
-          className="homepage-glass-button px-8 py-4 text-white transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none font-roboto font-semibold"
-          style={{ letterSpacing: '0.1rem' }}
-          onClick={goToWeeks}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-300">
-            <ellipse cx="12" cy="12" rx="6" ry="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <path d="M12 3v18M5.5 7.5l13 0M5.5 16.5l13 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-          <span className="text-sm uppercase">View Weeks</span>
-        </button>
+        {/* View Weeks Button */}
+        <div className="flex justify-center" style={{ marginTop: '24px' }}>
+          <button
+            className="homepage-glass-button px-8 py-4 text-white transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none font-roboto font-semibold"
+            style={{ letterSpacing: '0.1rem' }}
+            onClick={goToWeeks}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-300">
+              <ellipse cx="12" cy="12" rx="6" ry="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M12 3v18M5.5 7.5l13 0M5.5 16.5l13 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span className="text-sm uppercase">View Weeks</span>
+          </button>
+        </div>
       </div>
     </PageLayout>
   );

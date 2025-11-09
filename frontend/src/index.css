@@ -83,13 +83,17 @@
    transition: border-color 0.25s;
  }
 
- button:hover {
-   border-color: #8B5CF6;
+ /* Only apply hover border on desktop - prevents sticky hover on mobile */
+ @media (hover: hover) and (pointer: fine) {
+   button:hover {
+     border-color: #8B5CF6;
+   }
  }
 
  button:focus,
  button:focus-visible {
    outline: none;
+   border-color: transparent;
  }
 
 /* Auth page padding - responsive for mobile vs desktop */
