@@ -106,10 +106,10 @@ export default function QuickViewModal({
                     <td className="py-3 px-3 font-semibold font-roboto uppercase text-white text-sm">
                       {game.away_team} @ {game.home_team}
                     </td>
-                    <td className="py-3 px-3 font-roboto uppercase font-bold text-white text-center" style={{letterSpacing: '0.05rem'}}>
+                    <td className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm" style={{letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}>
                       {moneyLineSelections[game.id] || <span className="text-gray-600">—</span>}
                     </td>
-                    <td className="py-3 px-3 font-roboto uppercase font-bold text-white text-center" style={{letterSpacing: '0.05rem'}}>
+                    <td className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm" style={{letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}>
                       {getPropBetPick(game) === '—' ? <span className="text-gray-600">—</span> : getPropBetPick(game)}
                     </td>
                   </tr>

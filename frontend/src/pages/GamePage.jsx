@@ -106,6 +106,8 @@ export default function GamePage({
         className="px-4 game-page-content"
         style={{
           paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))',
+          minHeight: '100vh',
+          paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))'
         }}
       >
         {/* Header with controls and title - Protected */}
@@ -141,7 +143,7 @@ export default function GamePage({
             No games available for this week.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto justify-items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto justify-items-center">
             {weekGames.map(game => (
               <ErrorBoundary 
                 key={game.id} 

@@ -19,7 +19,6 @@ export default function PageLayout({
     <div
       className={`
         ${fullHeight ? 'min-h-screen' : ''}
-        pb-12
         ${mobileFullWidth ? 'px-1 sm:px-4 md:px-6' : 'px-6'}
         ${className}
       `}
@@ -28,6 +27,7 @@ export default function PageLayout({
         color: 'white',
         /* Dynamic padding that matches navbar height + safe area */
         paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))',
+        paddingBottom: '1rem'
       }}
     >
       <div className="page-container">
