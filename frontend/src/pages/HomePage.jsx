@@ -416,7 +416,13 @@ function HomePage() {
         />
         <StatCard
           title="Best Category"
-          value={!seasonPerf.loaded ? '—' : (userData.bestCategory === 'Moneyline' ? 'Moneyline' : userData.bestCategory === 'PropBet' ? 'Prop Bet' : userData.bestCategory || 'N/A')}
+          value={!seasonPerf.loaded ? '—' : (
+            userData.bestCategory === 'Moneyline' ? '$-Line' :
+            userData.bestCategory === 'PropBet' ? 'Prop Bet' :
+            userData.bestCategory === 'Prop Bets' ? 'Prop Bets' :
+            userData.bestCategory === 'Point Spread' ? 'Point Spread' :
+            userData.bestCategory || 'N/A'
+          )}
           subtitle={!seasonPerf.loaded ? '—' : `${userData.bestCategoryAccuracy || 0}% accuracy`}
           icon={ThumbsUp}
           color="blue"

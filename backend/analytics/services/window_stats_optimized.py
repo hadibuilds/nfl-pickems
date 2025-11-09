@@ -606,46 +606,71 @@ BEST_BALANCED_MARGIN = 0.02  # 2 percentage points
 def compute_best_category_for_user(user, season: int):
     """
     Determine a user's best category for the season using resolved counts.
+    Compares Moneyline vs individual PropBet categories (Point Spread, Over/Under, Take-the-Bait).
     Denominators are all resolved items (missed picks count as incorrect).
     """
-    # Totals of resolved items
-    total_ml_resolved = Game.objects.filter(season=season, winner__isnull=False).count()
-    total_pb_resolved = PropBet.objects.filter(game__season=season, correct_answer__isnull=False).count()
+    from django.db.models import Count
 
-    # Correct counts (missed picks count as incorrect because denominator is all resolved)
+    categories = {}
+
+    # Moneyline
+    total_ml_resolved = Game.objects.filter(season=season, winner__isnull=False).count()
     ml_correct = (
         MoneyLinePrediction.objects
         .filter(user=user, game__season=season, game__winner__isnull=False, predicted_winner=_F("game__winner"))
         .count()
         if total_ml_resolved else 0
     )
-    pb_correct = (
-        PropBetPrediction.objects
-        .filter(user=user, prop_bet__game__season=season, prop_bet__correct_answer__isnull=False,
-                answer=_F("prop_bet__correct_answer"))
-        .count()
-        if total_pb_resolved else 0
+    if total_ml_resolved > 0:
+        categories['Moneyline'] = ml_correct / total_ml_resolved
+
+    # PropBet categories (Point Spread, Over/Under, Take-the-Bait)
+    resolved_by_category = (
+        PropBet.objects
+        .filter(game__season=season, correct_answer__isnull=False)
+        .values('category')
+        .annotate(total=Count('id'))
     )
+    resolved_counts = {item['category']: item['total'] for item in resolved_by_category}
 
-    # Accuracies (0..1)
-    ml_acc = (ml_correct / total_ml_resolved) if total_ml_resolved else None
-    pb_acc = (pb_correct / total_pb_resolved) if total_pb_resolved else None
+    correct_by_category = (
+        PropBetPrediction.objects
+        .filter(
+            user=user,
+            prop_bet__game__season=season,
+            prop_bet__correct_answer__isnull=False,
+            answer=_F('prop_bet__correct_answer'),
+        )
+        .values('prop_bet__category')
+        .annotate(correct=Count('id'))
+    )
+    correct_counts = {item['prop_bet__category']: item['correct'] for item in correct_by_category}
 
-    # Decide best category
-    if ml_acc is None and pb_acc is None:
+    category_labels = {
+        'point_spread': 'Point Spread',
+        'over_under': 'Over/Under',
+        'take_the_bait': 'Take-the-Bait'
+    }
+
+    for cat_key, cat_label in category_labels.items():
+        cat_resolved = resolved_counts.get(cat_key, 0)
+        cat_correct = correct_counts.get(cat_key, 0)
+        if cat_resolved > 0:
+            categories[cat_label] = cat_correct / cat_resolved
+
+    # Find best category
+    if not categories:
         return {"bestCategory": None, "bestCategoryAccuracy": 0}
 
-    if ml_acc is not None and pb_acc is None:
-        return {"bestCategory": "Moneyline", "bestCategoryAccuracy": round(ml_acc * 100, 1)}
-    if pb_acc is not None and ml_acc is None:
-        return {"bestCategory": "Prop Bets", "bestCategoryAccuracy": round(pb_acc * 100, 1)}
+    best_cat = max(categories.items(), key=lambda x: x[1])
+    best_name = best_cat[0]
+    best_acc = best_cat[1]
 
-    # Both exist: compare with margin
-    diff = abs(ml_acc - pb_acc)
-    if diff <= BEST_BALANCED_MARGIN or (ml_acc >= 0.65 and pb_acc >= 0.65):
-        return {"bestCategory": "Balanced", "bestCategoryAccuracy": round(max(ml_acc, pb_acc) * 100, 1)}
+    # Check if balanced (all categories within BEST_BALANCED_MARGIN)
+    if len(categories) > 1:
+        accuracies = list(categories.values())
+        max_diff = max(accuracies) - min(accuracies)
+        if max_diff <= BEST_BALANCED_MARGIN or all(acc >= 0.65 for acc in accuracies):
+            return {"bestCategory": "Balanced", "bestCategoryAccuracy": round(best_acc * 100, 1)}
 
-    if ml_acc > pb_acc:
-        return {"bestCategory": "Moneyline", "bestCategoryAccuracy": round(ml_acc * 100, 1)}
-    else:
-        return {"bestCategory": "Prop Bets", "bestCategoryAccuracy": round(pb_acc * 100, 1)}
+    return {"bestCategory": best_name, "bestCategoryAccuracy": round(best_acc * 100, 1)}
