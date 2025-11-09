@@ -14,32 +14,26 @@ export default function QuickViewModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    const scrollY = window.scrollY;
     const body = document.body;
+    const html = document.documentElement;
 
-    // Lock scroll
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    body.style.width = '100%';
+    // Lock scroll without changing position
+    const originalOverflow = body.style.overflow;
+    const originalHtmlOverflow = html.style.overflow;
+
     body.style.overflow = 'hidden';
-    document.documentElement.style.overscrollBehavior = 'contain';
+    html.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'contain';
 
     // Disable pull-to-refresh while modal is open
     body.dataset.modalOpen = 'true';
 
     return () => {
       // Restore scroll
-      body.style.position = '';
-      body.style.top = '';
-      body.style.left = '';
-      body.style.right = '';
-      body.style.width = '';
-      body.style.overflow = '';
-      document.documentElement.style.overscrollBehavior = '';
+      body.style.overflow = originalOverflow;
+      html.style.overflow = originalHtmlOverflow;
+      html.style.overscrollBehavior = '';
       delete body.dataset.modalOpen;
-      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 
