@@ -385,7 +385,7 @@ function HomePage() {
     <PageLayout>
       <div className="max-w-[1280px] mx-auto">
         {/* Header */}
-        <div style={{ marginBottom: '16px' }} className="text-center md:text-left">
+        <div style={{ marginBottom: '16px' }} className="text-left">
           <h1 className="font-bebas text-3xl sm:text-4xl font-bold tracking-wider uppercase">
             Welcome back, <span style={{
               background: 'linear-gradient(to right, #FF1CF7, #b249f8)',
