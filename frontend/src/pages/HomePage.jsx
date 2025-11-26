@@ -13,7 +13,6 @@ import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
 import useDashboardData from '../hooks/useDashboardData';
 import PageLayout from '../components/common/PageLayout';
 import UserAvatar from '../components/common/UserAvatar';
-import QuickViewModal from '../components/game/QuickViewModal.jsx';
 import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Eye, ThumbsUp, Footprints } from 'lucide-react';
 import {
   GoldMedal,
@@ -202,11 +201,6 @@ function HomePage() {
   // Last updated timestamp
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Quick view modal state
-  const [showQuickView, setShowQuickView] = useState(false);
-  const [currentWeekGames, setCurrentWeekGames] = useState([]);
-  const [currentWeekPicks, setCurrentWeekPicks] = useState({ moneyline: {}, propBets: {} });
-
   const API_BASE = import.meta.env.VITE_API_URL;
 
   // Build a medal/rank list for helpers, preserving trend
@@ -384,56 +378,14 @@ function HomePage() {
     navigate('/weeks');
   };
 
-  const handleOpenQuickView = async () => {
-    if (!userData.currentWeek) return;
-
-    try {
-      // Fetch games for current week
-      const gamesRes = await fetch(`${API_BASE}/predictions/api/games/?week=${userData.currentWeek}`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') }
-      });
-      if (gamesRes.ok) {
-        const gamesData = await gamesRes.json();
-        setCurrentWeekGames(gamesData);
-      }
-
-      // Fetch user picks for current week
-      const picksRes = await fetch(`${API_BASE}/predictions/api/my-predictions/?week=${userData.currentWeek}`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') }
-      });
-      if (picksRes.ok) {
-        const picksData = await picksRes.json();
-        const moneylinePicks = {};
-        const propBetPicks = {};
-
-        picksData.forEach(pick => {
-          if (pick.game_id) {
-            moneylinePicks[pick.game_id] = pick.team_picked;
-          }
-          if (pick.prop_bet_id) {
-            propBetPicks[pick.prop_bet_id] = pick.prop_bet_answer;
-          }
-        });
-
-        setCurrentWeekPicks({ moneyline: moneylinePicks, propBets: propBetPicks });
-      }
-
-      setShowQuickView(true);
-    } catch (error) {
-      console.error('Failed to fetch week data:', error);
-    }
-  };
-
   // Prefer our local overlay; fall back to hook data if needed (keeps JSX unchanged)
   const userData = homeUserData || dashboardData?.user_data || {};
 
   return (
     <PageLayout>
       <div className="max-w-[1280px] mx-auto">
-        {/* Header - Hidden on mobile */}
-        <div style={{ marginBottom: '16px' }} className="text-left hidden md:block">
+        {/* Header */}
+        <div style={{ marginBottom: '16px' }} className="text-left">
           <h1 className="font-bebas text-3xl sm:text-4xl font-bold tracking-wider uppercase">
             Welcome back, <span style={{
               background: 'linear-gradient(to right, #FF1CF7, #b249f8)',
@@ -482,17 +434,6 @@ function HomePage() {
           color="blue"
         />
       </div>
-
-        {/* Quick View Button - Mobile Only */}
-        <div className="md:hidden" style={{ marginBottom: '16px' }}>
-          <button
-            onClick={handleOpenQuickView}
-            className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            <Eye className="w-4 h-4" />
-            <span className="text-sm">Week {userData.currentWeek} Quick View</span>
-          </button>
-        </div>
 
         {/* Leaderboard + Season Performance */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 homepage-grid-equal-height">
@@ -645,8 +586,8 @@ function HomePage() {
           }}
         >
           <button
-            className="homepage-glass-button px-6 py-2.5 text-white transition-all duration-200 ease-out inline-flex items-center space-x-2 focus:outline-none font-roboto font-semibold"
-            style={{ letterSpacing: '0.05rem' }}
+            className="homepage-glass-button px-8 py-4 text-white transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none font-roboto font-semibold"
+            style={{ letterSpacing: '0.1rem' }}
             onClick={goToWeeks}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transition-transform duration-300">
@@ -657,16 +598,6 @@ function HomePage() {
           </button>
         </div>
       </div>
-
-      {/* Quick View Modal */}
-      <QuickViewModal
-        isOpen={showQuickView}
-        onClose={() => setShowQuickView(false)}
-        weekNumber={userData.currentWeek}
-        games={currentWeekGames}
-        moneyLineSelections={currentWeekPicks.moneyline}
-        propBetSelections={currentWeekPicks.propBets}
-      />
     </PageLayout>
   );
 }
