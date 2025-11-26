@@ -1304,14 +1304,11 @@ a:focus-visible {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-right: 0.5em;
-  /* Isolate transform to prevent conflict with parent positioning */
-  will-change: transform;
-  transform: translateZ(0);
 }
-
+  
 @keyframes spin {
   to {
-    transform: rotate(360deg) translateZ(0);
+    transform: rotate(360deg);
   }
 }
   
