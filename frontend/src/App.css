@@ -1224,8 +1224,6 @@ a:focus-visible {
   background-color: #D97706 !important;
   cursor: not-allowed !important;
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
-  /* Maintain centering transform during submission */
-  transform: translateX(-50%);
 }
 
 /* Mobile optimizations */
@@ -1273,15 +1271,6 @@ a:focus-visible {
 
   body.is-android .floating-submit-button:active {
     transform: scale(0.96);
-  }
-
-  /* Preserve transform during submission on mobile */
-  body.is-ios .floating-submit-button.submitting {
-    transform: translateX(-50%);
-  }
-
-  body.is-android .floating-submit-button.submitting {
-    transform: none;
   }
 }
 
