@@ -161,7 +161,7 @@ export default function QuickViewModal({
                             <div
                               className="absolute z-20 rounded-md bg-black/90 border border-purple-500/40 px-3 py-1.5 text-[11px] leading-snug text-gray-100 shadow-xl"
                               style={{
-                                bottom: '98%',
+                                bottom: '104%',          // small visual gap from pill
                                 right: '4px',            // lock right edge
                                 left: 'auto',
                                 maxWidth: '260px',       // stretch left up to this
