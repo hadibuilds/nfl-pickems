@@ -207,6 +207,8 @@ function HomePage() {
   const [quickViewGames, setQuickViewGames] = useState([]);
   const [quickViewMoneylinePicks, setQuickViewMoneylinePicks] = useState({});
   const [quickViewPropBets, setQuickViewPropBets] = useState({});
+  const [quickViewLoading, setQuickViewLoading] = useState(false);
+  const [quickViewReady, setQuickViewReady] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -358,6 +360,80 @@ function HomePage() {
     })();
   }, [userInfo, API_BASE]);
 
+  // 4) Preload Quick View data (games + picks) once currentWeek is known
+  useEffect(() => {
+    if (!userInfo) return;
+    const currentWeek = homeUserData.currentWeek;
+    if (!currentWeek) return;
+
+    let cancelled = false;
+
+    const loadQuickViewData = async () => {
+      setQuickViewLoading(true);
+      setQuickViewReady(false);
+
+      try {
+        // Fetch games for the current week
+        const gamesRes = await fetch(`${API_BASE}/games/api/games/?week=${currentWeek}`, {
+          credentials: 'include',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        if (!gamesRes.ok) throw new Error('Failed to fetch games for quick view');
+        const gamesData = await gamesRes.json();
+
+        // Filter to only show current week's games
+        const currentWeekGames = Array.isArray(gamesData)
+          ? gamesData.filter(game => game.week === currentWeek)
+          : [];
+
+        // Fetch picks for the same week
+        const picksRes = await fetch(`${API_BASE}/predictions/api/get-user-predictions/?week=${currentWeek}`, {
+          credentials: 'include',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        if (!picksRes.ok) throw new Error('Failed to fetch picks for quick view');
+        const picksData = await picksRes.json();
+
+        if (cancelled) return;
+
+        const mlPicks = {};
+        const pbPicks = {};
+
+        if (picksData.predictions) {
+          picksData.predictions.forEach(pick => {
+            mlPicks[pick.game_id] = pick.predicted_winner;
+          });
+        }
+
+        if (picksData.prop_bets) {
+          picksData.prop_bets.forEach(pick => {
+            pbPicks[pick.prop_bet_id] = pick.answer;
+          });
+        }
+
+        setQuickViewGames(currentWeekGames);
+        setQuickViewMoneylinePicks(mlPicks);
+        setQuickViewPropBets(pbPicks);
+        setQuickViewReady(true);
+      } catch (e) {
+        console.warn('Quick view preload failed:', e);
+        if (!cancelled) {
+          setQuickViewReady(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setQuickViewLoading(false);
+        }
+      }
+    };
+
+    loadQuickViewData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userInfo, API_BASE, homeUserData.currentWeek]);
+
   if (!userInfo) {
     return (
       <div className="pt-16 sm:pt-[72px]">
@@ -385,66 +461,10 @@ function HomePage() {
     navigate('/weeks');
   };
 
-  const handleQuickView = async () => {
-    console.log('🔍 Quick View clicked!');
-    console.log('homeUserData:', homeUserData);
-    console.log('currentWeek:', homeUserData.currentWeek);
-
-    const currentWeek = homeUserData.currentWeek;
-    if (!currentWeek) {
-      console.log('❌ No current week found');
-      return;
-    }
-
-    console.log('✅ Fetching data for week:', currentWeek);
-
-    try {
-      // Fetch games
-      console.log('Fetching games...');
-      const gamesRes = await fetch(`${API_BASE}/games/api/games/?week=${currentWeek}`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') }
-      });
-      const gamesData = await gamesRes.json();
-      console.log('Games fetched:', gamesData);
-
-      // Filter to only show current week's games
-      const currentWeekGames = gamesData.filter(game => game.week === currentWeek);
-      setQuickViewGames(currentWeekGames);
-
-      // Fetch picks
-      console.log('Fetching picks...');
-      const picksRes = await fetch(`${API_BASE}/predictions/api/get-user-predictions/?week=${currentWeek}`, {
-        credentials: 'include',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') }
-      });
-      const picksData = await picksRes.json();
-      console.log('Picks fetched:', picksData);
-
-      const mlPicks = {};
-      const pbPicks = {};
-
-      // Process moneyline predictions
-      if (picksData.predictions) {
-        picksData.predictions.forEach(pick => {
-          mlPicks[pick.game_id] = pick.predicted_winner;
-        });
-      }
-
-      // Process prop bet predictions
-      if (picksData.prop_bets) {
-        picksData.prop_bets.forEach(pick => {
-          pbPicks[pick.prop_bet_id] = pick.answer;
-        });
-      }
-
-      setQuickViewMoneylinePicks(mlPicks);
-      setQuickViewPropBets(pbPicks);
-      console.log('🎉 Opening modal!');
-      setShowQuickView(true);
-    } catch (error) {
-      console.error('Quick view fetch error:', error);
-    }
+  const handleQuickView = () => {
+    // Match GamePage behavior: only toggle visibility, no fetching here
+    if (!quickViewReady) return;
+    setShowQuickView(true);
   };
 
   const handleCloseQuickView = () => {
@@ -512,12 +532,24 @@ function HomePage() {
         <div className="md:hidden" style={{ marginBottom: '16px' }}>
           <button
             onClick={handleQuickView}
-            className="homepage-glass-button w-full py-3 px-4 text-white font-roboto font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+            className="homepage-glass-button w-full py-3 px-4 text-white font-roboto font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={!quickViewReady}
           >
-            <Eye className="w-5 h-5" />
-            <span className="text-sm uppercase" style={{ letterSpacing: '0.1rem' }}>
-              Quick View - Week {userData.currentWeek}
-            </span>
+            {quickViewLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400" />
+                <span className="text-xs uppercase" style={{ letterSpacing: '0.12rem' }}>
+                  Loading Quick View...
+                </span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-5 h-5" />
+                <span className="text-sm uppercase" style={{ letterSpacing: '0.1rem' }}>
+                  Quick View - Week {userData.currentWeek}
+                </span>
+              </>
+            )}
           </button>
         </div>
 
