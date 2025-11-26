@@ -75,6 +75,11 @@
   letter-spacing: 0.05em;
 }
 
+/* Override uppercase for prop bet buttons - preserve admin input */
+.game-page-content .propbet-button {
+  text-transform: none;
+}
+
 /* UPDATED: Enhanced game box styling */
 .game-box {
   background-color: #1f1f1f;
