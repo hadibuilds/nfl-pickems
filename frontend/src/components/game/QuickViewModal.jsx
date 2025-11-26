@@ -68,9 +68,9 @@ export default function QuickViewModal({
         className="quickview-modal-content"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-2xl font-bold text-white font-bebas tracking-wider uppercase">Week {weekNumber} - Quick View</h2>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+          <h2 className="text-2xl font-bold text-white font-bebas tracking-wider uppercase">Quick View - Week {weekNumber}</h2>
           <button
             onMouseDown={(e) => {
               e.preventDefault();

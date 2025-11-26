@@ -386,34 +386,61 @@ function HomePage() {
   };
 
   const handleQuickView = async () => {
+    console.log('🔍 Quick View clicked!');
+    console.log('homeUserData:', homeUserData);
+    console.log('currentWeek:', homeUserData.currentWeek);
+
     const currentWeek = homeUserData.currentWeek;
-    if (!currentWeek) return;
+    if (!currentWeek) {
+      console.log('❌ No current week found');
+      return;
+    }
+
+    console.log('✅ Fetching data for week:', currentWeek);
 
     try {
       // Fetch games
-      const gamesRes = await fetch(`${API_BASE}/predictions/api/games/?week=${currentWeek}`, {
+      console.log('Fetching games...');
+      const gamesRes = await fetch(`${API_BASE}/games/api/games/?week=${currentWeek}`, {
         credentials: 'include',
         headers: { 'X-CSRFToken': getCookie('csrftoken') }
       });
       const gamesData = await gamesRes.json();
-      setQuickViewGames(gamesData);
+      console.log('Games fetched:', gamesData);
+
+      // Filter to only show current week's games
+      const currentWeekGames = gamesData.filter(game => game.week === currentWeek);
+      setQuickViewGames(currentWeekGames);
 
       // Fetch picks
-      const picksRes = await fetch(`${API_BASE}/predictions/api/my-predictions/?week=${currentWeek}`, {
+      console.log('Fetching picks...');
+      const picksRes = await fetch(`${API_BASE}/predictions/api/get-user-predictions/?week=${currentWeek}`, {
         credentials: 'include',
         headers: { 'X-CSRFToken': getCookie('csrftoken') }
       });
       const picksData = await picksRes.json();
+      console.log('Picks fetched:', picksData);
 
       const mlPicks = {};
       const pbPicks = {};
-      picksData.forEach(pick => {
-        if (pick.game_id) mlPicks[pick.game_id] = pick.team_picked;
-        if (pick.prop_bet_id) pbPicks[pick.prop_bet_id] = pick.prop_bet_answer;
-      });
+
+      // Process moneyline predictions
+      if (picksData.predictions) {
+        picksData.predictions.forEach(pick => {
+          mlPicks[pick.game_id] = pick.predicted_winner;
+        });
+      }
+
+      // Process prop bet predictions
+      if (picksData.prop_bets) {
+        picksData.prop_bets.forEach(pick => {
+          pbPicks[pick.prop_bet_id] = pick.answer;
+        });
+      }
 
       setQuickViewMoneylinePicks(mlPicks);
       setQuickViewPropBets(pbPicks);
+      console.log('🎉 Opening modal!');
       setShowQuickView(true);
     } catch (error) {
       console.error('Quick view fetch error:', error);
@@ -485,10 +512,12 @@ function HomePage() {
         <div className="md:hidden" style={{ marginBottom: '16px' }}>
           <button
             onClick={handleQuickView}
-            className="homepage-glass-button w-full py-2.5 px-4 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+            className="homepage-glass-button w-full py-3 px-4 text-white font-roboto font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
           >
-            <Eye className="w-4 h-4" />
-            <span className="text-sm">Week {userData.currentWeek} Quick View</span>
+            <Eye className="w-5 h-5" />
+            <span className="text-sm uppercase" style={{ letterSpacing: '0.1rem' }}>
+              Quick View - Week {userData.currentWeek}
+            </span>
           </button>
         </div>
 
@@ -636,14 +665,14 @@ function HomePage() {
 
         {/* View Weeks Button */}
         <div
-          className="flex justify-center view-weeks-wrapper"
+          className="view-weeks-wrapper w-full flex justify-center"
           style={{
-            marginTop: '24px',
-            paddingBottom: isPWA ? 'calc(8px + env(safe-area-inset-bottom, 0px))' : 'calc(100px + env(safe-area-inset-bottom, 0px))'
+            marginTop: '16px',
+            paddingBottom: isPWA ? 'calc(8px + env(safe-area-inset-bottom, 0px))' : 'calc(80px + env(safe-area-inset-bottom, 0px))'
           }}
         >
           <button
-            className="homepage-glass-button px-8 py-4 text-white transition-all duration-300 ease-out inline-flex items-center space-x-3 focus:outline-none font-roboto font-semibold"
+            className="homepage-glass-button w-full sm:w-[280px] md:w-[320px] lg:w-[360px] py-3 px-4 text-white transition-all duration-300 ease-out inline-flex items-center justify-center space-x-3 focus:outline-none font-roboto font-semibold rounded-lg"
             style={{ letterSpacing: '0.1rem' }}
             onClick={goToWeeks}
           >

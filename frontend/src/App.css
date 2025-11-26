@@ -2548,16 +2548,16 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 
 /* Minimal blur variant for buttons */
 .homepage-glass-button {
-  background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 50%, #2a2a2a 100%);
+  background: linear-gradient(135deg, #3d3d3d 0%, #2e2e2e 50%, #3a3a3a 100%);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 20px;
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.35),
-    0 1px 0px rgba(255, 255, 255, 0.06) inset,
+    0 1px 0px rgba(255, 255, 255, 0.12) inset,
     0 -1px 0px rgba(0, 0, 0, 0.2) inset,
-    0 0 20px rgba(139, 92, 246, 0.08);
+    0 0 20px rgba(139, 92, 246, 0.15);
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2695,7 +2695,7 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 /* Mobile specific adjustments */
 @media (max-width: 768px) {
   .homepage-glass-section {
-    margin-bottom: clamp(0.75rem, 2vw, 1rem);
+    margin-bottom: clamp(0.5rem, 2vw, 0.75rem);
     border-radius: 16px;
     padding: clamp(0.75rem, 3vw, 1rem) !important;
   }
