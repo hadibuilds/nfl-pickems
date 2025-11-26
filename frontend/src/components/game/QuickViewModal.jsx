@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getTeamLogo } from '../../utils/teamLogos.js';
 
@@ -37,6 +37,9 @@ export default function QuickViewModal({
       delete body.dataset.modalOpen;
     };
   }, [isOpen]);
+
+  // Track which game's prop question tooltip is open
+  const [activeQuestionGameId, setActiveQuestionGameId] = useState(null);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -85,6 +88,10 @@ export default function QuickViewModal({
             </svg>
           </button>
         </div>
+        {/* Helper subheader */}
+        <p className="text-xs font-roboto text-gray-400 mb-2">
+          Tap a prop answer to see the full question.
+        </p>
 
         {/* Content */}
         <div className="overflow-x-auto">
@@ -118,8 +125,48 @@ export default function QuickViewModal({
                         <span className="text-gray-600">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm" style={{letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}>
-                      {getPropBetPick(game) === '—' ? <span className="text-gray-600">—</span> : getPropBetPick(game)}
+                    <td
+                      className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm relative"
+                      style={{letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}
+                    >
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setActiveQuestionGameId(
+                            activeQuestionGameId === game.id ? null : game.id
+                          );
+                        }}
+                        className="inline-flex items-center justify-center gap-1 max-w-full"
+                        style={{ cursor: game.prop_bets && game.prop_bets.length ? 'pointer' : 'default' }}
+                      >
+                        {getPropBetPick(game) === '—' ? (
+                          <span className="text-gray-600">—</span>
+                        ) : (
+                          <>
+                            <span className="truncate">{getPropBetPick(game)}</span>
+                            {game.prop_bets && game.prop_bets.length > 0 && (
+                              <span className="text-[10px] text-purple-300 border border-purple-400/60 rounded-full px-1.5 py-0.5 leading-none">
+                                i
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </button>
+
+                      {activeQuestionGameId === game.id &&
+                        game.prop_bets &&
+                        game.prop_bets.length > 0 && (
+                          <div
+                            className="absolute right-0 z-20 mt-2 max-w-xs rounded-md bg-black/90 border border-purple-500/40 px-3 py-2 text-[11px] leading-snug text-gray-100 shadow-xl"
+                            style={{ top: '100%' }}
+                          >
+                            <div className="text-left whitespace-normal">
+                              {game.prop_bets[0].question}
+                            </div>
+                          </div>
+                      )}
                     </td>
                   </tr>
                 ))
