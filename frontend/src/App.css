@@ -2847,6 +2847,14 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   transition: all 0.2s ease;
 }
 
+.quickview-team-logo {
+  width: 32px;
+  height: auto;
+  display: inline-block;
+  vertical-align: middle;
+  object-fit: contain;
+}
+
 /* =================================================================
    PEEK PAGE STYLES - GameCard-inspired layout
    ================================================================= */

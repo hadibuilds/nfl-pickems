@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { getTeamLogo } from '../../utils/teamLogos.js';
 
 export default function QuickViewModal({
   isOpen,
@@ -106,8 +107,16 @@ export default function QuickViewModal({
                     <td className="py-3 px-3 font-semibold font-roboto uppercase text-white text-sm">
                       {game.away_team} @ {game.home_team}
                     </td>
-                    <td className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm" style={{letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}>
-                      {moneyLineSelections[game.id] || <span className="text-gray-600">—</span>}
+                    <td className="py-3 px-3 text-center" style={{borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}>
+                      {moneyLineSelections[game.id] ? (
+                        <img
+                          src={getTeamLogo(moneyLineSelections[game.id])}
+                          alt={moneyLineSelections[game.id]}
+                          className="quickview-team-logo"
+                        />
+                      ) : (
+                        <span className="text-gray-600">—</span>
+                      )}
                     </td>
                     <td className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm" style={{letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}>
                       {getPropBetPick(game) === '—' ? <span className="text-gray-600">—</span> : getPropBetPick(game)}
