@@ -13,6 +13,7 @@ import { useAuthWithNavigation } from '../hooks/useAuthWithNavigation';
 import useDashboardData from '../hooks/useDashboardData';
 import PageLayout from '../components/common/PageLayout';
 import UserAvatar from '../components/common/UserAvatar';
+import QuickViewModal from '../components/game/QuickViewModal.jsx';
 import { TrendingUp, TrendingDown, Trophy, Target, Clock, Users, Eye, ThumbsUp, Footprints } from 'lucide-react';
 import {
   GoldMedal,
@@ -201,6 +202,12 @@ function HomePage() {
   // Last updated timestamp
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  // Quick view state
+  const [showQuickView, setShowQuickView] = useState(false);
+  const [quickViewGames, setQuickViewGames] = useState([]);
+  const [quickViewMoneylinePicks, setQuickViewMoneylinePicks] = useState({});
+  const [quickViewPropBets, setQuickViewPropBets] = useState({});
+
   const API_BASE = import.meta.env.VITE_API_URL;
 
   // Build a medal/rank list for helpers, preserving trend
@@ -378,14 +385,53 @@ function HomePage() {
     navigate('/weeks');
   };
 
+  const handleQuickView = async () => {
+    const currentWeek = homeUserData.currentWeek;
+    if (!currentWeek) return;
+
+    try {
+      // Fetch games
+      const gamesRes = await fetch(`${API_BASE}/predictions/api/games/?week=${currentWeek}`, {
+        credentials: 'include',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+      });
+      const gamesData = await gamesRes.json();
+      setQuickViewGames(gamesData);
+
+      // Fetch picks
+      const picksRes = await fetch(`${API_BASE}/predictions/api/my-predictions/?week=${currentWeek}`, {
+        credentials: 'include',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+      });
+      const picksData = await picksRes.json();
+
+      const mlPicks = {};
+      const pbPicks = {};
+      picksData.forEach(pick => {
+        if (pick.game_id) mlPicks[pick.game_id] = pick.team_picked;
+        if (pick.prop_bet_id) pbPicks[pick.prop_bet_id] = pick.prop_bet_answer;
+      });
+
+      setQuickViewMoneylinePicks(mlPicks);
+      setQuickViewPropBets(pbPicks);
+      setShowQuickView(true);
+    } catch (error) {
+      console.error('Quick view fetch error:', error);
+    }
+  };
+
+  const handleCloseQuickView = () => {
+    setShowQuickView(false);
+  };
+
   // Prefer our local overlay; fall back to hook data if needed (keeps JSX unchanged)
   const userData = homeUserData || dashboardData?.user_data || {};
 
   return (
     <PageLayout>
       <div className="max-w-[1280px] mx-auto">
-        {/* Header */}
-        <div style={{ marginBottom: '16px' }} className="text-left">
+        {/* Header - Hidden on mobile */}
+        <div style={{ marginBottom: '16px' }} className="text-left hidden md:block">
           <h1 className="font-bebas text-3xl sm:text-4xl font-bold tracking-wider uppercase">
             Welcome back, <span style={{
               background: 'linear-gradient(to right, #FF1CF7, #b249f8)',
@@ -434,6 +480,17 @@ function HomePage() {
           color="blue"
         />
       </div>
+
+        {/* Quick View Button - Mobile Only */}
+        <div className="md:hidden" style={{ marginBottom: '16px' }}>
+          <button
+            onClick={handleQuickView}
+            className="homepage-glass-button w-full py-2.5 px-4 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
+          >
+            <Eye className="w-4 h-4" />
+            <span className="text-sm">Week {userData.currentWeek} Quick View</span>
+          </button>
+        </div>
 
         {/* Leaderboard + Season Performance */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 homepage-grid-equal-height">
@@ -598,6 +655,16 @@ function HomePage() {
           </button>
         </div>
       </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        isOpen={showQuickView}
+        onClose={handleCloseQuickView}
+        weekNumber={userData.currentWeek}
+        games={quickViewGames}
+        moneyLineSelections={quickViewMoneylinePicks}
+        propBetSelections={quickViewPropBets}
+      />
     </PageLayout>
   );
 }
