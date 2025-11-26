@@ -2552,26 +2552,24 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.35),
+  border-radius: 8px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
     0 1px 0px rgba(255, 255, 255, 0.06) inset,
-    0 -1px 0px rgba(0, 0, 0, 0.2) inset,
-    0 0 20px rgba(139, 92, 246, 0.08);
+    0 -1px 0px rgba(0, 0, 0, 0.2) inset;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Only hover on desktop - no hover effects on mobile */
 @media (hover: hover) and (pointer: fine) {
   .homepage-glass-button:hover {
-    transform: translateY(-2px) scale(1.05);
+    transform: translateY(-1px);
     box-shadow:
-      0 12px 40px rgba(0, 0, 0, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.4),
       0 2px 0px rgba(255, 255, 255, 0.08) inset,
-      0 -1px 0px rgba(0, 0, 0, 0.25) inset,
-      0 0 24px rgba(139, 92, 246, 0.12);
+      0 -1px 0px rgba(0, 0, 0, 0.25) inset;
   }
 }
 
