@@ -47,7 +47,7 @@ class ErrorBoundary extends React.Component {
         // Compact error for individual game cards
         return (
           <div className="game-box" style={{ 
-            backgroundColor: '#2d2d2d', 
+            backgroundColor: '#101118', 
             borderRadius: '16px',
             padding: '20px',
             margin: '20px 0',
@@ -90,7 +90,7 @@ class ErrorBoundary extends React.Component {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '2rem',
-            backgroundColor: '#1E1E20',
+            backgroundColor: '#05060A',
             color: 'white'
           }}>
             <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>💥</div>
@@ -118,7 +118,7 @@ class ErrorBoundary extends React.Component {
               <button
                 onClick={() => window.location.href = '/weeks'}
                 style={{ 
-                  backgroundColor: '#2d2d2d',
+                  backgroundColor: '#101118',
                   color: 'white',
                   border: '1px solid #4B5563',
                   padding: '12px 24px',
@@ -136,7 +136,7 @@ class ErrorBoundary extends React.Component {
               <details style={{ 
                 marginTop: '2rem', 
                 padding: '1rem', 
-                backgroundColor: '#2d2d2d', 
+                backgroundColor: '#101118', 
                 borderRadius: '8px',
                 maxWidth: '80vw',
                 overflow: 'auto'

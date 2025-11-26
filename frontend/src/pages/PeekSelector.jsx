@@ -36,7 +36,7 @@ export default function PeekSelector() {
 
 
   return (
-    <PageLayout backgroundColor="#1E1E20" maxWidth="max-w-6xl">
+    <PageLayout backgroundColor="#05060A" maxWidth="max-w-6xl">
       {/* Header copy matches your typography; Bebas font is global */}
       <div className="mx-auto mb-6 text-center">
         <h1 className="text-5xl sm:text-6xl md:text-7xl text-white font-bebas tracking-wider">Peek at Picks</h1>

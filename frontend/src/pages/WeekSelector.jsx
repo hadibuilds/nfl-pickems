@@ -110,13 +110,14 @@ export default function WeekSelector({
   const getCardStyles = (status) => {
     switch (status) {
       case 'completed':
-        return { backgroundColor: '#10B981', borderColor: '#059669', textColor: 'white', hoverColor: '#047857' };
+        // Completed weeks: gray, matching Peek selector aesthetic
+        return { backgroundColor: '#374151', borderColor: '#4B5563', textColor: 'white', hoverColor: '#4B5563' };
       case 'current':
         return { backgroundColor: '#8B5CF6', borderColor: '#7C3AED', textColor: 'white', hoverColor: '#7C3AED' };
       case 'upcoming':
         return { backgroundColor: '#374151', borderColor: '#4B5563', textColor: '#9CA3AF', hoverColor: '#4B5563' };
       default:
-        return { backgroundColor: '#2d2d2d', borderColor: '#4B5563', textColor: 'white', hoverColor: '#3a3a3a' };
+      return { backgroundColor: '#101118', borderColor: '#4B5563', textColor: 'white', hoverColor: '#151620' };
     }
   };
 
@@ -124,7 +125,7 @@ export default function WeekSelector({
     <div
       className="min-h-screen pb-12 px-1 sm:px-4 md:px-6"
       style={{
-        backgroundColor: '#1E1E20',
+        backgroundColor: '#05060A',
         color: 'white',
         paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))',
       }}
@@ -167,7 +168,7 @@ export default function WeekSelector({
                           <div className="week-card-right">
                             <span className="week-status-badge" 
                             style={{ 
-                              backgroundColor: weekStatus.status === 'completed' ? '#065F46' : weekStatus.status === 'current' ? '#5B21B6' : '#374151' 
+                              backgroundColor: weekStatus.status === 'completed' ? '#374151' : weekStatus.status === 'current' ? '#5B21B6' : '#374151' 
                             }}>{weekStatus.label}</span>
                             <div className="week-dates" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
                               {weekDates.start} - {weekDates.end}

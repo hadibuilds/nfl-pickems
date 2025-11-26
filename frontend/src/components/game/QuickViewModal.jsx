@@ -72,8 +72,10 @@ export default function QuickViewModal({
         onMouseDown={(e) => e.stopPropagation()}
       >
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-          <h2 className="text-2xl font-bold text-white font-bebas tracking-wider uppercase">Quick View - Week {weekNumber}</h2>
+      <div className="flex items-center justify-between mb-1.5">
+          <h2 className="text-xl font-semibold text-white font-bebas tracking-[0.18em] uppercase">
+            Quick View - Week {weekNumber}
+          </h2>
           <button
             onMouseDown={(e) => {
               e.preventDefault();
@@ -82,14 +84,14 @@ export default function QuickViewModal({
             }}
             className="quickview-close-btn"
             aria-label="Close modal"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
         {/* Helper subheader */}
-        <p className="text-xs font-roboto text-gray-400 mb-1">
+        <p className="text-[11px] font-roboto text-gray-400 mb-2">
           Tap a prop answer to see the full question.
         </p>
 
@@ -98,9 +100,9 @@ export default function QuickViewModal({
           <table className="w-full text-white">
             <thead>
               <tr className="quickview-table-header">
-                <th className="text-left py-3 px-3 font-roboto uppercase font-bold text-sm tracking-wide">Game</th>
-                <th className="text-center py-3 px-3 font-roboto uppercase font-bold text-sm tracking-wide">$</th>
-                <th className="text-center py-3 px-3 font-roboto uppercase font-bold text-sm tracking-wide">Prop</th>
+                <th className="text-left py-2 px-3 font-roboto uppercase font-semibold text-xs tracking-[0.16em]">Game</th>
+                <th className="text-center py-2 px-3 font-roboto uppercase font-semibold text-xs tracking-[0.16em]">$</th>
+                <th className="text-center py-2 px-3 font-roboto uppercase font-semibold text-xs tracking-[0.16em]">Prop</th>
               </tr>
             </thead>
             <tbody>
@@ -111,10 +113,10 @@ export default function QuickViewModal({
                     className="quickview-table-row"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <td className="py-3 px-3 font-semibold font-roboto uppercase text-white text-sm">
+                    <td className="py-2 px-3 font-semibold font-roboto uppercase text-white text-sm">
                       {game.away_team} @ {game.home_team}
                     </td>
-                    <td className="py-3 px-3 text-center" style={{borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}>
+                    <td className="py-2 px-3 text-center" style={{borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}>
                       {moneyLineSelections[game.id] ? (
                         <img
                           src={getTeamLogo(moneyLineSelections[game.id])}
@@ -126,8 +128,8 @@ export default function QuickViewModal({
                       )}
                     </td>
                     <td
-                      className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm"
-                      style={{ letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)' }}
+                      className="py-2 px-3 font-roboto uppercase font-bold text-white text-center text-sm"
+                      style={{ letterSpacing: '0.06rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)' }}
                     >
                       <div
                         className="relative inline-block w-full"
@@ -158,16 +160,8 @@ export default function QuickViewModal({
                         {activeQuestionGameId === game.id &&
                           game.prop_bets &&
                           game.prop_bets.length > 0 && (
-                            <div
-                              className="absolute z-20 rounded-md bg-black/90 border border-purple-500/40 px-3 py-1.5 text-[11px] leading-snug text-gray-100 shadow-xl"
-                              style={{
-                                bottom: '104%',          // small visual gap from pill
-                                right: '4px',            // lock right edge
-                                left: 'auto',
-                                maxWidth: '260px',       // stretch left up to this
-                              }}
-                            >
-                              <div className="whitespace-normal text-center">
+                            <div className="quickview-prop-tooltip">
+                              <div className="whitespace-normal text-left">
                                 {game.prop_bets[0].question}
                               </div>
                             </div>

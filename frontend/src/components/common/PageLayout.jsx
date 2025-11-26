@@ -12,7 +12,8 @@ export default function PageLayout({
   className = '',
   maxWidth = 'max-w-6xl', // Standard max-width, can be overridden
   fullHeight = true,
-  backgroundColor = '#1E1E20',
+  // Darker, more neutral background to match refined dashboard look
+  backgroundColor = '#05060A',
   mobileFullWidth = true // New prop for mobile behavior
 }) {
   return (

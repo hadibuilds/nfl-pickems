@@ -47,24 +47,16 @@ const PerformanceBar = ({ label, percentage, color = "#8B5CF6" }) => {
 
 const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", onClick, clickable = false, weekBadge }) => {
   const colorClasses = {
-    blue: "from-blue-500 via-blue-600 to-indigo-700",
-    purple: "from-purple-500 via-purple-600 to-violet-700",
-    green: "from-green-500 via-emerald-600 to-teal-700",
-    orange: "from-orange-500 via-amber-600 to-yellow-700",
-    red: "from-red-500 via-rose-600 to-pink-700"
+    blue: "border-blue-400/50",
+    purple: "border-purple-400/50",
+    green: "border-emerald-400/50",
+    orange: "border-amber-400/50",
+    red: "border-rose-400/50"
   };
 
-  const shadowColors = {
-    blue: "hover:shadow-blue-500/50",
-    purple: "hover:shadow-purple-500/50",
-    green: "hover:shadow-green-500/50",
-    orange: "hover:shadow-orange-500/50",
-    red: "hover:shadow-red-500/50"
-  };
-
-  const baseClasses = `relative bg-gradient-to-br ${colorClasses[color]} rounded-2xl text-white shadow-lg transition-all duration-300 focus:outline-none p-4 md:p-[18px]`;
+  const baseClasses = `relative bg-[#111218] border ${colorClasses[color]} rounded-[20px] text-white shadow-[0_18px_45px_rgba(0,0,0,0.75)] transition-all duration-300 focus:outline-none p-3.5 md:p-4`;
   const interactiveClasses = clickable
-    ? `${baseClasses} cursor-pointer hover:scale-[1.02] hover:shadow-2xl ${shadowColors[color]}`
+    ? `${baseClasses} cursor-pointer hover:scale-[1.015]`
     : baseClasses;
 
   const CardContent = () => (
@@ -74,17 +66,17 @@ const StatCard = ({ title, value, subtitle, icon: Icon, trend, color = "blue", o
           Week {weekBadge}
         </div>
       )}
-      <div className="flex items-center justify-between mb-2">
-        <Icon className="w-5 h-5 opacity-90" strokeWidth={1.5} />
+      <div className="flex items-center justify-between mb-2.5">
+        <Icon className="w-4 h-4 opacity-90" strokeWidth={1.6} />
         {trend && trend !== 'same' && (
           <div className={`flex items-center text-sm ${trend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
             {trend === 'up' ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
           </div>
         )}
       </div>
-      <div className={`font-semibold mb-1 leading-tight ${value?.length > 6 ? 'text-2xl' : 'text-[28px] md:text-[32px]'}`}>{value}</div>
-      <div className="font-medium opacity-80" style={{ fontSize: '13px' }}>{title}</div>
-      {subtitle && <div className="opacity-70 mt-1" style={{ fontSize: '11px' }}>{subtitle}</div>}
+      <div className={`font-semibold mb-0.5 leading-tight ${value?.length > 6 ? 'text-[1.5rem]' : 'text-[1.7rem] md:text-[1.9rem]'}`}>{value}</div>
+      <div className="font-medium text-sm opacity-80">{title}</div>
+      {subtitle && <div className="opacity-70 mt-0.5 text-[11px]">{subtitle}</div>}
     </>
   );
   
@@ -126,8 +118,8 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
   };
 
   return (
-    <div className={`flex items-center justify-between p-3 rounded-lg ${entry.isCurrentUser ? 'bg-purple-500/20 border border-purple-500/30' : ''}`}>
-      <div className="flex items-center space-x-3">
+    <div className={`flex items-center justify-between px-3 py-1.5 rounded-lg ${entry.isCurrentUser ? 'bg-purple-500/20 border border-purple-500/30' : ''}`}>
+      <div className="flex items-center space-x-2">
         <UserAvatar
           username={entry.username}
           first_name={entry.first_name}
@@ -138,11 +130,13 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
           ringColor={getRingColor(medalTier)}
         />
         <div className="flex items-center justify-center">{renderRankBadge(medalTier)}</div>
-        <div>
+        <div className="leading-tight">
           <div className={`font-medium text-sm ${entry.isCurrentUser ? 'text-purple-300' : 'text-white'} select-none`}>
             {capitalizeFirstLetter(entry.first_name || entry.username)}
           </div>
-          <div className="text-xs select-none" style={{ color: '#9ca3af' }}>{entry.total_points ?? entry.points ?? 0} points</div>
+          <div className="text-[11px] select-none" style={{ color: '#9ca3af' }}>
+            {entry.total_points ?? entry.points ?? 0} points
+          </div>
         </div>
       </div>
       <div className="flex items-center text-sm">
@@ -478,8 +472,8 @@ function HomePage() {
     <PageLayout>
       <div className="max-w-[1280px] mx-auto">
         {/* Header - Hidden on mobile */}
-        <div style={{ marginBottom: '16px' }} className="text-left hidden md:block">
-          <h1 className="font-bebas text-3xl sm:text-4xl font-bold tracking-wider uppercase">
+        <div className="text-left hidden md:block mb-4">
+          <h1 className="font-bebas text-[2.1rem] sm:text-[2.4rem] font-bold tracking-[0.18em] uppercase">
             Welcome back, <span style={{
               background: 'linear-gradient(to right, #FF1CF7, #b249f8)',
               WebkitBackgroundClip: 'text',
@@ -490,7 +484,7 @@ function HomePage() {
         </div>
 
         {/* Season Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3" style={{ marginBottom: '16px' }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <StatCard title="Current Rank" value={`#${userData.rank ?? '—'}`} subtitle={userData.currentWeek >= 2 && rankMeta.rankChange !== 0 ? `${rankMeta.rankChange > 0 ? '+' : ''}${rankMeta.rankChange} this week` : ""} icon={Trophy} trend={userData.currentWeek >= 2 ? rankMeta.trend : 'same'} color="green" />
         <StatCard
           title="Pending Picks"
@@ -529,7 +523,7 @@ function HomePage() {
       </div>
 
         {/* Quick View Button - Mobile Only */}
-        <div className="md:hidden" style={{ marginBottom: '16px' }}>
+        <div className="md:hidden mb-4">
           <button
             onClick={handleQuickView}
             className="homepage-glass-button w-full py-3 px-4 text-white transition-all duration-300 ease-out inline-flex items-center justify-center space-x-3 focus:outline-none font-roboto font-semibold rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
@@ -556,7 +550,7 @@ function HomePage() {
         {/* Leaderboard + Season Performance */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 homepage-grid-equal-height">
         {/* Leaderboard (with trend arrows) */}
-        <div className="homepage-glass-section p-4">
+        <div className="homepage-glass-section p-4 pb-0">
           <div className="homepage-glass-content">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -573,7 +567,7 @@ function HomePage() {
               </div>
               <Users className="w-4 h-4" style={{ color: '#9ca3af' }} />
             </div>
-            <div className="space-y-0">
+            <div className="space-y-1 flex-1 mt-2">
               {!standingsLoaded ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
@@ -592,17 +586,22 @@ function HomePage() {
                 </div>
               )}
             </div>
-            <button className="w-full mt-3 text-base sm:text-sm font-medium transition-colors homepage-section-content focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 rounded-md py-1" style={{ color: '#F59E0B', opacity: 0.75, letterSpacing: '0.05rem' }} onMouseEnter={(e) => e.target.style.color = '#FBBF24'} onMouseLeave={(e) => e.target.style.color = '#F59E0B'} onClick={() => navigate('/standings')}>
-              View Full Standings →
-            </button>
+            <div className="mt-auto -mx-4">
+              <button
+                className="leaderboard-footer-button homepage-section-content border-t border-slate-500/25 focus:outline-none focus:ring-0"
+                onClick={() => navigate('/standings')}
+              >
+                View Full Standings →
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Season Performance */}
-        <div className="homepage-glass-section season-performance-glass p-4">
+        <div className="homepage-glass-section season-performance-glass p-4 pb-4">
           <div className="homepage-glass-content h-full flex flex-col">
-            <h3 className="homepage-section-title mb-3">Season Performance</h3>
-            <div className="flex-1 flex flex-col justify-center space-y-2.5">
+            <h3 className="homepage-section-title mb-2 text-left">Season Performance</h3>
+            <div className="flex-1 flex flex-col justify-center space-y-1.5">
               <PerformanceBar
                 label="Moneyline"
                 percentage={seasonPerf.ml || 0}
@@ -629,10 +628,10 @@ function HomePage() {
                 color="#8B5CF6"
               />
             </div>
-            <div className="mt-3 pt-3 border-t border-gray-700">
+            <div className="mt-2 pt-2 border-t border-gray-700">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-medium opacity-70">Total Points</div>
-                <div className="text-lg font-bold" style={{ color: "#F9A825" }}>
+                <div className="text-[11px] font-medium opacity-70">Total Points</div>
+                <div className="text-base font-bold" style={{ color: "#F9A825" }}>
                   {seasonPerf.totalPoints || 0}
                 </div>
               </div>
@@ -641,25 +640,16 @@ function HomePage() {
         </div>
 
         {/* Recent Games */}
-        <div className="homepage-glass-section p-4">
+        <div className="homepage-glass-section p-4 pb-3">
           <div className="homepage-glass-content">
             <div className="flex items-center justify-between">
               <h3 className="homepage-section-title">Recent Games</h3>
               <Clock className="w-4 h-4" style={{ color: '#9ca3af' }} />
             </div>
             <div
-              className="space-y-2 recent-games-scrollable homepage-section-content"
-              style={{
-                maxHeight: '200px',
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                paddingRight: '4px',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#4B5563 #2d2d2d',
-                WebkitOverflowScrolling: 'touch'
-              }}
+              className="space-y-2 homepage-section-content"
             >
-              {(userData?.recentGames || []).map(game => {
+              {(userData?.recentGames || []).slice(0, 3).map(game => {
                 // Handle the new 3-way color logic
                 const status = game.correctStatus || (game.correct ? 'full' : 'none');
                 const isGreen = status === 'full';
@@ -671,7 +661,11 @@ function HomePage() {
                 const badge = isGreen ? '✓' : isYellow ? '◐' : '✗';
 
                 return (
-                  <div key={game.id} className={`p-2.5 rounded-lg border-l-4 transition-all duration-200 ${borderColor}`} style={{ backgroundColor: 'rgba(42, 42, 42, 0.5)' }}>
+                  <div
+                    key={game.id}
+                    className={`p-2.5 rounded-lg border-l-4 transition-all duration-200 ${borderColor}`}
+                    style={{ backgroundColor: '#101118' }}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="text-sm font-medium homepage-section-content" style={{ color: '#9ca3af' }}>{game.awayTeam} @ {game.homeTeam}</div>

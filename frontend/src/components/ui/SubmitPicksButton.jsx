@@ -193,7 +193,7 @@ function SubmitPicksButton({
         }
 
         .modal-content {
-          background: #2d2d2d;
+          background: #101118;
           border-radius: 12px;
           width: 100%;
           max-width: 500px;

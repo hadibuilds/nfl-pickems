@@ -137,7 +137,7 @@ export default function Standings({ isAuthLoading = false }) {
           <button
             onClick={() => setOpen((v) => !v)}
             className="inline-flex items-center justify-between w-60 px-5 py-2.5 text-sm font-medium rounded-xl shadow-lg focus:outline-none text-white hover:bg-gray-700 transition-all duration-200 border border-gray-600"
-            style={{ backgroundColor: '#2d2d2d' }}
+            style={{ backgroundColor: '#101118' }}
           >
             <span className="flex items-center">
               <Trophy className="w-4 h-4 mr-2" />
@@ -159,7 +159,7 @@ export default function Standings({ isAuthLoading = false }) {
           {open && (
             <div
               className="absolute z-10 mt-2 w-60 rounded-xl shadow-2xl border border-gray-600 overflow-hidden"
-              style={{ backgroundColor: '#2d2d2d' }}
+              style={{ backgroundColor: '#101118' }}
             >
               <ul className="py-1">
                 <li>

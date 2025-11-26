@@ -100,7 +100,7 @@ export default function PeekPage() {
   }, [weekNum, API_BASE]);
 
   return (
-    <PageLayout backgroundColor="#1E1E20" maxWidth="max-w-4xl">
+    <PageLayout backgroundColor="#05060A" maxWidth="max-w-4xl">
       <WeekHeader
         weekNumber={Number.isFinite(weekNum) ? weekNum : ''}
         onBack={() => navigate('/peek')}

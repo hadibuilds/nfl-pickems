@@ -282,7 +282,7 @@ export default function SettingsPage() {
   
   if (loading) {
     return (
-      <PageLayout backgroundColor="#1E1E20" maxWidth="max-w-4xl">
+      <PageLayout backgroundColor="#05060A" maxWidth="max-w-4xl">
         <div className="text-center text-white py-12">
           <div className="inline-flex items-center">
             <svg className="animate-spin h-8 w-8 text-violet-500 mr-3" viewBox="0 0 24 24">
@@ -297,7 +297,7 @@ export default function SettingsPage() {
   }
   
   return (
-    <PageLayout backgroundColor="#1E1E20" maxWidth="max-w-4xl">
+    <PageLayout backgroundColor="#05060A" maxWidth="max-w-4xl">
       {/* Header */}
       <div className="mx-auto mb-8 text-center">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-2 font-bebas tracking-wider">Settings</h1>

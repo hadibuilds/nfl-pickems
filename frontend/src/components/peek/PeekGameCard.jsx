@@ -8,10 +8,10 @@ export default function PeekGameCard({ game, peekData }) {
       className="game-box locked"
       style={{
         border: '1px solid rgba(68, 68, 68, 0.4)',
-        borderRadius: '8px',
-        backgroundColor: '#2d2d2d',
+        borderRadius: '16px',
+        backgroundColor: '#101118',
         overflow: 'hidden',
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(68, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+        boxShadow: '0 18px 45px rgba(0, 0, 0, 0.8)'
       }}
     >
       {/* Top section - Game info (reuse existing component) */}

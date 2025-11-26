@@ -51,8 +51,8 @@ export default function PasswordResetPage() {
   };
 
   return (
-    <div className="w-full min-h-screen flex items-start justify-center px-6 pb-12" style={{ backgroundColor: '#1E1E20', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1.5rem)' }}>
-      <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] p-8 sm:p-10 rounded-xl shadow-md text-base" style={{ backgroundColor: '#2d2d2d' }}>
+    <div className="w-full min-h-screen flex items-start justify-center px-6 pb-12" style={{ backgroundColor: '#05060A', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1.5rem)' }}>
+      <div className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-[40rem] p-8 sm:p-10 rounded-xl shadow-md text-base" style={{ backgroundColor: '#101118' }}>
         <div className="text-center mb-6">
           <h2 className="text-4xl font-bold text-white">Reset Password</h2>
           <p className="mt-2 text-base" style={{ color: '#9ca3af' }}>

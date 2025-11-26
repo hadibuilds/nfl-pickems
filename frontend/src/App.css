@@ -80,17 +80,17 @@
   text-transform: none;
 }
 
-/* UPDATED: Enhanced game box styling */
+/* UPDATED: Enhanced game box styling - halved radius for better hierarchy */
 .game-box {
-  background-color: #1f1f1f;
-  border-radius: 16px;
-  margin: 20px 0;
+  background-color: #101118;
+  border-radius: 3px;
+  margin: 12px 0;
   width: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   color: white;
   overflow: hidden;
   padding: 0;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   transition: opacity 0.3s ease, filter 0.3s ease;
   min-width: 0;
   box-sizing: border-box;
@@ -120,14 +120,14 @@
    ================================================================= */
 
 .game-box .game-info-section {
-  background-color: #1f1f1f;
-  padding: 16px 20px;
+  background-color: transparent;
+  padding: 14px 20px 10px;
   text-align: center;
   position: relative;
 }
 
 .game-box.locked:not(.has-results) .game-info-section {
-  background-color: #2a2a2a;
+  background-color: #151620;
 }
 
 /* Team matchup styling */
@@ -193,15 +193,15 @@
 
 .money-line {
   position: relative;
-  background-color: #2d2d2d;
+  background-color: #14151f;
 }
 
 .game-box.locked:not(.has-results) .money-line {
-  background-color: #3a3a3a;
+  background-color: #1c1d28;
 }
 
 .game-box.has-results .money-line {
-  background-color: #2d2d2d;
+  background-color: #14151f;
 }
 
 /* =================================================================
@@ -209,17 +209,17 @@
    ================================================================= */
 
 .prop-bet {
-  background-color: #1f1f1f;
+  background-color: #101119;
   padding: 16px;
   position: relative;
 }
 
 .game-box.locked:not(.has-results) .prop-bet {
-  background-color: #2a2a2a;
+  background-color: #151620;
 }
 
 .game-box.has-results .prop-bet {
-  background-color: #1f1f1f;
+  background-color: #101119;
 }
 
 /* =================================================================
@@ -381,9 +381,7 @@
    ================================================================= */
 
 .divider-line {
-  height: 1px;
-  background-color: #4b5563;
-  width: 100%;
+  display: none; /* Remove divider line */
 }
 
 /* =================================================================
@@ -422,26 +420,50 @@
 
 .button-row {
   display: flex;
-  gap: 20px;
+  gap: 12px;
+  width: 100%;
 }
 
 /* =================================================================
    FIXED: iOS DOUBLE TAP PREVENTION - Touch Device Hover States
    ================================================================= */
 
-/* Base button styling - NO hover states initially */
-.team-button, .propbet-button {
-  padding: 12px 24px;
+/* Base button styling - wider buttons, less rounded, new color scheme */
+.team-button {
+  padding: 12px 16px;
   border: 2px solid transparent;
-  border-radius: 8px;
-  background-color: #383850;
+  border-radius: 4px;
+  background-color: #1f1f28;
   color: white;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.15s ease;
   box-sizing: border-box;
   font-size: 0.95rem;
-  min-width: 80px;
+  flex: 1;
+  /* iOS tap optimization */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  /* Improved touch interaction */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  text-transform: uppercase;
+}
+
+/* Prop bet buttons - fill space equally, less rounded, new color scheme */
+.propbet-button {
+  padding: 12px 16px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background-color: #1f1f28;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  box-sizing: border-box;
+  font-size: 0.95rem;
+  flex: 1;
   /* iOS tap optimization */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -463,48 +485,59 @@
 /* CRITICAL: Only apply hover effects on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   /* Base button hover - ONLY for enabled buttons on non-touch devices */
-  .team-button:not(:disabled):not(.selected):hover,
-  .propbet-button:not(:disabled):not(.selected):hover {
-    background-color: #8B5CF6;
+  .team-button:not(:disabled):not(.selected):hover {
+    background-color: #2a2a35;
     transform: translateY(-1px);
+  }
+  
+  .propbet-button:not(:disabled):not(.selected):hover {
+    background-color: #2a2a35;
+    transform: none;
   }
 
   /* Hover states for selected buttons on non-touch devices */
   .team-button.selected:not(:disabled):hover,
   .propbet-button.selected:not(:disabled):hover {
-    background-color: #6B21A8;
+    background-color: #5B5FDE;
   }
 
   /* Keep selected styling even when disabled on non-touch devices */
   .team-button.selected:disabled:hover,
   .propbet-button.selected:disabled:hover {
-    background-color: #7C3AED;
+    background-color: #5B5FDE;
     transform: none;
   }
 }
 
-/* Selected button styling - works on all devices */
-.team-button.selected, .propbet-button.selected {
-  background-color: #7C3AED;
-  border-color: #7C3AED;
+/* Selected button styling - quieter purple */
+.team-button.selected {
+  background-color: #5B5FDE;
+  border-color: #5B5FDE;
+  outline: none;
+}
+
+.propbet-button.selected {
+  background-color: #5B5FDE;
+  border-color: #5B5FDE;
   outline: none;
 }
 
 /* Disabled button states - works on all devices */
 .team-button:disabled, .propbet-button:disabled {
-  background-color: #555555;
-  color: #999999;
+  /* Darker, non-ashy disabled state */
+  background-color: #191a24;
+  color: #6b7280;
   cursor: not-allowed;
   transform: none;
-  border-color: #555555;
+  border-color: #191a24;
   pointer-events: none;
 }
 
 /* Keep selected styling even when disabled */
 .team-button.selected:disabled, .propbet-button.selected:disabled {
-  background-color: #7C3AED;
+  background-color: #5B5FDE;
   color: white;
-  border-color: #7C3AED;
+  border-color: #5B5FDE;
   opacity: 0.9;
   pointer-events: none;
 }
@@ -603,7 +636,7 @@
   align-items: center;
   margin-bottom: 24px;
   padding: 16px 24px;
-  background-color: #2d2d2d;
+  background-color: #101118;
   border-radius: 12px;
   color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -666,9 +699,10 @@ a:focus-visible {
   left: 0;
   width: 100%;
   z-index: 1000;
-  background-color: rgba(30, 30, 32, 0.7);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Dark, matte bar to match new app background */
+  background: rgba(5, 6, 10, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: none;
   transition: all 0.3s ease;
   /* Base height without safe area */
   height: 64px;
@@ -755,7 +789,7 @@ a:focus-visible {
 }
 
 .login-button {
-  background-color: #2d2d2d;
+  background-color: #101118;
   color: white;
 }
 
@@ -911,7 +945,7 @@ a:focus-visible {
   max-width: 40vw; /* ADDED: Ensure it never exceeds 50% */
   z-index: 40;
   transition: transform 0.3s ease;
-  background-color: #1E1E20;
+  background-color: #05060A;
 }
 
 @media (min-width: 768px) {
@@ -1130,8 +1164,9 @@ a:focus-visible {
 .week-card[data-status="current"] { color: white; }
 
 .week-card[data-status="completed"] {
-  background-color: #10B981;
-  border-color: #059669;
+  /* Completed weeks: gray, matching Peek selector aesthetic */
+  background-color: #374151;
+  border-color: #4B5563;
 }
 
 .week-card[data-status="current"] {
@@ -1149,7 +1184,7 @@ a:focus-visible {
 .week-status-badge[data-status="completed"],
 .week-status-badge[data-status="current"] { color: white; }
 
-.week-status-badge[data-status="completed"] { background-color: #065F46; }
+.week-status-badge[data-status="completed"] { background-color: #374151; }
 .week-status-badge[data-status="current"] { background-color: #5B21B6; }
 .week-status-badge[data-status="upcoming"] {
   background-color: #374151;
@@ -1179,7 +1214,7 @@ a:focus-visible {
   border: none;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+  box-shadow: none;
   white-space: nowrap;
   font-family: inherit;
   outline: none;
@@ -1195,13 +1230,13 @@ a:focus-visible {
   -moz-user-select: none;
   user-select: none;
   
-  /* Responsive sizing based on screen size - moderate proportions */
-  padding: clamp(10px, 1.8vh, 12px) clamp(16px, 3vw, 20px);
+  /* Reduced height by 35%, drastic radius reduction */
+  padding: clamp(6px, 1.2vh, 8px) clamp(16px, 3vw, 20px);
   font-size: clamp(13px, 2.2vh, 14px);
-  border-radius: clamp(16px, 3vh, 20px);
+  border-radius: 6px;
   
   /* Minimum touch target size for accessibility */
-  min-height: 40px;
+  min-height: 32px;
   min-width: 90px;
 }
 
@@ -1209,8 +1244,8 @@ a:focus-visible {
 @media (hover: hover) and (pointer: fine) {
   .floating-submit-button:hover {
     background-color: #D97706;
-    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
-    transform: translateX(-50%) translateY(-2px);
+    box-shadow: none;
+    transform: translateX(-50%) translateY(-1px);
   }
 }
 
@@ -1223,17 +1258,17 @@ a:focus-visible {
 .floating-submit-button.submitting {
   background-color: #D97706 !important;
   cursor: not-allowed !important;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+  box-shadow: none !important;
 }
 
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .floating-submit-button {
-    /* Better mobile sizing - moderate size */
-    padding: clamp(12px, 2.4vh, 14px) clamp(20px, 4.5vw, 24px);
+    /* Reduced height by 35%, drastic radius */
+    padding: clamp(6px, 1.2vh, 8px) clamp(20px, 4.5vw, 24px);
     font-size: clamp(13px, 2.8vh, 15px);
-    border-radius: clamp(18px, 3.5vh, 22px);
-    min-height: 42px;
+    border-radius: 6px;
+    min-height: 32px;
     min-width: 100px;
     
     /* Improved mobile positioning with safe area */
@@ -1277,9 +1312,9 @@ a:focus-visible {
 /* Large phones/small tablets (iPhone 14 Pro Max, etc.) */
 @media (min-width: 414px) and (max-width: 768px) {
   .floating-submit-button {
-    padding: clamp(13px, 2.8vh, 16px) clamp(22px, 5vw, 28px);
+    padding: clamp(6px, 1.2vh, 8px) clamp(22px, 5vw, 28px);
     font-size: clamp(14px, 3vh, 16px);
-    border-radius: clamp(19px, 4vh, 24px);
+    border-radius: 6px;
     min-width: 110px;
   }
 }
@@ -1287,9 +1322,9 @@ a:focus-visible {
 /* Desktop/tablet - keep reasonable size */
 @media (min-width: 769px) {
   .floating-submit-button {
-    padding: 14px 24px;
+    padding: 8px 24px;
     font-size: 15px;
-    border-radius: 26px;
+    border-radius: 6px;
     bottom: 24px;
     min-width: 120px;
   }
@@ -1348,7 +1383,7 @@ a:focus-visible {
 }
   
 .navigation-modal {
-  background-color: #2d2d2d;
+  background-color: #101118;
   border-radius: 16px;
   padding: 0;
   width: 90%;
@@ -1359,7 +1394,7 @@ a:focus-visible {
 }
   
 .navigation-modal-header {
-  background-color: #1f1f1f;
+  background-color: #101118;
   padding: 20px 24px;
   border-bottom: 1px solid #404040;
 }
@@ -1735,111 +1770,118 @@ body.is-pwa.is-ios #root {
    RESULT BANNER STYLES
    ================================================================= */
 
+/* Week header button styling - properly sized icons aligned with title baseline */
+.week-header-button {
+  background-color: transparent;
+  border: none;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  transform: translateY(6px); /* Move down 6px to align with title baseline */
+}
+
+.week-header-button svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+}
+
+.week-header-button:hover {
+  opacity: 0.7;
+}
+
+.week-header-button:active {
+  opacity: 0.5;
+}
+
 .result-banner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 15px;
-  background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 50%, #2a2a2a 100%);
-  border-radius: 20px;
+  margin-bottom: 12px;
+  background-color: #101118;
+  border-radius: 3px;
   color: white;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 1px 0px rgba(255, 255, 255, 0.05) inset,
-    0 -1px 0px rgba(0, 0, 0, 0.2) inset;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   max-width: 32rem;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
   position: relative;
   overflow: hidden;
+  padding: 8px;
 }
 
-/* Add subtle animated gradient overlay */
-.result-banner::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(139, 92, 246, 0.03), 
-    transparent
-  );
-  animation: shimmer 3s ease-in-out infinite;
-}
+/* Removed gradient overlay */
 
-@keyframes shimmer {
-  0% { left: -100%; }
-  50% { left: -100%; }
-  100% { left: 100%; }
-}
-
-/* Top stats row */
+/* Top stats row - reduced padding, tighter spacing, reduced height */
 .result-stats-row {
   display: flex;
   justify-content: space-around;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   align-items: center;
   position: relative;
   z-index: 1;
+  padding: 0;
 }
 
 .stat-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 16px;
+  gap: 4px;
+  padding: 5px 10px;
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 12px;
+  border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   min-width: 80px;
 }
 
 .stat-label {
-  font-size: 0.8rem;
-  color: #B0B7C3;
+  font-size: 0.75rem;
+  color: #E5E7EB;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  line-height: 1.2;
 }
 
 .stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  line-height: 1;
 }
 
 .points-value {
   color: #F59E0B;
-  font-size: 1.8rem;
-  text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+  font-size: 1.3rem;
 }
 
-/* Results breakdown container */
+/* Results breakdown container - tighter spacing */
 .results-breakdown {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   position: relative;
   z-index: 1;
+  padding: 0;
 }
 
-/* Individual result sections */
+/* Individual result sections - reduced padding and radius */
 .result-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 16px;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 14px;
+  border-radius: 3px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
 }
@@ -1861,51 +1903,32 @@ body.is-pwa.is-ios #root {
   border-radius: 8px;
 }
 
-/* Enhanced progress bar styling */
+/* Enhanced progress bar styling - higher contrast, slimmer */
 .result-progress-bar {
   width: 100%;
-  height: 12px;
-  background: linear-gradient(90deg, #1a1a1a, #333);
-  border-radius: 8px;
+  height: 8px;
+  background-color: #2a2a2a;
+  border-radius: 6px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: none;
 }
 
 .result-progress-fill {
   height: 100%;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 8px;
+  border-radius: 6px;
   position: relative;
   overflow: hidden;
 }
 
-/* Add animated glow effect to progress bars */
-.result-progress-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: progressGlow 2s ease-in-out infinite;
-}
-
-@keyframes progressGlow {
-  0% { left: -100%; }
-  50% { left: -100%; }
-  100% { left: 100%; }
-}
+/* Removed animated glow effect */
 
 .moneyline-fill {
-  background: linear-gradient(90deg, #8B5CF6, #A855F7);
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+  background-color: #6366f1;
 }
 
 .propbet-fill {
-  background: linear-gradient(90deg, #F59E0B, #FBBF24);
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+  background-color: #F59E0B;
 }
 
 /* Mobile responsive */
@@ -1921,29 +1944,31 @@ body.is-pwa.is-ios #root {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 18px;
+    padding: 10px 14px;
     min-width: auto;
     width: 100%;
   }
 
   .stat-label {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin: 0;
+    line-height: 1.2;
   }
 
   .stat-value {
-    font-size: 1.4rem;
+    font-size: 1.1rem;
     margin: 0;
+    line-height: 1;
   }
 
   .points-value {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
   }
   
   .result-section {
-    padding: 14px;
+    padding: 8px;
   }
   
   .result-section-header {
@@ -1955,7 +1980,7 @@ body.is-pwa.is-ios #root {
   }
   
   .result-progress-bar {
-    height: 10px;
+    height: 8px;
   }
 }
 
@@ -1999,15 +2024,15 @@ body.is-pwa.is-ios #root {
   /* CRITICAL: Remove all padding/margin that's distorting the circle */
   padding: 0 !important;
   margin: 0 !important;
-  /* FORCE exact dimensions - responsive to navbar height (10% smaller) */
-  width: 43px !important;
-  height: 43px !important;
-  min-width: 43px !important;
-  min-height: 43px !important;
-  max-width: 43px !important;
-  max-height: 43px !important;
+  /* FORCE exact dimensions - reduced size to not overpower header icons */
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
   /* Override any button/flex container interference */
-  flex-basis: 43px !important;
+  flex-basis: 36px !important;
   flex-grow: 0 !important;
   white-space: nowrap !important;
   text-align: center !important;
@@ -2037,26 +2062,26 @@ body.is-pwa.is-ios #root {
 
 /* Avatar Sizes - with mobile-specific overrides (renamed to avoid conflicts) */
 .user-avatar.avatar-sm {
-  /* Mobile: 43px (10% smaller than 48px) */
-  width: 43px !important;
-  height: 43px !important;
-  font-size: 16px;
-  min-width: 43px !important;
-  min-height: 43px !important;
-  max-width: 43px !important;
-  max-height: 43px !important;
-  flex-basis: 43px !important;
+  /* Mobile: 36px (reduced to not overpower header) */
+  width: 36px !important;
+  height: 36px !important;
+  font-size: 14px;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  flex-basis: 36px !important;
 }
 
 .user-avatar.avatar-md {
-  width: 50px !important;
-  height: 50px !important;
-  font-size: 20px;
-  min-width: 50px !important;
-  min-height: 50px !important;
-  max-width: 50px !important;
-  max-height: 50px !important;
-  flex-basis: 50px !important;
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 16px;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+  flex-basis: 40px !important;
 }
 
 .user-avatar.avatar-lg {
@@ -2088,14 +2113,14 @@ body.is-pwa.is-ios #root {
   }
   
   .user-avatar.avatar-sm {
-    /* Mobile: 43px (10% smaller) */
-    width: 43px !important;
-    height: 43px !important;
-    min-width: 43px !important;
-    min-height: 43px !important;
-    max-width: 43px !important;
-    max-height: 43px !important;
-    flex-basis: 43px !important;
+    /* Mobile: 36px (reduced to not overpower header) */
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+    flex-basis: 36px !important;
     font-size: 16px;
   }
 }
@@ -2103,14 +2128,14 @@ body.is-pwa.is-ios #root {
 /* Desktop sizing - larger avatar for desktop navbar */
 @media (min-width: 640px) {
   .user-avatar.avatar-sm {
-    /* Desktop: 50px (10% smaller than 56px) */
-    width: 50px !important;
-    height: 50px !important;
-    min-width: 50px !important;
-    min-height: 50px !important;
-    max-width: 50px !important;
-    max-height: 50px !important;
-    flex-basis: 50px !important;
+    /* Desktop: 40px (reduced to not overpower header) */
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    flex-basis: 40px !important;
     font-size: 20px;
   }
 }
@@ -2135,8 +2160,8 @@ body.is-pwa.is-ios #root {
   top: calc(100% + 8px);
   right: 0;
   min-width: 240px;
-  background: #2D2D2F;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #101118;
+  border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(16px);
@@ -2529,18 +2554,15 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 
 /* Base glassmorphism styling for homepage sections */
 .homepage-glass-section {
+  /* Dark, neutral glass card similar to reference screenshot */
   background:
-    radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
-    linear-gradient(135deg, rgba(45, 45, 50, 0.95) 0%, rgba(30, 30, 35, 0.9) 50%, rgba(42, 42, 47, 0.95) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(68, 68, 68, 0.4);
+    linear-gradient(135deg, #171821 0%, #101118 50%, #07070D 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-radius: 20px;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(68, 68, 68, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.14); /* slate-400-ish */
+  /* Single, consistent depth across homepage cards */
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75);
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2548,16 +2570,13 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 
 /* Minimal blur variant for buttons */
 .homepage-glass-button {
-  background: linear-gradient(135deg, #3d3d3d 0%, #2e2e2e 50%, #3a3a3a 100%);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(135deg, #252632 0%, #181923 50%, #101118 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 20px;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    0 1px 0px rgba(255, 255, 255, 0.12) inset,
-    0 -1px 0px rgba(0, 0, 0, 0.2) inset,
-    0 0 20px rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  /* Same depth as cards to keep hierarchy clean */
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75);
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2614,11 +2633,10 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 
 /* Season performance specific styling - matte neutral */
 .season-performance-glass {
-  background: linear-gradient(135deg, rgba(42, 42, 42, 0.95) 0%, rgba(32, 32, 32, 0.9) 50%, rgba(38, 38, 38, 0.95) 100%);
-  border: 1px solid rgba(68, 68, 68, 0.4);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(68, 68, 68, 0.2);
+  /* Match homepage glass cards: bold, dark, non-ashy */
+  background: linear-gradient(135deg, #171821 0%, #101118 50%, #07070D 100%);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75);
 }
 
 
@@ -2765,8 +2783,28 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 @media (min-width: 769px) {
   .homepage-grid-equal-height > .homepage-glass-section {
     height: 100%;
-    min-height: 300px;
+    /* More aggressive density on desktop */
+    min-height: 180px;
   }
+}
+
+/* Leaderboard footer CTA - flat strip, no inner pill */
+.leaderboard-footer-button {
+  display: block;
+  width: 100%;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent;
+  padding: 8px 0;
+  text-align: center;
+  font-size: 0.875rem;
+  letter-spacing: 0.06rem;
+  color: #fbbf24;
+  opacity: 0.85;
+}
+
+.leaderboard-footer-button:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* Small mobile adjustments */
@@ -2791,16 +2829,11 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
    ================================================================= */
 
 .quickview-modal-content {
-  background:
-    radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(251, 146, 60, 0.08) 0%, transparent 50%),
-    linear-gradient(135deg, rgba(45, 45, 50, 0.98) 0%, rgba(30, 30, 35, 0.95) 50%, rgba(42, 42, 47, 0.98) 100%);
+  /* Flat, low-contrast charcoal background */
+  background-color: #111218;
   border-radius: 12px;
-  box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(68, 68, 68, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(68, 68, 68, 0.4);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(15, 23, 42, 0.7);
   padding: 20px;
   max-width: 500px;
   width: auto;
@@ -2825,7 +2858,7 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   color: #9ca3af;
   transition: all 0.2s ease;
   outline: none;
-  padding: 8px;
+  padding: 4px;
   border-radius: 9999px;
   background: transparent;
   border: none;
@@ -2839,11 +2872,11 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 }
 
 .quickview-table-header {
-  border-bottom: 2px solid rgba(68, 68, 68, 0.5);
+  border-bottom: 1px solid rgba(75, 85, 99, 0.4);
 }
 
 .quickview-table-header th {
-  color: #A78BFA;
+  color: #9CA3AF;
 }
 
 .quickview-table-row {
@@ -2852,7 +2885,7 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 }
 
 .quickview-team-logo {
-  width: 32px;
+  width: 28px;
   height: auto;
   display: inline-block;
   vertical-align: middle;
@@ -2878,13 +2911,41 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   padding-inline: 8px;
 }
 
+/* Quick View tooltip - modern, minimal bubble */
+.quickview-prop-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 4px;
+  max-width: min(260px, 70vw);
+  background-color: #0F0F0F;
+  border: 1px solid #2A2A2A;
+  border-radius: 8px;
+  padding: 6px 10px;
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.25);
+  color: #E5E7EB;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  z-index: 20;
+}
+
+.quickview-prop-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 18px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: #0F0F0F transparent transparent transparent;
+}
+
 /* =================================================================
    PEEK PAGE STYLES - GameCard-inspired layout
    ================================================================= */
 
 /* Moneyline section - mimics MoneyLineSection */
 .moneyline-section {
-  background-color: #1f1f1f;
+  background-color: #101118;
   padding: 16px;
   position: relative;
 }
@@ -2901,7 +2962,7 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   align-items: center;
   padding: 12px;
   border-radius: 8px;
-  background-color: #383850;
+  background-color: #181923;
   border: 2px solid rgba(107, 114, 128, 0.4);
   min-height: 100px;
 }
@@ -2958,7 +3019,7 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 
 /* PropBet section - mimics PropBetSection */
 .propbet-section {
-  background-color: #1f1f1f;
+  background-color: #101118;
   padding: 16px;
   position: relative;
 }
@@ -2984,7 +3045,7 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   align-items: center;
   padding: 12px;
   border-radius: 8px;
-  background-color: #383850;
+  background-color: #181923;
   border: 2px solid rgba(107, 114, 128, 0.4);
   min-height: 100px;
 }
@@ -3073,10 +3134,11 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(20, 20, 22, 0.95);
+  /* Flush with global app background */
+  background: #05060A;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(68, 68, 68, 0.3);
+  border-top: 1px solid rgba(15, 23, 42, 0.8);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -3118,7 +3180,7 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 }
 
 .bottom-nav-item.active {
-  color: #8B5CF6;
+  color: #5B5FDE;
 }
 
 .bottom-nav-item:active {
@@ -3130,8 +3192,8 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 }
 
 .bottom-nav-item.active .bottom-nav-icon {
-  color: #8B5CF6;
-  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4));
+  color: #5B5FDE;
+  filter: drop-shadow(0 0 8px rgba(91, 95, 222, 0.4));
 }
 
 .bottom-nav-label {
