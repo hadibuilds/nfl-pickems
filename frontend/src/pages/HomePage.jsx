@@ -380,16 +380,19 @@ function HomePage() {
     );
   }
 
+  // Prefer our local overlay; fall back to hook data if needed (keeps JSX unchanged)
+  const userData = homeUserData || dashboardData?.user_data || {};
+
   const goToWeeks = () => {
     navigate('/weeks');
   };
 
   const handleOpenQuickView = async () => {
-    if (!userData.currentWeek) return;
+    if (!homeUserData.currentWeek) return;
 
     try {
       // Fetch games for current week
-      const gamesRes = await fetch(`${API_BASE}/predictions/api/games/?week=${userData.currentWeek}`, {
+      const gamesRes = await fetch(`${API_BASE}/predictions/api/games/?week=${homeUserData.currentWeek}`, {
         credentials: 'include',
         headers: { 'X-CSRFToken': getCookie('csrftoken') }
       });
@@ -399,7 +402,7 @@ function HomePage() {
       }
 
       // Fetch user picks for current week
-      const picksRes = await fetch(`${API_BASE}/predictions/api/my-predictions/?week=${userData.currentWeek}`, {
+      const picksRes = await fetch(`${API_BASE}/predictions/api/my-predictions/?week=${homeUserData.currentWeek}`, {
         credentials: 'include',
         headers: { 'X-CSRFToken': getCookie('csrftoken') }
       });
@@ -425,9 +428,6 @@ function HomePage() {
       console.error('Failed to fetch week data:', error);
     }
   };
-
-  // Prefer our local overlay; fall back to hook data if needed (keeps JSX unchanged)
-  const userData = homeUserData || dashboardData?.user_data || {};
 
   return (
     <PageLayout>
@@ -487,7 +487,7 @@ function HomePage() {
         <div className="md:hidden" style={{ marginBottom: '16px' }}>
           <button
             onClick={handleOpenQuickView}
-            className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+            className="homepage-glass-button w-full py-2.5 px-4 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
           >
             <Eye className="w-4 h-4" />
             <span className="text-sm">Week {userData.currentWeek} Quick View</span>
