@@ -532,10 +532,10 @@ function HomePage() {
         <div className="md:hidden" style={{ marginBottom: '16px' }}>
           <button
             onClick={handleQuickView}
-            className="homepage-glass-button w-full py-3 px-4 text-white font-roboto font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
+            className="homepage-glass-button w-full py-3 px-4 text-white transition-all duration-300 ease-out inline-flex items-center justify-center space-x-3 focus:outline-none font-roboto font-semibold rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={!quickViewReady}
           >
-            {quickViewLoading ? (
+            {(!quickViewReady || quickViewLoading) ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400" />
                 <span className="text-xs uppercase" style={{ letterSpacing: '0.12rem' }}>

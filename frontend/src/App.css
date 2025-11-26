@@ -2563,6 +2563,7 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+
 /* Only hover on desktop - no hover effects on mobile */
 @media (hover: hover) and (pointer: fine) {
   .homepage-glass-button:hover {
