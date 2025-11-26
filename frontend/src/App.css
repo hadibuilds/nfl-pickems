@@ -2856,6 +2856,25 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   object-fit: contain;
 }
 
+/* Prop pill inside Quick View table - keep single-line, no wrap */
+.quickview-prop-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(167, 139, 250, 0.7);
+  /* Viewport-aware size, calibrated so ~0.78rem on iPhone Air */
+  font-size: clamp(0.7rem, 0.5rem + 1.1vw, 0.85rem);
+  white-space: nowrap;
+}
+
+/* Slightly smaller pill for longer answers (e.g. "No Cover") */
+.quickview-prop-pill--long {
+  /* ~10% smaller than base, also viewport-aware */
+  font-size: clamp(0.64rem, 0.45rem + 1vw, 0.78rem);
+  padding-inline: 8px;
+}
+
 /* =================================================================
    PEEK PAGE STYLES - GameCard-inspired layout
    ================================================================= */

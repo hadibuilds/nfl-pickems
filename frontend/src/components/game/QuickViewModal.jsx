@@ -141,7 +141,13 @@ export default function QuickViewModal({
                       {getPropBetPick(game) === '—' ? (
                         <span className="text-gray-600">—</span>
                       ) : (
-                        <span className="inline-block px-3 py-1 rounded-full bg-white/5 border border-purple-400/50">
+                        <span
+                          className={`quickview-prop-pill ${
+                            (getPropBetPick(game) || '').length > 5
+                              ? 'quickview-prop-pill--long'
+                              : ''
+                          }`}
+                        >
                           {getPropBetPick(game)}
                         </span>
                       )}
@@ -150,8 +156,8 @@ export default function QuickViewModal({
                         game.prop_bets &&
                         game.prop_bets.length > 0 && (
                           <div
-                            className="absolute right-0 z-20 mt-1 max-w-xs rounded-md bg-black/90 border border-purple-500/40 px-3 py-2 text-[11px] leading-snug text-gray-100 shadow-xl"
-                            style={{ top: '100%' }}
+                            className="absolute right-0 z-20 mb-1 max-w-xs rounded-md bg-black/90 border border-purple-500/40 px-3 py-2 text-[11px] leading-snug text-gray-100 shadow-xl"
+                            style={{ bottom: '100%' }}
                           >
                             <div className="text-left whitespace-normal">
                               {game.prop_bets[0].question}
