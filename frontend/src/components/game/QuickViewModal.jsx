@@ -68,10 +68,13 @@ export default function QuickViewModal({
         const pillRect = pillElement.getBoundingClientRect();
         const modalRect = modalContentRef.current.getBoundingClientRect();
         
+        // Account for modal scroll position
+        const modalScrollTop = modalContentRef.current.scrollTop;
+        
         // Calculate position relative to modal content - right edge of the pill (grows leftward)
         const right = modalRect.right - pillRect.right;
-        // Position at the top of the pill (grows upward)
-        const top = pillRect.top - modalRect.top;
+        // Position at the top of the pill (grows upward) - add scroll offset
+        const top = (pillRect.top - modalRect.top) + modalScrollTop;
         
         setTooltipPosition({ top, right });
         setActiveQuestionGameId(gameId);

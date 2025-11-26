@@ -48,24 +48,18 @@ export function initPullToRefresh() {
       top: ${navbarBottomPosition}px;
       left: 50%;
       transform: translateX(-50%) translateY(0px) scale(0.8);
-      width: 40px;
-      height: 40px;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(156, 163, 175, 0.3);
+      border-top-color: rgba(156, 163, 175, 0.8);
       border-radius: 50%;
-      background: rgba(139, 92, 246, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       z-index: 1000;
-      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out;
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out, border-color 0.2s ease;
       opacity: 0;
       pointer-events: none;
+      animation: none;
     `;
-    indicator.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-      </svg>
-    `;
+    indicator.innerHTML = '';
     document.body.appendChild(indicator);
     return indicator;
   }
@@ -118,18 +112,16 @@ export function initPullToRefresh() {
       // Map to 0px (at navbar bottom, hidden by opacity) to +30px (visible below navbar)
       const indicatorY = progressForPosition * 30;
       const scale = 0.8 + (Math.min(pullDistance / PULL_THRESHOLD, 1) * 0.2); // Grows from 0.8 to 1.0
-      const rotation = pullDistance * 1.5; // Subtle rotation
+      const rotation = pullDistance * 2; // Rotation as you pull
 
       pullIndicator.style.transform = `translateX(-50%) translateY(${indicatorY}px) scale(${scale}) rotate(${rotation}deg)`;
       pullIndicator.style.opacity = Math.min(progressForPosition * 1.5, 1);
 
-      // Change color when threshold reached
+      // Slightly darken border when threshold reached
       if (pullDistance >= PULL_THRESHOLD) {
-        pullIndicator.style.background = 'rgba(16, 185, 129, 0.9)';
-        pullIndicator.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.5)';
+        pullIndicator.style.borderTopColor = 'rgba(107, 114, 128, 1)';
       } else {
-        pullIndicator.style.background = 'rgba(139, 92, 246, 0.9)';
-        pullIndicator.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
+        pullIndicator.style.borderTopColor = 'rgba(156, 163, 175, 0.8)';
       }
     }
   }
@@ -142,8 +134,8 @@ export function initPullToRefresh() {
     if (pullDistance >= PULL_THRESHOLD) {
       // Trigger refresh - position spinner at final position (20px below navbar) and spin
       pullIndicator.style.transition = 'transform 0.3s ease';
-      pullIndicator.style.transform = 'translateX(-50%) translateY(20px) scale(1) rotate(360deg)';
-      pullIndicator.querySelector('svg').style.animation = 'spin 1s linear infinite';
+      pullIndicator.style.transform = 'translateX(-50%) translateY(20px) scale(1)';
+      pullIndicator.style.animation = 'spin 0.8s linear infinite';
 
       // Keep body pushed down slightly to show spinner with space
       if (bodyElement) {
