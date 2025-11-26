@@ -72,7 +72,7 @@ export default function QuickViewModal({
         onMouseDown={(e) => e.stopPropagation()}
       >
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
           <h2 className="text-2xl font-bold text-white font-bebas tracking-wider uppercase">Quick View - Week {weekNumber}</h2>
           <button
             onMouseDown={(e) => {
@@ -89,7 +89,7 @@ export default function QuickViewModal({
           </button>
         </div>
         {/* Helper subheader */}
-        <p className="text-xs font-roboto text-gray-400 mb-2">
+        <p className="text-xs font-roboto text-gray-400 mb-1">
           Tap a prop answer to see the full question.
         </p>
 
@@ -126,44 +126,48 @@ export default function QuickViewModal({
                       )}
                     </td>
                     <td
-                      className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm relative"
+                      className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm"
                       style={{letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (game.prop_bets && game.prop_bets.length > 0) {
-                          setActiveQuestionGameId(
-                            activeQuestionGameId === game.id ? null : game.id
-                          );
-                        }
-                      }}
                     >
-                      {getPropBetPick(game) === '—' ? (
-                        <span className="text-gray-600">—</span>
-                      ) : (
-                        <span
-                          className={`quickview-prop-pill ${
-                            (getPropBetPick(game) || '').length > 5
-                              ? 'quickview-prop-pill--long'
-                              : ''
-                          }`}
-                        >
-                          {getPropBetPick(game)}
-                        </span>
-                      )}
-
-                      {activeQuestionGameId === game.id &&
-                        game.prop_bets &&
-                        game.prop_bets.length > 0 && (
-                          <div
-                            className="absolute right-0 z-20 mb-1 max-w-xs rounded-md bg-black/90 border border-purple-500/40 px-3 py-2 text-[11px] leading-snug text-gray-100 shadow-xl"
-                            style={{ bottom: '100%' }}
+                      <div
+                        className="inline-block relative"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (game.prop_bets && game.prop_bets.length > 0) {
+                            setActiveQuestionGameId(
+                              activeQuestionGameId === game.id ? null : game.id
+                            );
+                          }
+                        }}
+                      >
+                        {getPropBetPick(game) === '—' ? (
+                          <span className="text-gray-600">—</span>
+                        ) : (
+                          <span
+                            className={`quickview-prop-pill ${
+                              (getPropBetPick(game) || '').length > 5
+                                ? 'quickview-prop-pill--long'
+                                : ''
+                            }`}
                           >
-                            <div className="text-left whitespace-normal">
-                              {game.prop_bets[0].question}
+                            {getPropBetPick(game)}
+                          </span>
+                        )}
+
+                        {activeQuestionGameId === game.id &&
+                          game.prop_bets &&
+                          game.prop_bets.length > 0 && (
+                            <div
+                              className="absolute left-1/2 z-20 max-w-md rounded-md bg-black/90 border border-purple-500/40 px-3 py-1.5 text-[11px] leading-snug text-gray-100 shadow-xl -translate-x-1/2"
+                              style={{ bottom: '98%' }}
+                            >
+                              <div className="whitespace-normal text-center">
+                                {game.prop_bets[0].question}
+                              </div>
                             </div>
-                          </div>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
