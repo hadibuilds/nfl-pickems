@@ -75,8 +75,8 @@
   letter-spacing: 0.05em;
 }
 
-/* Override uppercase for prop bet buttons - preserve admin input */
-.game-page-content .propbet-button {
+/* Override uppercase for prop bet question text - preserve admin input */
+.game-page-content .prop-question {
   text-transform: none;
 }
 
