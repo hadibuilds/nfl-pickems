@@ -139,12 +139,12 @@ const LeaderboardRow = ({ entry, standingsForMedals }) => {
           </div>
         </div>
       </div>
-      <div className="flex items-center text-sm">
+      <div className="flex items-center text-sm min-w-[24px]">
         {derivedTrend !== 'same' && (
           <div className={`flex items-center text-sm ${derivedTrend === 'up' ? 'text-green-200' : 'text-red-200'}`}>
             {derivedTrend === 'up'
-              ? <TrendingUp className="w-4 h-4 mr-1" />
-              : <TrendingDown className="w-4 h-4 mr-1" />}
+              ? <TrendingUp className="w-4 h-4 mr-1" strokeWidth={2} />
+              : <TrendingDown className="w-4 h-4 mr-1" strokeWidth={2} />}
           </div>
         )}
       </div>

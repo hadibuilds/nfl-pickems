@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { getTeamLogo } from '../../utils/teamLogos.js';
 
@@ -38,8 +38,11 @@ export default function QuickViewModal({
     };
   }, [isOpen]);
 
-  // Track which game's prop question tooltip is open
+  // Track which game's prop question tooltip is open and its position
   const [activeQuestionGameId, setActiveQuestionGameId] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, right: 0 });
+  const modalContentRef = useRef(null);
+  const cellRefs = useRef({});
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -56,6 +59,29 @@ export default function QuickViewModal({
     return selection || '—';
   };
 
+  // Handle tooltip toggle with position calculation
+  const handleTooltipToggle = (gameId, pillElement) => {
+    if (activeQuestionGameId === gameId) {
+      setActiveQuestionGameId(null);
+    } else {
+      if (pillElement && modalContentRef.current) {
+        const pillRect = pillElement.getBoundingClientRect();
+        const modalRect = modalContentRef.current.getBoundingClientRect();
+        
+        // Calculate position relative to modal content - right edge of the pill (grows leftward)
+        const right = modalRect.right - pillRect.right;
+        // Position at the top of the pill (grows upward)
+        const top = pillRect.top - modalRect.top;
+        
+        setTooltipPosition({ top, right });
+        setActiveQuestionGameId(gameId);
+      } else {
+        // Fallback: just toggle without position calculation
+        setActiveQuestionGameId(gameId);
+      }
+    }
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -68,6 +94,7 @@ export default function QuickViewModal({
       }}
     >
       <div
+        ref={modalContentRef}
         className="quickview-modal-content"
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -96,7 +123,7 @@ export default function QuickViewModal({
         </p>
 
         {/* Content */}
-        <div className="overflow-x-hidden">
+        <div style={{ overflowX: 'hidden', overflowY: 'visible' }}>
           <table className="w-full text-white">
             <thead>
               <tr className="quickview-table-header">
@@ -128,6 +155,7 @@ export default function QuickViewModal({
                       )}
                     </td>
                     <td
+                      ref={(el) => { if (el) cellRefs.current[game.id] = el; }}
                       className="py-2 px-3 font-roboto uppercase font-bold text-white text-center text-sm"
                       style={{ letterSpacing: '0.06rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)' }}
                     >
@@ -137,9 +165,9 @@ export default function QuickViewModal({
                           e.preventDefault();
                           e.stopPropagation();
                           if (game.prop_bets && game.prop_bets.length > 0) {
-                            setActiveQuestionGameId(
-                              activeQuestionGameId === game.id ? null : game.id
-                            );
+                            // Find the actual pill element (span) for positioning
+                            const pillElement = e.currentTarget.querySelector('.quickview-prop-pill') || e.currentTarget;
+                            handleTooltipToggle(game.id, pillElement);
                           }
                         }}
                       >
@@ -156,16 +184,6 @@ export default function QuickViewModal({
                             {getPropBetPick(game)}
                           </span>
                         )}
-
-                        {activeQuestionGameId === game.id &&
-                          game.prop_bets &&
-                          game.prop_bets.length > 0 && (
-                            <div className="quickview-prop-tooltip">
-                              <div className="whitespace-normal text-left">
-                                {game.prop_bets[0].question}
-                              </div>
-                            </div>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -180,6 +198,25 @@ export default function QuickViewModal({
             </tbody>
           </table>
         </div>
+        
+        {/* Tooltip rendered relative to modal content */}
+        {activeQuestionGameId && games.find(g => g.id === activeQuestionGameId)?.prop_bets?.[0] && (
+          <div
+            className="quickview-prop-tooltip"
+            style={{
+              position: 'absolute',
+              top: `${tooltipPosition.top}px`,
+              right: `${tooltipPosition.right}px`,
+              bottom: 'auto',
+              left: 'auto',
+              transform: 'translateY(calc(-100% - 6px))',
+            }}
+          >
+            <div className="whitespace-normal text-left" style={{ margin: 0, padding: 0 }}>
+              {games.find(g => g.id === activeQuestionGameId)?.prop_bets[0].question}
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body

@@ -83,7 +83,7 @@
 /* UPDATED: Enhanced game box styling - halved radius for better hierarchy */
 .game-box {
   background-color: #101118;
-  border-radius: 3px;
+  border-radius: 16px;
   margin: 12px 0;
   width: 100%;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -101,6 +101,18 @@
   .game-box {
     min-width: 320px;
     max-width: 500px;
+    border-radius: 18px;
+  }
+}
+
+/* Large screen adjustments - match homepage cards */
+@media (min-width: 1025px) {
+  .game-box {
+    border-radius: 20px;
+  }
+  
+  .result-banner {
+    border-radius: 20px;
   }
 }
 
@@ -1628,6 +1640,19 @@ body.is-pwa {
   /* Full viewport without browser controls */
   min-height: 100vh;
   min-height: 100dvh;
+  /* Ensure background extends into safe area */
+  background-color: #05060A !important;
+}
+
+body.is-pwa::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background-color: #05060A;
+  z-index: 9999;
 }
 
 /* iOS PWA: Proper fullscreen handling - works on ALL iPhones/iPads */
@@ -1649,11 +1674,25 @@ body.is-pwa.is-ios #root {
 @media (display-mode: standalone) {
   html {
     height: 100%;
+    background-color: #05060A !important;
   }
 
   body {
     min-height: 100vh;
     min-height: 100dvh;
+    background-color: #05060A !important;
+  }
+
+  /* Cover safe area with black background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background-color: #05060A;
+    z-index: 9999;
   }
 }
 
@@ -1802,10 +1841,14 @@ body.is-pwa.is-ios #root {
   flex-direction: column;
   align-items: center;
   margin-bottom: 12px;
-  background-color: #101118;
-  border-radius: 3px;
+  /* Match homepage glass section styling */
+  background: linear-gradient(135deg, #171821 0%, #101118 50%, #07070D 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75);
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   max-width: 32rem;
   margin-left: auto;
   margin-right: auto;
@@ -1813,6 +1856,20 @@ body.is-pwa.is-ios #root {
   position: relative;
   overflow: hidden;
   padding: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsive border radius for result banner */
+@media (min-width: 769px) {
+  .result-banner {
+    border-radius: 18px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .result-banner {
+    border-radius: 20px;
+  }
 }
 
 /* Removed gradient overlay */
@@ -1881,7 +1938,7 @@ body.is-pwa.is-ios #root {
   gap: 8px;
   padding: 8px;
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 3px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
 }
@@ -2368,7 +2425,7 @@ body.is-pwa.is-ios #root {
 
 .team-button.selected.draft,
 .propbet-button.selected.draft {
-  background-color: #7C3AED !important; /* Keep purple background */
+  background-color: #5B5FDE !important; /* Blue background for consistency */
   position: relative;
 }
 
@@ -2388,13 +2445,13 @@ body.is-pwa.is-ios #root {
 
 .team-button.selected:not(.draft):hover,
 .propbet-button.selected:not(.draft):hover {
-  background-color: #7C3AED !important; /* Keep the same purple */
+  background-color: #5B5FDE !important; /* Blue for consistency */
   transform: none !important; /* No movement either */
 }
 
 .team-button.selected.draft:hover,
 .propbet-button.selected.draft:hover {
-  background-color: #7C3AED !important; /* Keep purple, normal selected hover */
+  background-color: #5B5FDE !important; /* Blue for consistency */
 }
 
 .team-button.selected.draft:disabled::after,
@@ -2834,24 +2891,14 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   border-radius: 12px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
   border: 1px solid rgba(15, 23, 42, 0.7);
-  padding: 20px;
-  max-width: 500px;
-  width: auto;
-  margin: 0 16px;
+  padding: 20px 16px 20px 10px;
+  width: 75vw;
+  max-width: none;
+  margin: 0;
   max-height: 80vh;
   overflow-y: auto;
-}
-
-/* Match game card width on mobile */
-@media (max-width: 768px) {
-  .quickview-modal-content {
-    width: 75vw;
-    max-width: none;
-    margin: 0;
-    /* Tighter horizontal padding on mobile to give columns more room,
-       with slightly less on the left so the modal hugs that edge more */
-    padding: 20px 16px 20px 10px;
-  }
+  overflow-x: hidden;
+  position: relative;
 }
 
 .quickview-close-btn {
@@ -2913,10 +2960,11 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
 
 /* Quick View tooltip - modern, minimal bubble */
 .quickview-prop-tooltip {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  right: 4px;
-  max-width: min(260px, 70vw);
+  /* Position is set via inline styles from JavaScript */
+  /* Dynamic width: grows from 0px with content, expands leftward, wraps vertically */
+  width: fit-content;
+  max-width: 280px;
+  min-width: 0;
   background-color: #0F0F0F;
   border: 1px solid #2A2A2A;
   border-radius: 8px;
@@ -2926,14 +2974,89 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
-  z-index: 20;
+  z-index: 10002;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+  pointer-events: none;
+  /* Anchor to right edge, grows leftward */
+  text-align: left;
+  /* Hide any scrollbars */
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Ensure content fits tightly - no extra space */
+  display: inline-block;
+}
+
+.quickview-prop-tooltip > div {
+  /* Remove any extra spacing from inner div */
+  margin: 0;
+  padding: 0;
+  width: fit-content;
+  max-width: 100%;
+  display: inline-block;
+}
+
+.quickview-prop-tooltip::-webkit-scrollbar {
+  display: none;
+}
+
+/* On mobile, use modal width minus padding but allow dynamic sizing */
+@media (max-width: 768px) {
+  .quickview-prop-tooltip {
+    max-width: min(280px, calc(75vw - 40px));
+  }
 }
 
 .quickview-prop-tooltip::after {
   content: '';
   position: absolute;
   top: 100%;
-  right: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #0F0F0F transparent transparent transparent;
+}
+
+/* Ensure modal prevents horizontal scrolling */
+.quickview-modal-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Style scrollbar to be less visible */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(75, 85, 99, 0.3) transparent;
+}
+
+.quickview-modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quickview-modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.quickview-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.3);
+  border-radius: 3px;
+}
+
+.quickview-modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.5);
+}
+
+.quickview-modal-content > div:last-child {
+  overflow-x: hidden;
+}
+
+.quickview-prop-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
   border-width: 6px;
   border-style: solid;
   border-color: #0F0F0F transparent transparent transparent;

@@ -16,6 +16,9 @@
   overflow-y: auto !important; /* Allow vertical scroll */
    width: 100vw !important; /* Never exceed viewport */
    max-width: 100vw !important;
+   /* PWA safe area background */
+   padding-top: env(safe-area-inset-top, 0px);
+   background: #05060A;
  }
 
  body {
@@ -28,9 +31,12 @@
    /* REMOVED: display: flex, place-items: center - these were causing centering issues */
    margin: 0;
    padding: 0;
+   padding-top: env(safe-area-inset-top, 0px);
    font-family: 'General Sans', system-ui, sans-serif;
    min-width: 320px;
    min-height: 100vh;
+   /* PWA safe area background */
+   background: #05060A;
  }
 
  :root {
