@@ -94,7 +94,7 @@ export default function QuickViewModal({
         </p>
 
         {/* Content */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-hidden">
           <table className="w-full text-white">
             <thead>
               <tr className="quickview-table-header">
@@ -127,10 +127,10 @@ export default function QuickViewModal({
                     </td>
                     <td
                       className="py-3 px-3 font-roboto uppercase font-bold text-white text-center text-sm"
-                      style={{letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)'}}
+                      style={{ letterSpacing: '0.05rem', borderLeft: '1px solid rgba(68, 68, 68, 0.3)' }}
                     >
                       <div
-                        className="inline-block relative"
+                        className="relative inline-block w-full"
                         onMouseDown={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -159,8 +159,13 @@ export default function QuickViewModal({
                           game.prop_bets &&
                           game.prop_bets.length > 0 && (
                             <div
-                              className="absolute left-1/2 z-20 max-w-md rounded-md bg-black/90 border border-purple-500/40 px-3 py-1.5 text-[11px] leading-snug text-gray-100 shadow-xl -translate-x-1/2"
-                              style={{ bottom: '98%' }}
+                              className="absolute z-20 rounded-md bg-black/90 border border-purple-500/40 px-3 py-1.5 text-[11px] leading-snug text-gray-100 shadow-xl"
+                              style={{
+                                bottom: '98%',
+                                right: '4px',            // lock right edge
+                                left: 'auto',
+                                maxWidth: '260px',       // stretch left up to this
+                              }}
                             >
                               <div className="whitespace-normal text-center">
                                 {game.prop_bets[0].question}

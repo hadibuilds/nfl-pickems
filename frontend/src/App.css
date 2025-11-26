@@ -2815,6 +2815,9 @@ div[style*="background-color: rgb(45, 45, 45)"][style*="min-height: 300px"] div.
     width: 75vw;
     max-width: none;
     margin: 0;
+    /* Tighter horizontal padding on mobile to give columns more room,
+       with slightly less on the left so the modal hugs that edge more */
+    padding: 20px 16px 20px 10px;
   }
 }
 
